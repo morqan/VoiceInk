@@ -40,7 +40,7 @@ struct CustomModelCardView: View {
     private var metadataSection: some View {
         HStack(spacing: 12) {
             // Provider
-            Label("Custom Provider", systemImage: "cloud")
+            Label(tr("Custom Provider"), systemImage: "cloud")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
@@ -52,7 +52,7 @@ struct CustomModelCardView: View {
                 .lineLimit(1)
             
             // OpenAI Compatible
-            Label("OpenAI Compatible", systemImage: "checkmark.seal")
+            Label(tr("OpenAI Compatible"), systemImage: "checkmark.seal")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
@@ -72,12 +72,12 @@ struct CustomModelCardView: View {
     private var actionSection: some View {
         HStack(spacing: 8) {
             if isCurrent {
-                Text("Default Model")
+                Text(tr("Default Model"))
                     .font(.system(size: 12))
                     .foregroundColor(Color(.secondaryLabelColor))
             } else {
                 Button(action: setDefaultAction) {
-                    Text("Set as Default")
+                    Text(tr("Set as Default"))
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.bordered)
@@ -88,13 +88,13 @@ struct CustomModelCardView: View {
                 Button {
                     editAction(model)
                 } label: {
-                    Label("Edit Model", systemImage: "pencil")
+                    Label(tr("Edit Model"), systemImage: "pencil")
                 }
                 
                 Button(role: .destructive) {
                     deleteAction()
                 } label: {
-                    Label("Delete Model", systemImage: "trash")
+                    Label(tr("Delete Model"), systemImage: "trash")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle")

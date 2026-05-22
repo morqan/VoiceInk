@@ -62,7 +62,7 @@ struct WordReplacementView: View {
         VStack(alignment: .leading, spacing: 20) {
             GroupBox {
                 Label {
-                    Text("Define word replacements to automatically replace specific words or phrases")
+                    Text(tr("Define word replacements to automatically replace specific words or phrases"))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -102,7 +102,7 @@ struct WordReplacementView: View {
                     }
                     .buttonStyle(.borderless)
                     .disabled(originalWord.isEmpty || replacementWord.isEmpty)
-                    .help("Add word replacement")
+                    .help(tr("Add word replacement"))
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: shouldShowAddButton)
@@ -112,7 +112,7 @@ struct WordReplacementView: View {
                     HStack(spacing: 8) {
                         Button(action: { toggleSort(for: .original) }) {
                             HStack(spacing: 4) {
-                                Text("Original")
+                                Text(tr("Original"))
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.secondary)
 
@@ -125,7 +125,7 @@ struct WordReplacementView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .buttonStyle(.plain)
-                        .help("Sort by original")
+                        .help(tr("Sort by original"))
 
                         Image(systemName: "arrow.right")
                             .foregroundColor(.secondary)
@@ -134,7 +134,7 @@ struct WordReplacementView: View {
 
                         Button(action: { toggleSort(for: .replacement) }) {
                             HStack(spacing: 4) {
-                                Text("Replacement")
+                                Text(tr("Replacement"))
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.secondary)
 
@@ -147,7 +147,7 @@ struct WordReplacementView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .buttonStyle(.plain)
-                        .help("Sort by replacement")
+                        .help(tr("Sort by replacement"))
                     }
                     .padding(.horizontal, 4)
                     .padding(.vertical, 8)
@@ -215,15 +215,15 @@ struct WordReplacementView: View {
 struct WordReplacementInfoPopover: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("How to use Word Replacements")
+            Text(tr("How to use Word Replacements"))
                 .font(.headline)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Separate multiple originals with commas:")
+                Text(tr("Separate multiple originals with commas:"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
-                Text("Voicing, Voice ink, Voiceing")
+                Text(tr("Voicing, Voice ink, Voiceing"))
                     .font(.callout)
                     .padding(8)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -233,17 +233,17 @@ struct WordReplacementInfoPopover: View {
 
             Divider()
 
-            Text("Examples")
+            Text(tr("Examples"))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
             VStack(spacing: 12) {
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Original:")
+                        Text(tr("Original:"))
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("my website link")
+                        Text(tr("my website link"))
                             .font(.callout)
                     }
 
@@ -252,10 +252,10 @@ struct WordReplacementInfoPopover: View {
                         .foregroundColor(.secondary)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Replacement:")
+                        Text(tr("Replacement:"))
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("https://tryvoiceink.com")
+                        Text(tr("https://tryvoiceink.com"))
                             .font(.callout)
                     }
                 }
@@ -266,10 +266,10 @@ struct WordReplacementInfoPopover: View {
 
                 HStack(spacing: 8) {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Original:")
+                        Text(tr("Original:"))
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("Voicing, Voice ink")
+                        Text(tr("Voicing, Voice ink"))
                             .font(.callout)
                     }
 
@@ -278,10 +278,10 @@ struct WordReplacementInfoPopover: View {
                         .foregroundColor(.secondary)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Replacement:")
+                        Text(tr("Replacement:"))
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("VoiceInk")
+                        Text(tr("VoiceInk"))
                             .font(.callout)
                     }
                 }
@@ -331,7 +331,7 @@ struct ReplacementRow: View {
                             .contentTransition(.symbolEffect(.replace))
                     }
                     .buttonStyle(.borderless)
-                    .help("Edit replacement")
+                    .help(tr("Edit replacement"))
                     .onHover { hover in
                         withAnimation(.easeInOut(duration: 0.2)) {
                             isEditHovered = hover
@@ -345,7 +345,7 @@ struct ReplacementRow: View {
                             .contentTransition(.symbolEffect(.replace))
                     }
                     .buttonStyle(.borderless)
-                    .help("Remove replacement")
+                    .help(tr("Remove replacement"))
                     .onHover { hover in
                         withAnimation(.easeInOut(duration: 0.2)) {
                             isDeleteHovered = hover

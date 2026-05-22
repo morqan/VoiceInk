@@ -21,11 +21,11 @@ struct OnboardingTutorialView: View {
                     VStack(alignment: .leading, spacing: 40) {
                         // Title and description
                         VStack(alignment: .leading, spacing: 16) {
-                            Text("Try It Out!")
+                            Text(tr("Try It Out!"))
                                 .font(.system(size: 44, weight: .bold, design: .rounded))
                                 .foregroundColor(.white)
                             
-                            Text("Let's test your VoiceInk setup.")
+                            Text(tr("Let's test your VoiceInk setup."))
                                 .font(.system(size: 24, weight: .medium, design: .rounded))
                                 .foregroundColor(.white.opacity(0.7))
                                 .lineSpacing(4)
@@ -34,7 +34,7 @@ struct OnboardingTutorialView: View {
                         // Keyboard shortcut display
                         VStack(alignment: .leading, spacing: 20) {
                             HStack {
-                                Text("Your Shortcut")
+                                Text(tr("Your Shortcut"))
                                     .font(.system(size: 28, weight: .semibold, design: .rounded))
                                     .foregroundColor(.white)
                                 
@@ -58,7 +58,7 @@ struct OnboardingTutorialView: View {
                         Button(action: {
                             hasCompletedOnboarding = true
                         }) {
-                            Text("Complete Setup")
+                            Text(tr("Complete Setup"))
                                 .font(.system(size: 18, weight: .semibold, design: .rounded))
                                 .foregroundColor(.white)
                                 .frame(width: 200, height: 50)
@@ -116,7 +116,7 @@ struct OnboardingTutorialView: View {
                                         .font(.system(size: 36))
                                         .foregroundColor(.white.opacity(0.3))
                                     
-                                    Text("Click here and start speaking...")
+                                    Text(tr("Click here and start speaking..."))
                                         .font(.system(size: 28, weight: .semibold, design: .rounded))
                                         .foregroundColor(.white.opacity(0.5))
                                         .multilineTextAlignment(.center)

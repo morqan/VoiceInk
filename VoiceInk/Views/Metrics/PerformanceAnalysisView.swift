@@ -161,7 +161,7 @@ struct PerformanceAnalysisView: View {
 
     private var header: some View {
         HStack {
-            Text("Performance Analysis")
+            Text(tr("Performance Analysis"))
                 .font(.title2)
                 .fontWeight(.bold)
             Spacer()
@@ -199,7 +199,7 @@ struct PerformanceAnalysisView: View {
 
     private var systemInfoSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("System Information")
+            Text(tr("System Information"))
                 .font(.system(.title2, design: .default, weight: .bold))
                 .foregroundColor(.primary)
 
@@ -213,7 +213,7 @@ struct PerformanceAnalysisView: View {
 
     private var transcriptionPerformanceSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Transcription Models")
+            Text(tr("Transcription Models"))
                 .font(.system(.title2, design: .default, weight: .bold))
                 .foregroundColor(.primary)
 
@@ -227,7 +227,7 @@ struct PerformanceAnalysisView: View {
 
     private var enhancementPerformanceSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Enhancement Models")
+            Text(tr("Enhancement Models"))
                 .font(.system(.title2, design: .default, weight: .bold))
                 .foregroundColor(.primary)
 
@@ -345,7 +345,7 @@ struct TranscriptionModelCard: View {
                     Text(String(format: "%.1fx", modelStat.speedFactor))
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.mint)
-                    Text("Faster than Real-time")
+                    Text(tr("Faster than Real-time"))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -408,7 +408,7 @@ struct EnhancementModelCard: View {
                 Text(String(format: "%.2f s", modelStat.avgProcessingTime))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.indigo)
-                Text("Avg. Enhancement Time")
+                Text(tr("Avg. Enhancement Time"))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

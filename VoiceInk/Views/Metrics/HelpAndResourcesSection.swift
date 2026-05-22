@@ -3,7 +3,7 @@ import SwiftUI
 struct HelpAndResourcesSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Help & Resources")
+            Text(tr("Help & Resources"))
                 .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundColor(.primary.opacity(0.8))
 

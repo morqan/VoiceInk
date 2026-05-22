@@ -7,7 +7,7 @@ struct DictionarySettingsPanel: View {
         VStack(spacing: 0) {
             // Header
             HStack(spacing: 12) {
-                Text("Dictionary Settings")
+                Text(tr("Dictionary Settings"))
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
@@ -23,7 +23,7 @@ struct DictionarySettingsPanel: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .help("Close")
+                .help(tr("Close"))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -35,12 +35,12 @@ struct DictionarySettingsPanel: View {
             // Content
             Form {
                 Section {
-                    LabeledContent("Quick Add to Dictionary") {
+                    LabeledContent(tr("Quick Add to Dictionary")) {
                         ShortcutRecorder(action: .quickAddToDictionary)
                             .controlSize(.small)
                     }
                 } header: {
-                    Text("Shortcuts")
+                    Text(tr("Shortcuts"))
                 }
 
             }

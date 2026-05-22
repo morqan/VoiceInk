@@ -14,7 +14,7 @@ struct CopyIconButton: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
-        .help("Copy to clipboard")
+        .help(tr("Copy to clipboard"))
     }
 
     private func copy() {

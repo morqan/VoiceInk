@@ -5,18 +5,18 @@ struct LicenseView: View {
     
     var body: some View {
         VStack(spacing: 15) {
-            Text("License Management")
+            Text(tr("License Management"))
                 .font(.headline)
             
             if case .licensed = licenseViewModel.licenseState {
                 VStack(spacing: 10) {
-                    Text("Premium Features Activated")
+                    Text(tr("Premium Features Activated"))
                         .foregroundColor(.green)
                     
                     Button(role: .destructive, action: {
                         licenseViewModel.removeLicense()
                     }) {
-                        Text("Remove License")
+                        Text(tr("Remove License"))
                     }
                 }
             } else {
@@ -32,7 +32,7 @@ struct LicenseView: View {
                     if licenseViewModel.isValidating {
                         ProgressView()
                     } else {
-                        Text("Activate License")
+                        Text(tr("Activate License"))
                     }
                 }
                 .disabled(licenseViewModel.isValidating)

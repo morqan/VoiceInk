@@ -116,7 +116,7 @@ struct LicenseManagementView: View {
                     Image(systemName: "infinity.circle.fill")
                         .font(.system(size: 20))
                         .foregroundStyle(.blue)
-                    Text("Buy Once, Own Forever")
+                    Text(tr("Buy Once, Own Forever"))
                         .font(.headline)
                 }
                 .padding(.vertical, 8)
@@ -130,7 +130,7 @@ struct LicenseManagementView: View {
                         NSWorkspace.shared.open(url)
                     }
                 }) {
-                    Text("Upgrade to VoiceInk Pro")
+                    Text(tr("Upgrade to VoiceInk Pro"))
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
@@ -152,7 +152,7 @@ struct LicenseManagementView: View {
 
             // License Activation
             VStack(spacing: 20) {
-                Text("Already have a license?")
+                Text(tr("Already have a license?"))
                     .font(.headline)
                 
                 HStack(spacing: 12) {
@@ -168,7 +168,7 @@ struct LicenseManagementView: View {
                             ProgressView()
                                 .controlSize(.small)
                         } else {
-                            Text("Activate")
+                            Text(tr("Activate"))
                                 .frame(width: 80)
                         }
                     }
@@ -189,11 +189,11 @@ struct LicenseManagementView: View {
             
             // Already Purchased Section
             VStack(spacing: 20) {
-                Text("Already purchased?")
+                Text(tr("Already purchased?"))
                     .font(.headline)
 
                 HStack(spacing: 12) {
-                    Text("Manage your license and device activations")
+                    Text(tr("Manage your license and device activations"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -203,7 +203,7 @@ struct LicenseManagementView: View {
                             NSWorkspace.shared.open(url)
                         }
                     }) {
-                        Text("License Management Portal")
+                        Text(tr("License Management Portal"))
                             .frame(width: 180)
                     }
                     .buttonStyle(.borderedProminent)
@@ -223,10 +223,10 @@ struct LicenseManagementView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 24))
                         .foregroundStyle(.green)
-                    Text("License Active")
+                    Text(tr("License Active"))
                         .font(.headline)
                     Spacer()
-                    Text("Active")
+                    Text(tr("Active"))
                         .font(.caption)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 4)
@@ -241,7 +241,7 @@ struct LicenseManagementView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    Text("You can use VoiceInk Pro on all your personal devices")
+                    Text(tr("You can use VoiceInk Pro on all your personal devices"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -252,13 +252,13 @@ struct LicenseManagementView: View {
             
             // Deactivation Card
             VStack(alignment: .leading, spacing: 16) {
-                Text("License Management")
+                Text(tr("License Management"))
                     .font(.headline)
 
                 Button(role: .destructive, action: {
                     licenseViewModel.removeLicense()
                 }) {
-                    Label("Deactivate License", systemImage: "xmark.circle.fill")
+                    Label(tr("Deactivate License"), systemImage: "xmark.circle.fill")
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 8)
                 }
@@ -299,7 +299,7 @@ struct LicenseManagementView: View {
                     heartPulse = true
                 }
             
-            Text("Tip Jar")
+            Text(tr("Tip Jar"))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.primary)
         }

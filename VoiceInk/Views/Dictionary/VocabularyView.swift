@@ -46,7 +46,7 @@ struct VocabularyView: View {
         VStack(alignment: .leading, spacing: 20) {
             GroupBox {
                 Label {
-                    Text("Add words to help VoiceInk recognize them properly. (Requires AI enhancement)")
+                    Text(tr("Add words to help VoiceInk recognize them properly. (Requires AI enhancement)"))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -71,7 +71,7 @@ struct VocabularyView: View {
                     }
                     .buttonStyle(.borderless)
                     .disabled(newWord.isEmpty)
-                    .help("Add word")
+                    .help(tr("Add word"))
                 }
             }
             .animation(.easeInOut(duration: 0.2), value: shouldShowAddButton)
@@ -90,7 +90,7 @@ struct VocabularyView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .help("Sort alphabetically")
+                    .help(tr("Sort alphabetically"))
 
                     ScrollView {
                         FlowLayout(spacing: 8) {
@@ -159,7 +159,7 @@ struct VocabularyWordView: View {
                     .contentTransition(.symbolEffect(.replace))
             }
             .buttonStyle(.borderless)
-            .help("Remove word")
+            .help(tr("Remove word"))
             .onHover { hover in
                 withAnimation(.easeInOut(duration: 0.2)) {
                     isDeleteHovered = hover

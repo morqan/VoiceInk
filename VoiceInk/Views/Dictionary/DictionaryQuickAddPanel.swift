@@ -252,7 +252,7 @@ struct DictionaryQuickAddView: View {
             Image(systemName: "character.book.closed.fill")
                 .font(.system(size: 14))
                 .foregroundStyle(.secondary)
-            TextField("", text: $wordInput, prompt: Text("e.g. Prakash, VoiceInk").foregroundColor(.secondary))
+            TextField("", text: $wordInput, prompt: Text(tr("e.g. Prakash, VoiceInk")).foregroundColor(.secondary))
                 .textFieldStyle(.roundedBorder)
                 .font(.system(size: 14))
                 .focused($focusedField, equals: .word)
@@ -265,11 +265,11 @@ struct DictionaryQuickAddView: View {
     private var replacementInputView: some View {
         VStack(spacing: 8) {
             HStack(spacing: 10) {
-                Text("Replace")
+                Text(tr("Replace"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                     .frame(width: 56, alignment: .trailing)
-                TextField("", text: $originalInput, prompt: Text("e.g. my email, my mail").foregroundColor(.secondary))
+                TextField("", text: $originalInput, prompt: Text(tr("e.g. my email, my mail")).foregroundColor(.secondary))
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: 14))
                     .focused($focusedField, equals: .original)
@@ -277,11 +277,11 @@ struct DictionaryQuickAddView: View {
             }
 
             HStack(spacing: 10) {
-                Text("With")
+                Text(tr("With"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                     .frame(width: 56, alignment: .trailing)
-                TextField("", text: $replacementInput, prompt: Text("e.g. support@tryvoiceink.com").foregroundColor(.secondary))
+                TextField("", text: $replacementInput, prompt: Text(tr("e.g. support@tryvoiceink.com")).foregroundColor(.secondary))
                     .textFieldStyle(.roundedBorder)
                     .font(.system(size: 14))
                     .focused($focusedField, equals: .replacement)
@@ -300,13 +300,13 @@ struct DictionaryQuickAddView: View {
             HStack(spacing: 14) {
                 HStack(spacing: 4) {
                     KeyHint("↵")
-                    Text("Add")
+                    Text(tr("Add"))
                         .font(.system(size: 11))
                         .foregroundStyle(.tertiary)
                 }
                 HStack(spacing: 4) {
                     KeyHint("esc")
-                    Text("Dismiss")
+                    Text(tr("Dismiss"))
                         .font(.system(size: 11))
                         .foregroundStyle(.tertiary)
                 }

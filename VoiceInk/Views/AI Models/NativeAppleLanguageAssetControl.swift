@@ -51,7 +51,7 @@ struct NativeAppleLanguageAssetControl: View {
             ProgressView()
                 .controlSize(.small)
                 .frame(width: 28, height: 24)
-                .help("Checking Apple Speech language download status.")
+                .help(tr("Checking Apple Speech language download status."))
         case .downloaded:
             EmptyView()
         case .needsDownload:
@@ -62,25 +62,25 @@ struct NativeAppleLanguageAssetControl: View {
             .buttonStyle(.plain)
             .controlSize(.small)
             .frame(width: 28, height: 24)
-            .help("Download this Apple Speech language before transcribing.")
+            .help(tr("Download this Apple Speech language before transcribing."))
             .accessibilityLabel("Download Apple Speech language")
         case .downloading:
             ProgressView()
                 .controlSize(.small)
                 .frame(width: 28, height: 24)
-                .help("Downloading Apple Speech language.")
+                .help(tr("Downloading Apple Speech language."))
         case .notSupported:
             Image(systemName: "exclamationmark.triangle")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .frame(width: 28, height: 24)
-                .help("This language is not supported by Apple Speech.")
+                .help(tr("This language is not supported by Apple Speech."))
         case .assetManagementUnavailable:
             Image(systemName: "exclamationmark.triangle")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .frame(width: 28, height: 24)
-                .help("Apple Speech asset management is not available on this system.")
+                .help(tr("Apple Speech asset management is not available on this system."))
         case .failed(let message):
             Button(action: downloadAsset) {
                 Image(systemName: "arrow.clockwise.circle.fill")

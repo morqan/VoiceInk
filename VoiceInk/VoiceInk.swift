@@ -416,7 +416,7 @@ struct VoiceInkApp: App {
 
         #if DEBUG
         WindowGroup("Debug") {
-            Button("Toggle Menu Bar Only") {
+            Button(tr("Toggle Menu Bar Only")) {
                 menuBarManager.isMenuBarOnly.toggle()
             }
         }

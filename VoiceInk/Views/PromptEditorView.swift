@@ -85,7 +85,7 @@ struct PromptEditorView: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .help("Close")
+                .help(tr("Close"))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -104,7 +104,7 @@ struct PromptEditorView: View {
             // Footer
             VStack(spacing: 0) {
                 HStack {
-                    Button("Cancel") { dismissPanel() }
+                    Button(tr("Cancel")) { dismissPanel() }
                         .keyboardShortcut(.escape, modifiers: [])
                         .buttonStyle(.plain)
                         .foregroundColor(.secondary)
@@ -115,7 +115,7 @@ struct PromptEditorView: View {
                         save()
                         dismissPanel()
                     } label: {
-                        Text("Save Changes")
+                        Text(tr("Save Changes"))
                             .frame(minWidth: 100)
                     }
                     .buttonStyle(.borderedProminent)
@@ -135,7 +135,7 @@ struct PromptEditorView: View {
     private var predefinedPromptForm: some View {
         Form {
             Section {
-                Text("You can only customize the trigger words for system prompts.")
+                Text(tr("You can only customize the trigger words for system prompts."))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             } header: {
@@ -180,7 +180,7 @@ struct PromptEditorView: View {
                 TextField("Brief description", text: $description)
                     .textFieldStyle(.roundedBorder)
             } header: {
-                Text("Details")
+                Text(tr("Details"))
             }
 
             Section {
@@ -191,7 +191,7 @@ struct PromptEditorView: View {
                         .scrollContentBackground(.hidden)
 
                     if promptText.isEmpty {
-                        Text("Enter your custom prompt instructions here...")
+                        Text(tr("Enter your custom prompt instructions here..."))
                             .font(.system(.body, design: .monospaced))
                             .foregroundStyle(.tertiary)
                             .padding(.leading, 5)
@@ -201,20 +201,20 @@ struct PromptEditorView: View {
 
                 Toggle(isOn: $useSystemInstructions) {
                     HStack(spacing: 4) {
-                        Text("Use System Template")
+                        Text(tr("Use System Template"))
                         InfoTip("If enabled, your instructions are combined with a general-purpose template to improve transcription quality.\n\nDisable for full control over the AI's system prompt (for advanced users).")
                     }
                 }
                 .toggleStyle(.switch)
             } header: {
-                Text("Instructions")
+                Text(tr("Instructions"))
             }
 
             Section {
                 TriggerWordsEditor(triggerWords: $triggerWords)
             } header: {
                 HStack(spacing: 4) {
-                    Text("Trigger Words")
+                    Text(tr("Trigger Words"))
                     InfoTip("Add words that automatically activate this prompt. For example, 'summarize', 'email', 'translate'.")
                 }
             }
@@ -233,7 +233,7 @@ struct PromptEditorView: View {
                             }
                         }
                     } label: {
-                        Label("Start with Template", systemImage: "sparkles")
+                        Label(tr("Start with Template"), systemImage: "sparkles")
                     }
                     .menuStyle(.borderlessButton)
                 }
@@ -302,7 +302,7 @@ struct TriggerWordsEditor: View {
                     }
                 }
             } else {
-                Text("No trigger words added")
+                Text(tr("No trigger words added"))
                     .font(.caption)
                     .foregroundColor(.secondary.opacity(0.7))
                     .italic()

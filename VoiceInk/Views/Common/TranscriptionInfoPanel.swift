@@ -81,7 +81,7 @@ struct TranscriptionInfoPanel: View {
                 )
             }
         } header: {
-            Text("Details")
+            Text(tr("Details"))
         }
     }
 
@@ -93,7 +93,7 @@ struct TranscriptionInfoPanel: View {
             Section {
                 if let systemMsg = transcription.aiRequestSystemMessage, !systemMsg.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("System Prompt")
+                        Text(tr("System Prompt"))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.secondary)
                         Text(systemMsg)
@@ -106,7 +106,7 @@ struct TranscriptionInfoPanel: View {
 
                 if let userMsg = transcription.aiRequestUserMessage, !userMsg.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("User Message")
+                        Text(tr("User Message"))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.secondary)
                         Text(userMsg)
@@ -118,7 +118,7 @@ struct TranscriptionInfoPanel: View {
                 }
             } header: {
                 HStack {
-                    Text("AI Request")
+                    Text(tr("AI Request"))
                     Spacer()
                     CopyIconButton(textToCopy: fullRequestText)
                 }

@@ -29,7 +29,7 @@ struct AudioCleanupSettingsView: View {
                 HStack {
                     Toggle(isOn: $isTranscriptionCleanupEnabled) {
                         HStack(spacing: 4) {
-                            Text("Auto-delete Transcripts")
+                            Text(tr("Auto-delete Transcripts"))
                             InfoTip("Automatically delete transcript history based on the retention period you set.")
                         }
                     }
@@ -55,14 +55,14 @@ struct AudioCleanupSettingsView: View {
                 if isTranscriptionCleanupEnabled && isTranscriptExpanded {
                     VStack(alignment: .leading, spacing: 8) {
                         Picker("Delete After", selection: $transcriptionRetentionMinutes) {
-                            Text("Immediately").tag(0)
+                            Text(tr("Immediately")).tag(0)
                             Text("1 hour").tag(60)
                             Text("1 day").tag(24 * 60)
                             Text("3 days").tag(3 * 24 * 60)
                             Text("7 days").tag(7 * 24 * 60)
                         }
 
-                        Button("Run Cleanup Now") {
+                        Button(tr("Run Cleanup Now")) {
                             Task {
                                 await TranscriptionAutoCleanupService.shared.runManualCleanup(modelContext: modelContext)
                                 await MainActor.run {
@@ -80,7 +80,7 @@ struct AudioCleanupSettingsView: View {
             .alert("Transcript Cleanup", isPresented: $showTranscriptCleanupResult) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text("Cleanup complete.")
+                Text(tr("Cleanup complete."))
             }
             .onChange(of: isTranscriptionCleanupEnabled) { _, newValue in
                 isHandlingTranscriptToggle = true
@@ -106,7 +106,7 @@ struct AudioCleanupSettingsView: View {
                     HStack {
                         Toggle(isOn: $isAudioCleanupEnabled) {
                             HStack(spacing: 4) {
-                                Text("Auto-delete Audio Files")
+                                Text(tr("Auto-delete Audio Files"))
                                 InfoTip("Automatically delete audio recordings while keeping text transcripts intact.")
                             }
                         }

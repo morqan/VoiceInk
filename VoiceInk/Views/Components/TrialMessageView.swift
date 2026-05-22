@@ -31,7 +31,7 @@ struct TrialMessageView: View {
                 Button(action: {
                     onAddLicenseKey?()
                 }) {
-                    Text("Enter License")
+                    Text(tr("Enter License"))
                         .font(.system(size: 13, weight: .medium))
                 }
                 .buttonStyle(.bordered)
@@ -41,7 +41,7 @@ struct TrialMessageView: View {
                         NSWorkspace.shared.open(url)
                     }
                 }) {
-                    Text("Buy License")
+                    Text(tr("Buy License"))
                         .font(.system(size: 13, weight: .medium))
                 }
                 .buttonStyle(.borderedProminent)

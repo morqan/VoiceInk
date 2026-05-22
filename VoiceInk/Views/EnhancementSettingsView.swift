@@ -43,7 +43,7 @@ struct EnhancementSettingsView: View {
             Section {
                 Toggle(isOn: $enhancementService.isEnhancementEnabled) {
                     HStack(spacing: 4) {
-                        Text("Enable Enhancement")
+                        Text(tr("Enable Enhancement"))
                         InfoTip(
                             "AI enhancement lets you pass the transcribed audio through LLMs to post-process using different prompts suitable for different use cases like e-mails, summary, writing, etc.",
                             learnMoreURL: "https://tryvoiceink.com/docs/enhancements-configuring-models"
@@ -53,7 +53,7 @@ struct EnhancementSettingsView: View {
                 .toggleStyle(.switch)
             } header: {
                 HStack {
-                    Text("General")
+                    Text(tr("General"))
                     Spacer()
                     Button {
                         withAnimation(.smooth(duration: 0.3)) {
@@ -67,7 +67,7 @@ struct EnhancementSettingsView: View {
                             .foregroundColor(isShowingSettings ? .accentColor : .secondary)
                     }
                     .buttonStyle(.plain)
-                    .help("Enhancement settings")
+                    .help(tr("Enhancement settings"))
                 }
             }
 
@@ -93,7 +93,7 @@ struct EnhancementSettingsView: View {
                 .padding(.vertical, 8)
             } header: {
                 HStack {
-                    Text("Enhancement Prompts")
+                    Text(tr("Enhancement Prompts"))
                     Spacer()
                     Button {
                         openPromptPanel()
@@ -107,7 +107,7 @@ struct EnhancementSettingsView: View {
                             .foregroundStyle(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .help("Add new prompt")
+                    .help(tr("Add new prompt"))
                 }
             }
             .opacity(enhancementService.isEnhancementEnabled ? 1.0 : 0.8)
@@ -161,7 +161,7 @@ private struct ReorderablePromptGrid: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if enhancementService.customPrompts.isEmpty {
-                Text("No prompts available")
+                Text(tr("No prompts available"))
                     .foregroundColor(.secondary)
                     .font(.caption)
             } else {
@@ -215,7 +215,7 @@ private struct ReorderablePromptGrid: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                    Text("Double-click to edit • Right-click for more options")
+                    Text(tr("Double-click to edit • Right-click for more options"))
                     .font(.caption)
                     .foregroundColor(.secondary)
                 }

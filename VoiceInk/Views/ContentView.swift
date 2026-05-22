@@ -92,11 +92,11 @@ struct ContentView: View {
                                 .cornerRadius(8)
                         }
 
-                        Text("VoiceInk")
+                        Text(tr("VoiceInk"))
                             .font(.system(size: 14, weight: .semibold))
 
                         if case .licensed = licenseViewModel.licenseState {
-                            Text("PRO")
+                            Text(tr("PRO"))
                                 .font(.system(size: 9, weight: .heavy))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 4)
@@ -121,7 +121,7 @@ struct ContentView: View {
                 }
             }
             .listStyle(.sidebar)
-            .navigationTitle("VoiceInk")
+            .navigationTitle(tr("VoiceInk"))
             .navigationSplitViewColumnWidth(210)
         } detail: {
             if let selectedView = selectedView {
@@ -129,7 +129,7 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .navigationTitle(selectedView.rawValue)
             } else {
-                Text("Select a view")
+                Text(tr("Select a view"))
                     .foregroundColor(.secondary)
             }
         }

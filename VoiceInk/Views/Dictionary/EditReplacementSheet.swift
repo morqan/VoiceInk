@@ -44,12 +44,12 @@ struct EditReplacementSheet: View {
 
             Spacer()
 
-            Text("Edit Word Replacement")
+            Text(tr("Edit Word Replacement"))
                 .font(.headline)
 
             Spacer()
 
-            Button("Save") { saveChanges() }
+            Button(tr("Save")) { saveChanges() }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
                 .disabled(originalWord.isEmpty || replacementWord.isEmpty)
@@ -71,7 +71,7 @@ struct EditReplacementSheet: View {
     }
 
     private var descriptionSection: some View {
-        Text("Update the word or phrase that should be automatically replaced.")
+        Text(tr("Update the word or phrase that should be automatically replaced."))
             .font(.subheadline)
             .foregroundColor(.secondary)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -84,9 +84,9 @@ struct EditReplacementSheet: View {
             // Original Text Field
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Original Text")
+                    Text(tr("Original Text"))
                         .font(.headline)
-                    Text("Required")
+                    Text(tr("Required"))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -99,9 +99,9 @@ struct EditReplacementSheet: View {
             // Replacement Text Field
             VStack(alignment: .leading, spacing: 6) {
                 HStack {
-                    Text("Replacement Text")
+                    Text(tr("Replacement Text"))
                         .font(.headline)
-                    Text("Required")
+                    Text(tr("Required"))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

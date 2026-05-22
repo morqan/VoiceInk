@@ -29,7 +29,7 @@ struct InfoTip: View {
                             .font(.callout)
                             .foregroundColor(.secondary)
                         +
-                        Text("Learn more")
+                        Text(tr("Learn more"))
                             .font(.callout)
                             .foregroundColor(.accentColor)
                     } else {

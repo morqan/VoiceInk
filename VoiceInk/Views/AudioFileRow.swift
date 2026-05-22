@@ -52,7 +52,7 @@ struct AudioFileRow: View {
 
             Spacer()
 
-            Text("Waiting")
+            Text(tr("Waiting"))
                 .font(.caption)
                 .foregroundColor(.secondary)
 

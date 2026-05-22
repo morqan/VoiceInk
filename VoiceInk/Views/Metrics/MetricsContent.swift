@@ -234,9 +234,9 @@ struct MetricsContent: View {
                         Image(systemName: "waveform")
                             .font(.system(size: 56, weight: .semibold))
                             .foregroundColor(.secondary)
-                        Text("No Recorder Sessions Yet")
+                        Text(tr("No Recorder Sessions Yet"))
                             .font(.title3.weight(.semibold))
-                        Text("Start your first recording to unlock value insights.")
+                        Text(tr("Start your first recording to unlock value insights."))
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
@@ -257,7 +257,7 @@ struct MetricsContent: View {
                 Spacer(minLength: 0)
 
                 if hasLoadedMetricsSnapshot {
-                    (Text("You have saved ")
+                    (Text(tr("You have saved "))
                         .fontWeight(.bold)
                         .foregroundColor(.white.opacity(0.85))
                      +
@@ -273,7 +273,7 @@ struct MetricsContent: View {
                     .font(.system(size: 30))
                     .multilineTextAlignment(.center)
                 } else {
-                    Text("VoiceInk Insights")
+                    Text(tr("VoiceInk Insights"))
                         .font(.system(size: 32, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
@@ -349,7 +349,7 @@ struct MetricsContent: View {
             }) {
                 HStack(spacing: 8) {
                     Image(systemName: "gauge")
-                    Text("Model Performance")
+                    Text(tr("Model Performance"))
                 }
                 .font(.system(size: 13, weight: .medium))
                 .padding(.horizontal, 12)
@@ -357,7 +357,7 @@ struct MetricsContent: View {
                 .background(Capsule().fill(.thinMaterial))
             }
             .buttonStyle(.plain)
-            .help("View transcription and enhancement model performance")
+            .help(tr("View transcription and enhancement model performance"))
             CopySystemInfoButton()
         }
     }

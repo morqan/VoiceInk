@@ -71,7 +71,7 @@ struct DictionarySettingsView: View {
     private var sectionSelector: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
-                Text("Select Section")
+                Text(tr("Select Section"))
                     .font(.title2)
                     .fontWeight(.semibold)
 
@@ -87,7 +87,7 @@ struct DictionarySettingsView: View {
                         .foregroundColor(isShowingSettings ? .accentColor : .secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Dictionary settings")
+                .help(tr("Dictionary settings"))
             }
 
             HStack(spacing: 20) {

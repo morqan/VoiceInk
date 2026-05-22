@@ -31,11 +31,11 @@ struct PowerModeEmptyStateView: View {
                 .font(.system(size: 48))
                 .foregroundColor(.secondary)
             
-            Text("No Power Modes")
+            Text(tr("No Power Modes"))
                 .font(.title2)
                 .fontWeight(.semibold)
             
-            Text("Add customized power modes for different contexts")
+            Text(tr("Add customized power modes for different contexts"))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
             
@@ -167,7 +167,7 @@ struct ConfigurationRow: View {
                             .font(.system(size: 15, weight: .semibold))
                         
                         if config.isDefault {
-                            Text("Default")
+                            Text(tr("Default"))
                                 .font(.system(size: 11, weight: .medium))
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
@@ -287,7 +287,7 @@ struct ConfigurationRow: View {
                             HStack(spacing: 4) {
                                 Image(systemName: "camera.viewfinder")
                                     .font(.system(size: 10))
-                                Text("Context Awareness")
+                                Text(tr("Context Awareness"))
                                     .font(.caption)
                             }
                             .padding(.horizontal, 6)
@@ -337,7 +337,7 @@ struct ConfigurationRow: View {
         Button(action: {
             onEditConfig(config)
         }) {
-            Label("Edit", systemImage: "pencil")
+            Label(tr("Edit"), systemImage: "pencil")
         }
         Button(role: .destructive, action: {
             let alert = NSAlert()
@@ -352,7 +352,7 @@ struct ConfigurationRow: View {
                 powerModeManager.removeConfiguration(with: config.id)
             }
         }) {
-            Label("Delete", systemImage: "trash")
+            Label(tr("Delete"), systemImage: "trash")
         }
     }
     }

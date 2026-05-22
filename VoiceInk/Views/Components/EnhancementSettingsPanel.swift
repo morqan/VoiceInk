@@ -15,7 +15,7 @@ struct EnhancementSettingsPanel: View {
         VStack(spacing: 0) {
             // Header
             HStack(spacing: 12) {
-                Text("Enhancement Settings")
+                Text(tr("Enhancement Settings"))
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
@@ -31,7 +31,7 @@ struct EnhancementSettingsPanel: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .help("Close")
+                .help(tr("Close"))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -45,7 +45,7 @@ struct EnhancementSettingsPanel: View {
                 Section {
                     Toggle(isOn: $enhancementService.useClipboardContext) {
                         HStack(spacing: 4) {
-                            Text("Clipboard Context")
+                            Text(tr("Clipboard Context"))
                             InfoTip("Use clipboard text to understand context for better enhancement.")
                         }
                     }
@@ -53,13 +53,13 @@ struct EnhancementSettingsPanel: View {
 
                     Toggle(isOn: $enhancementService.useScreenCaptureContext) {
                         HStack(spacing: 4) {
-                            Text("Screen Context")
+                            Text(tr("Screen Context"))
                             InfoTip("Capture on-screen text to understand context for better enhancement.")
                         }
                     }
                     .toggleStyle(.switch)
                 } header: {
-                    Text("Context")
+                    Text(tr("Context"))
                 }
 
                 Section {
@@ -85,7 +85,7 @@ struct EnhancementSettingsPanel: View {
                                 }
                             )) {
                                 HStack(spacing: 4) {
-                                    Text("Skip short transcriptions")
+                                    Text(tr("Skip short transcriptions"))
                                     InfoTip("Automatically skip AI enhancement when the transcription has very few words. Short phrases like \"yes\", \"thank you\", or quick commands don't benefit from enhancement.")
                                 }
                             }
@@ -132,13 +132,13 @@ struct EnhancementSettingsPanel: View {
                     .pickerStyle(.menu)
 
                     Picker("On timeout", selection: $retryOnTimeout) {
-                        Text("Fail immediately").tag(false)
-                        Text("Retry").tag(true)
+                        Text(tr("Fail immediately")).tag(false)
+                        Text(tr("Retry")).tag(true)
                     }
                     .pickerStyle(.menu)
                 } header: {
                     HStack(spacing: 4) {
-                        Text("Request Timeout")
+                        Text(tr("Request Timeout"))
                         InfoTip("Set how long to wait for the AI provider to respond. If no response is received within this duration, you can either fail immediately and paste the original transcription, or retry the request (up to 3 attempts).")
                     }
                 }
@@ -146,7 +146,7 @@ struct EnhancementSettingsPanel: View {
                 Section {
                     EnhancementShortcutsView()
                 } header: {
-                    Text("Shortcuts")
+                    Text(tr("Shortcuts"))
                 }
             }
             .formStyle(.grouped)

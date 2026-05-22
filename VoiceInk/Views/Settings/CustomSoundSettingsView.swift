@@ -14,11 +14,11 @@ struct CustomSoundSettingsView: View {
 
     var body: some View {
         Group {
-            LabeledContent("Start Sound") {
+            LabeledContent(tr("Start Sound")) {
                 soundControls(for: .start)
             }
 
-            LabeledContent("Stop Sound") {
+            LabeledContent(tr("Stop Sound")) {
                 soundControls(for: .stop)
             }
         }
@@ -48,7 +48,7 @@ struct CustomSoundSettingsView: View {
             .pickerStyle(.menu)
             .frame(width: 116, alignment: .trailing)
             .fixedSize()
-            .help("Select sound")
+            .help(tr("Select sound"))
 
             Button {
                 if type == .start {
@@ -60,7 +60,7 @@ struct CustomSoundSettingsView: View {
                 Image(systemName: "play.fill")
             }
             .buttonStyle(.borderless)
-            .help("Test")
+            .help(tr("Test"))
 
             Button {
                 selectSound(for: type)
@@ -68,7 +68,7 @@ struct CustomSoundSettingsView: View {
                 Image(systemName: "folder")
             }
             .buttonStyle(.borderless)
-            .help("Choose")
+            .help(tr("Choose"))
 
             if !customSoundManager.isDefaultSelection(for: type) {
                 Button {
@@ -81,7 +81,7 @@ struct CustomSoundSettingsView: View {
                     Image(systemName: "arrow.uturn.backward")
                 }
                 .buttonStyle(.borderless)
-                .help("Reset")
+                .help(tr("Reset"))
             }
         }
     }

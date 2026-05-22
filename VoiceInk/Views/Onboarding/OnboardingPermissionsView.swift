@@ -149,7 +149,7 @@ struct OnboardingPermissionsView: View {
                                                 .symbolRenderingMode(.hierarchical)
                                                 .foregroundStyle(.secondary)
                                             
-                                            Text("No microphones found")
+                                            Text(tr("No microphones found"))
                                                 .font(.subheadline)
                                                 .foregroundStyle(.secondary)
                                         }
@@ -186,7 +186,7 @@ struct OnboardingPermissionsView: View {
                                         }
                                     }
                                     
-                                    Text("For best results, using your Mac's built-in microphone is recommended.")
+                                    Text(tr("For best results, using your Mac's built-in microphone is recommended."))
                                         .font(.caption)
                                         .foregroundColor(.white.opacity(0.7))
                                         .multilineTextAlignment(.center)
@@ -452,7 +452,7 @@ struct OnboardingPermissionsView: View {
         HStack(spacing: 12) {
             Spacer()
 
-            Text("Shortcut:")
+            Text(tr("Shortcut:"))
                 .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white.opacity(0.8))
 

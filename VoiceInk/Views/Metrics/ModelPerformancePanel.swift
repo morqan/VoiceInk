@@ -52,7 +52,7 @@ struct ModelPerformancePanel: View {
 
     private var header: some View {
         HStack(spacing: 10) {
-            Text("Model Performance")
+            Text(tr("Model Performance"))
                 .font(.headline.weight(.semibold))
             Spacer()
             Picker("", selection: Binding(get: { filter }, set: { filterRaw = $0.rawValue })) {
@@ -144,7 +144,7 @@ private struct ModelPerformancePanelContent: View {
             Image(systemName: "chart.bar.xaxis")
                 .font(.system(size: 32, weight: .light))
                 .foregroundColor(.secondary)
-            Text("No data for this period")
+            Text(tr("No data for this period"))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
@@ -193,7 +193,7 @@ private struct ModelPerformancePanelContent: View {
                     Text(formatDuration(stat.avgAudioDuration))
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
                         .foregroundColor(.indigo)
-                    Text("Avg. Audio")
+                    Text(tr("Avg. Audio"))
                         .font(.system(size: 9))
                         .foregroundColor(.secondary)
                 }
@@ -207,7 +207,7 @@ private struct ModelPerformancePanelContent: View {
                     Text(String(format: "%.2fs", stat.avgProcessingTime))
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
                         .foregroundColor(.teal)
-                    Text("Avg. Processing")
+                    Text(tr("Avg. Processing"))
                         .font(.system(size: 9))
                         .foregroundColor(.secondary)
                 }
@@ -249,7 +249,7 @@ private struct ModelPerformancePanelContent: View {
                 Text(String(format: "%.2fs", stat.avgDuration))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.indigo)
-                Text("Avg. Enhancement Time")
+                Text(tr("Avg. Enhancement Time"))
                     .font(.system(size: 10))
                     .foregroundColor(.secondary)
             }

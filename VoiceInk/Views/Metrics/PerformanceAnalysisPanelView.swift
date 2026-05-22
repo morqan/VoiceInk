@@ -43,7 +43,7 @@ struct PerformanceAnalysisPanelView: View {
 
     private var header: some View {
         HStack(spacing: 12) {
-            Text("Performance Analysis")
+            Text(tr("Performance Analysis"))
                 .font(.headline)
                 .fontWeight(.semibold)
             Spacer()
@@ -169,7 +169,7 @@ struct PerformanceAnalysisPanelView: View {
                 Text(String(format: "%.1fx", modelStat.speedFactor))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.mint)
-                Text("Faster than Real-time")
+                Text(tr("Faster than Real-time"))
                     .font(.system(size: 10))
                     .foregroundColor(.secondary)
             }
@@ -183,7 +183,7 @@ struct PerformanceAnalysisPanelView: View {
                     Text(formatDuration(modelStat.avgAudioDuration))
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
                         .foregroundColor(.indigo)
-                    Text("Avg. Audio")
+                    Text(tr("Avg. Audio"))
                         .font(.system(size: 9))
                         .foregroundColor(.secondary)
                 }
@@ -197,7 +197,7 @@ struct PerformanceAnalysisPanelView: View {
                     Text(String(format: "%.2fs", modelStat.avgProcessingTime))
                         .font(.system(size: 11, weight: .semibold, design: .monospaced))
                         .foregroundColor(.teal)
-                    Text("Avg. Processing")
+                    Text(tr("Avg. Processing"))
                         .font(.system(size: 9))
                         .foregroundColor(.secondary)
                 }
@@ -242,7 +242,7 @@ struct PerformanceAnalysisPanelView: View {
                 Text(String(format: "%.2f s", modelStat.avgProcessingTime))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.indigo)
-                Text("Avg. Enhancement Time")
+                Text(tr("Avg. Enhancement Time"))
                     .font(.system(size: 10))
                     .foregroundColor(.secondary)
             }

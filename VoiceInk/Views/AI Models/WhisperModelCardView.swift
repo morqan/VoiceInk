@@ -62,7 +62,7 @@ struct WhisperModelCardView: View {
             
             // Speed
             HStack(spacing: 3) {
-                Text("Speed")
+                Text(tr("Speed"))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.speed * 10)
@@ -72,7 +72,7 @@ struct WhisperModelCardView: View {
             
             // Accuracy
             HStack(spacing: 3) {
-                Text("Accuracy")
+                Text(tr("Accuracy"))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.accuracy * 10)
@@ -109,12 +109,12 @@ struct WhisperModelCardView: View {
     private var actionSection: some View {
         HStack(spacing: 8) {
             if isCurrent {
-                Text("Default Model")
+                Text(tr("Default Model"))
                     .font(.system(size: 12))
                     .foregroundColor(Color(.secondaryLabelColor))
             } else if isDownloaded {
                 Button(action: setDefaultAction) {
-                    Text("Set as Default")
+                    Text(tr("Set as Default"))
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.bordered)
@@ -143,7 +143,7 @@ struct WhisperModelCardView: View {
             if isDownloaded {
                 Menu {
                     Button(action: deleteAction) {
-                        Label("Delete Model", systemImage: "trash")
+                        Label(tr("Delete Model"), systemImage: "trash")
                     }
                     
                     Button {
@@ -151,7 +151,7 @@ struct WhisperModelCardView: View {
                             NSWorkspace.shared.selectFile(modelURL.path, inFileViewerRootedAtPath: "")
                         }
                     } label: {
-                        Label("Show in Finder", systemImage: "folder")
+                        Label(tr("Show in Finder"), systemImage: "folder")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -185,7 +185,7 @@ struct ImportedWhisperModelCardView: View {
                     Spacer()
                 }
 
-                Text("Imported local model")
+                Text(tr("Imported local model"))
                     .font(.system(size: 11))
                     .foregroundColor(Color(.secondaryLabelColor))
                     .lineLimit(2)
@@ -196,12 +196,12 @@ struct ImportedWhisperModelCardView: View {
 
             HStack(spacing: 8) {
                 if isCurrent {
-                    Text("Default Model")
+                    Text(tr("Default Model"))
                         .font(.system(size: 12))
                         .foregroundColor(Color(.secondaryLabelColor))
                 } else if isDownloaded {
                     Button(action: setDefaultAction) {
-                        Text("Set as Default")
+                        Text(tr("Set as Default"))
                             .font(.system(size: 12))
                     }
                     .buttonStyle(.bordered)
@@ -211,14 +211,14 @@ struct ImportedWhisperModelCardView: View {
                 if isDownloaded {
                     Menu {
                         Button(action: deleteAction) {
-                            Label("Delete Model", systemImage: "trash")
+                            Label(tr("Delete Model"), systemImage: "trash")
                         }
                         Button {
                             if let modelURL = modelURL {
                                 NSWorkspace.shared.selectFile(modelURL.path, inFileViewerRootedAtPath: "")
                             }
                         } label: {
-                            Label("Show in Finder", systemImage: "folder")
+                            Label(tr("Show in Finder"), systemImage: "folder")
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")

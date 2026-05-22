@@ -35,7 +35,7 @@ struct SettingsView: View {
         Form {
             // MARK: - Shortcuts
             Section {
-                LabeledContent("Primary Shortcut") {
+                LabeledContent(tr("Primary Shortcut")) {
                     HStack(spacing: 8) {
                         Spacer()
                         shortcutModePicker(binding: $recordingShortcutManager.primaryRecordingShortcutMode)
@@ -48,7 +48,7 @@ struct SettingsView: View {
                 }
 
                 if recordingShortcutManager.secondaryRecordingShortcut != .none {
-                    LabeledContent("Secondary Shortcut") {
+                    LabeledContent(tr("Secondary Shortcut")) {
                         HStack(spacing: 8) {
                             Spacer()
                             shortcutModePicker(binding: $recordingShortcutManager.secondaryRecordingShortcutMode)
@@ -69,38 +69,38 @@ struct SettingsView: View {
                 }
 
                 if recordingShortcutManager.secondaryRecordingShortcut == .none {
-                    Button("Add Second Shortcut") {
+                    Button(tr("Add Second Shortcut")) {
                         withAnimation { recordingShortcutManager.secondaryRecordingShortcut = .custom }
                     }
                 }
             } header: {
-                Text("Shortcuts")
+                Text(tr("Shortcuts"))
             }
 
             // MARK: - Additional Shortcuts
             Section("Additional Shortcuts") {
-                LabeledContent("Paste Last Transcription (Original)") {
+                LabeledContent(tr("Paste Last Transcription (Original)")) {
                     ShortcutRecorder(action: .pasteLastTranscription) {
                         recordingShortcutManager.updateShortcutStatus()
                     }
                         .controlSize(.small)
                 }
 
-                LabeledContent("Paste Last Transcription (Enhanced)") {
+                LabeledContent(tr("Paste Last Transcription (Enhanced)")) {
                     ShortcutRecorder(action: .pasteLastEnhancement) {
                         recordingShortcutManager.updateShortcutStatus()
                     }
                         .controlSize(.small)
                 }
 
-                LabeledContent("Retry Last Transcription") {
+                LabeledContent(tr("Retry Last Transcription")) {
                     ShortcutRecorder(action: .retryLastTranscription) {
                         recordingShortcutManager.updateShortcutStatus()
                     }
                         .controlSize(.small)
                 }
 
-                LabeledContent("Cancel Recording") {
+                LabeledContent(tr("Cancel Recording")) {
                     HStack(spacing: 8) {
                         ShortcutRecorder(
                             action: .cancelRecorder,
@@ -119,7 +119,7 @@ struct SettingsView: View {
                             Image(systemName: "arrow.counterclockwise")
                         }
                         .buttonStyle(.plain)
-                        .help("Reset to default")
+                        .help(tr("Reset to default"))
                     }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: ShortcutStore.shortcutDidChange)) { notification in
@@ -133,7 +133,7 @@ struct SettingsView: View {
                     isEnabled: $recordingShortcutManager.isMiddleClickToggleEnabled,
                     label: "Middle-Click Recording"
                 ) {
-                    LabeledContent("Activation Delay") {
+                    LabeledContent(tr("Activation Delay")) {
                         HStack {
                             TextField("", value: $recordingShortcutManager.middleClickActivationDelay, formatter: {
                                 let formatter = NumberFormatter()
@@ -142,7 +142,7 @@ struct SettingsView: View {
                             }())
                                 .textFieldStyle(.roundedBorder)
                                 .frame(width: 60)
-                            Text("ms")
+                            Text(tr("ms"))
                                 .foregroundColor(.secondary)
                         }
                     }
@@ -201,7 +201,7 @@ struct SettingsView: View {
                     }
                 } label: {
                     HStack(spacing: 4) {
-                        Text("Paste Method")
+                        Text(tr("Paste Method"))
                         InfoTip("Default uses simulated Cmd+V key events. AppleScript can help when custom keyboard layouts do not paste correctly.")
                     }
                 }
@@ -221,8 +221,8 @@ struct SettingsView: View {
             // MARK: - Interface
             Section("Interface") {
                 Picker("Recorder Style", selection: $recorderUIManager.recorderType) {
-                    Text("Notch").tag("notch")
-                    Text("Mini").tag("mini")
+                    Text(tr("Notch")).tag("notch")
+                    Text(tr("Mini")).tag("mini")
                 }
                 .pickerStyle(.segmented)
 
@@ -233,16 +233,16 @@ struct SettingsView: View {
 
             // MARK: - General
             Section("General") {
-                Toggle("Hide Dock Icon", isOn: $menuBarManager.isMenuBarOnly)
+                Toggle(tr("Hide Dock Icon"), isOn: $menuBarManager.isMenuBarOnly)
 
                 LaunchAtLogin.Toggle("Launch at Login")
 
-                Toggle("Auto-check Updates", isOn: Binding(
+                Toggle(tr("Auto-check Updates"), isOn: Binding(
                     get: { updaterViewModel.automaticallyChecksForUpdates },
                     set: { updaterViewModel.setAutomaticallyChecksForUpdates($0) }
                 ))
 
-                Toggle("Show Announcements", isOn: $enableAnnouncements)
+                Toggle(tr("Show Announcements"), isOn: $enableAnnouncements)
                     .onChange(of: enableAnnouncements) { _, newValue in
                         if newValue {
                             AnnouncementsService.shared.start()
@@ -252,12 +252,12 @@ struct SettingsView: View {
                     }
 
                 HStack {
-                    Button("Check for Updates") {
+                    Button(tr("Check for Updates")) {
                         updaterViewModel.checkForUpdates()
                     }
                     .disabled(!updaterViewModel.canCheckForUpdates)
 
-                    Button("Reset Onboarding") {
+                    Button(tr("Reset Onboarding")) {
                         showResetOnboardingAlert = true
                     }
                 }
@@ -267,9 +267,9 @@ struct SettingsView: View {
             Section {
                 AudioCleanupSettingsView()
             } header: {
-                Text("Privacy")
+                Text(tr("Privacy"))
             } footer: {
-                Text("Control how VoiceInk handles your transcription data and audio recordings.")
+                Text(tr("Control how VoiceInk handles your transcription data and audio recordings."))
             }
 
             // MARK: - Language / Язык
@@ -286,8 +286,8 @@ struct SettingsView: View {
 
             // MARK: - Backup
             Section {
-                LabeledContent("Export Settings") {
-                    Button("Export") {
+                LabeledContent(tr("Export Settings")) {
+                    Button(tr("Export")) {
                         ImportExportService.shared.exportSettings(
                             enhancementService: enhancementService,
                             recordingShortcutManager: recordingShortcutManager,
@@ -301,8 +301,8 @@ struct SettingsView: View {
                     }
                 }
 
-                LabeledContent("Import Settings") {
-                    Button("Import") {
+                LabeledContent(tr("Import Settings")) {
+                    Button(tr("Import")) {
                         ImportExportService.shared.importSettings(
                             enhancementService: enhancementService,
                             recordingShortcutManager: recordingShortcutManager,
@@ -317,9 +317,9 @@ struct SettingsView: View {
                     }
                 }
             } header: {
-                Text("Backup")
+                Text(tr("Backup"))
             } footer: {
-                Text("Export all settings, or choose specific categories when importing a backup.")
+                Text(tr("Export all settings, or choose specific categories when importing a backup."))
             }
 
             // MARK: - Diagnostics
@@ -338,7 +338,7 @@ struct SettingsView: View {
                 }
             }
         } message: {
-            Text("You'll see the introduction screens again the next time you launch the app.")
+            Text(tr("You'll see the introduction screens again the next time you launch the app."))
         }
     }
 
@@ -453,18 +453,18 @@ struct PowerModeSection: View {
             ) {
                 Toggle(isOn: $powerModePersistSettings) {
                     HStack(spacing: 4) {
-                        Text("Persist Configured Preferences")
+                        Text(tr("Persist Configured Preferences"))
                         InfoTip("When enabled, Power Mode preferences stay active after you stop recording instead of reverting to your original preferences. They will only change when a different Power Mode activates.")
                     }
                 }
             }
         } header: {
-            Text("Power Mode")
+            Text(tr("Power Mode"))
         }
         .alert("Power Mode Still Active", isPresented: $showDisableAlert) {
             Button("Got it", role: .cancel) { }
         } message: {
-            Text("Disable or remove your Power Modes first.")
+            Text(tr("Disable or remove your Power Modes first."))
         }
     }
 
@@ -511,7 +511,7 @@ struct ExperimentalSection: View {
                 }
             }
         } header: {
-            Text("Experimental")
+            Text(tr("Experimental"))
         }
     }
 }

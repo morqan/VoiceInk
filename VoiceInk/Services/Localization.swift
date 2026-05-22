@@ -77,3 +77,19 @@ struct LocalizedText: View {
         return stored == .russian ? ru : en
     }
 }
+
+// MARK: - Auto translation for full app
+
+extension L10n {
+    /// Если активный язык — русский, ищет en-ключ в таблице переводов.
+    /// Не нашёл — возвращает оригинал. На английском — всегда оригинал.
+    static func auto(_ en: String) -> String {
+        guard current == .russian else { return en }
+        return ruTranslations[en] ?? en
+    }
+}
+
+/// Глобальный shortcut. `Text(tr("Sessions Recorded"))` вернёт русскую строку
+/// если язык переключён на русский.
+func tr(_ en: String) -> String { L10n.auto(en) }
+

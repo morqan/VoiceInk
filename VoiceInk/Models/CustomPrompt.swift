@@ -278,7 +278,7 @@ extension CustomPrompt {
                     Button {
                         onEdit(self)
                     } label: {
-                        Label("Edit", systemImage: "pencil")
+                        Label(tr("Edit"), systemImage: "pencil")
                     }
                 }
                 
@@ -296,7 +296,7 @@ extension CustomPrompt {
                             onDelete(self)
                         }
                     } label: {
-                        Label("Delete", systemImage: "trash")
+                        Label(tr("Delete"), systemImage: "trash")
                     }
                 }
             }
@@ -372,7 +372,7 @@ extension CustomPrompt {
             
             // Text label with matching styling
             VStack(spacing: 2) {
-                Text("Add New")
+                Text(tr("Add New"))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(.secondary)
                     .lineLimit(1)

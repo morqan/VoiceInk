@@ -36,7 +36,7 @@ struct ModelSettingsView: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .scrollContentBackground(.hidden)
 
-                        Button("Save") {
+                        Button(tr("Save")) {
                             whisperPrompt.setCustomPrompt(customPrompt, for: selectedLanguage)
                             isEditing = false
                         }
@@ -46,7 +46,7 @@ struct ModelSettingsView: View {
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .leading)
 
-                        Button("Edit") {
+                        Button(tr("Edit")) {
                             customPrompt = whisperPrompt.getLanguagePrompt(for: selectedLanguage)
                             isEditing = true
                         }
@@ -54,7 +54,7 @@ struct ModelSettingsView: View {
                 }
             } header: {
                 HStack(spacing: 4) {
-                    Text("Output Format")
+                    Text(tr("Output Format"))
                     InfoTip(
                         "Only supported for local Whisper models. Unlike GPT, Voice Models(whisper) follows the style of your prompt rather than instructions. Use examples of your desired output format instead of commands.",
                         learnMoreURL: "https://cookbook.openai.com/examples/whisper_prompting_guide#comparison-with-gpt-prompting"
@@ -65,7 +65,7 @@ struct ModelSettingsView: View {
             Section {
                 Toggle(isOn: $isTextFormattingEnabled) {
                     HStack(spacing: 4) {
-                        Text("Paragraph breaks")
+                        Text(tr("Paragraph breaks"))
                         InfoTip("Apply intelligent text formatting to break large block of text into paragraphs.")
                     }
                 }
@@ -77,7 +77,7 @@ struct ModelSettingsView: View {
                     }
                 } label: {
                     HStack(spacing: 4) {
-                        Text("Punctuation")
+                        Text(tr("Punctuation"))
                         InfoTip("Keep preserves punctuation as transcribed. Remove all strips punctuation marks from the transcribed text. Remove trailing period only removes a final period from the transcribed text.")
                     }
                 }
@@ -85,7 +85,7 @@ struct ModelSettingsView: View {
 
                 Toggle(isOn: $lowercaseTranscription) {
                     HStack(spacing: 4) {
-                        Text("Lowercase output")
+                        Text(tr("Lowercase output"))
                         InfoTip("Convert transcription output to lowercase.")
                     }
                 }
@@ -93,13 +93,13 @@ struct ModelSettingsView: View {
 
                 FillerWordsSettingsView()
             } header: {
-                Text("Transcript Formatting")
+                Text(tr("Transcript Formatting"))
             }
 
             Section {
                 Toggle(isOn: $appendTrailingSpace) {
                     HStack(spacing: 4) {
-                        Text("Add Space After Paste")
+                        Text(tr("Add Space After Paste"))
                         InfoTip("Add a trailing space after pasted transcription output.")
                     }
                 }
@@ -107,7 +107,7 @@ struct ModelSettingsView: View {
 
                 Toggle(isOn: $isVADEnabled) {
                     HStack(spacing: 4) {
-                        Text("Voice Activity Detection (VAD)")
+                        Text(tr("Voice Activity Detection (VAD)"))
                         InfoTip("Detect speech segments and filter out silence to improve accuracy of local models.")
                     }
                 }
@@ -115,7 +115,7 @@ struct ModelSettingsView: View {
 
                 Toggle(isOn: $prewarmModelOnWake) {
                     HStack(spacing: 4) {
-                        Text("Prewarm model (Experimental)")
+                        Text(tr("Prewarm model (Experimental)"))
                         InfoTip("Turn this on if transcriptions with local models are taking longer than expected. Runs silent background transcription on app launch and wake to trigger optimization.")
                     }
                 }
@@ -123,13 +123,13 @@ struct ModelSettingsView: View {
 
                 Toggle(isOn: $showLiveTextPreview) {
                     HStack(spacing: 4) {
-                        Text("Show Live Text Preview")
+                        Text(tr("Show Live Text Preview"))
                         InfoTip("Displays the live transcript preview in the recorder while speaking. Only applies when using real-time streaming models.")
                     }
                 }
                 .toggleStyle(.switch)
             } header: {
-                Text("Advanced")
+                Text(tr("Advanced"))
             }
         }
         .formStyle(.grouped)

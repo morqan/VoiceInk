@@ -176,7 +176,7 @@ struct WaveformView: View {
                     HStack {
                         ProgressView()
                             .controlSize(.small)
-                        Text("Loading...")
+                        Text(tr("Loading..."))
                             .font(.system(size: 10))
                             .foregroundColor(.secondary)
                     }
@@ -412,7 +412,7 @@ struct AudioPlayerView: View {
 
                 HStack(spacing: 8) {
                     CircleIconButton(icon: "folder", action: showInFinder)
-                        .help("Show in Finder")
+                        .help(tr("Show in Finder"))
 
                     Button(action: { playerManager.cyclePlaybackRate() }) {
                         Circle()
@@ -425,14 +425,14 @@ struct AudioPlayerView: View {
                             )
                     }
                     .buttonStyle(.plain)
-                    .help("Playback speed")
+                    .help(tr("Playback speed"))
 
                     CircleIconButton(
                         icon: enhancementService.activePrompt?.icon ?? "sparkles",
                         action: { showPromptPopover.toggle() }
                     )
                     .opacity(enhancementService.isEnhancementEnabled ? 1.0 : 0.4)
-                    .help("Select enhancement prompt")
+                    .help(tr("Select enhancement prompt"))
                     .popover(isPresented: $showPromptPopover, arrowEdge: .bottom) {
                         EnhancementPromptPopover()
                             .environmentObject(enhancementService)
@@ -456,7 +456,7 @@ struct AudioPlayerView: View {
                         action: retranscribeAudio
                     )
                     .disabled(isOperationInProgress)
-                    .help("Retranscribe this audio")
+                    .help(tr("Retranscribe this audio"))
 
                     if transcription != nil {
                         AsyncCircleButton(
@@ -467,12 +467,12 @@ struct AudioPlayerView: View {
                         )
                         .disabled(isOperationInProgress || !enhancementService.isEnhancementEnabled || !enhancementService.isConfigured)
                         .opacity(enhancementService.isEnhancementEnabled && enhancementService.isConfigured ? 1.0 : 0.4)
-                        .help("Re-enhance with selected prompt")
+                        .help(tr("Re-enhance with selected prompt"))
                     }
 
                     if let onInfoTap {
                         CircleIconButton(icon: "info.circle", action: onInfoTap)
-                            .help("View details")
+                            .help(tr("View details"))
                     }
                 }
 

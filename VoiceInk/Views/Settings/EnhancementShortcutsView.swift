@@ -6,7 +6,7 @@ struct EnhancementShortcutsView: View {
             // Toggle AI Enhancement
             HStack(alignment: .center, spacing: 12) {
                 HStack(spacing: 4) {
-                    Text("Toggle AI Enhancement")
+                    Text(tr("Toggle AI Enhancement"))
                         .font(.system(size: 13))
 
                     InfoTip(
@@ -24,7 +24,7 @@ struct EnhancementShortcutsView: View {
             // Switch Enhancement Prompt
             HStack(alignment: .center, spacing: 12) {
                 HStack(spacing: 4) {
-                    Text("Switch Enhancement Prompt")
+                    Text(tr("Switch Enhancement Prompt"))
                         .font(.system(size: 13))
 
                     InfoTip(

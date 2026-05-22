@@ -70,13 +70,13 @@ struct EmojiPickerView: View {
                             }
                             .onSubmit(attemptAddCustomEmoji)
 
-                        Button("Add") {
+                        Button(tr("Add")) {
                             attemptAddCustomEmoji()
                         }
                         .buttonStyle(.borderedProminent)
                         .disabled(newEmojiText.isEmpty || !newEmojiText.isValidEmoji || emojiManager.allEmojis.contains(newEmojiText))
 
-                        Button("Cancel") {
+                        Button(tr("Cancel")) {
                             isAddingCustomEmoji = false
                             newEmojiText = ""
                             inputFeedbackMessage = ""
@@ -89,7 +89,7 @@ struct EmojiPickerView: View {
                             .foregroundColor(inputFeedbackMessage == "Emoji already exists!" || inputFeedbackMessage == "Invalid emoji." ? .red : .secondary)
                             .transition(.opacity)
                     }
-                    Text("Tip: Use ⌃⌘Space for emoji picker or paste an emoji.")
+                    Text(tr("Tip: Use ⌃⌘Space for emoji picker or paste an emoji."))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .padding(.top, 2)
@@ -187,7 +187,7 @@ private struct AddEmojiButton: View {
 
     var body: some View {
         Button(action: action) {
-            Label("Add Emoji", systemImage: "plus.circle.fill")
+            Label(tr("Add Emoji"), systemImage: "plus.circle.fill")
                 .font(.title2)
                 .labelStyle(.iconOnly)
                 .foregroundColor(.accentColor)
@@ -198,7 +198,7 @@ private struct AddEmojiButton: View {
                 )
         }
         .buttonStyle(.plain)
-        .help("Add custom emoji")
+        .help(tr("Add custom emoji"))
     }
 }
 

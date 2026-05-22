@@ -41,7 +41,7 @@ struct AudioInputSettingsView: View {
     
     private var inputModeSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Input Mode")
+            Text(tr("Input Mode"))
                 .font(.title2)
                 .fontWeight(.semibold)
             
@@ -59,7 +59,7 @@ struct AudioInputSettingsView: View {
     
     private var systemDefaultSection: some View {
         VStack(alignment: .leading, spacing: 20) {
-            Text("Current Device")
+            Text(tr("Current Device"))
                 .font(.title2)
                 .fontWeight(.semibold)
 
@@ -72,7 +72,7 @@ struct AudioInputSettingsView: View {
 
                 Spacer()
 
-                Label("Active", systemImage: "wave.3.right")
+                Label(tr("Active"), systemImage: "wave.3.right")
                     .font(.caption)
                     .foregroundStyle(.green)
                     .padding(.horizontal, 10)
@@ -90,14 +90,14 @@ struct AudioInputSettingsView: View {
     private var customDeviceSection: some View {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
-                Text("Available Devices")
+                Text(tr("Available Devices"))
                     .font(.title2)
                     .fontWeight(.semibold)
 
                 Spacer()
 
                 Button(action: { audioDeviceManager.loadAvailableDevices() }) {
-                    Label("Refresh", systemImage: "arrow.clockwise")
+                    Label(tr("Refresh"), systemImage: "arrow.clockwise")
                 }
                 .buttonStyle(.borderless)
             }
@@ -131,17 +131,17 @@ struct AudioInputSettingsView: View {
     private var prioritizedDevicesContent: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Prioritized Devices")
+                Text(tr("Prioritized Devices"))
                     .font(.title2)
                     .fontWeight(.semibold)
-                Text("Devices will be used in order of priority. If a device is unavailable, the next one will be tried. If no prioritized device is available, the built-in microphone will be used.")
+                Text(tr("Devices will be used in order of priority. If a device is unavailable, the next one will be tried. If no prioritized device is available, the built-in microphone will be used."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             
             if audioDeviceManager.prioritizedDevices.isEmpty {
-                Text("No prioritized devices")
+                Text(tr("No prioritized devices"))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 8)
             } else {
@@ -152,7 +152,7 @@ struct AudioInputSettingsView: View {
     
     private var availableDevicesContent: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Available Devices")
+            Text(tr("Available Devices"))
                 .font(.title2)
                 .fontWeight(.semibold)
             
@@ -168,9 +168,9 @@ struct AudioInputSettingsView: View {
                 .foregroundStyle(.secondary)
             
             VStack(spacing: 8) {
-                Text("No Audio Devices")
+                Text(tr("No Audio Devices"))
                     .font(.headline)
-                Text("Connect an audio input device to get started")
+                Text(tr("Connect an audio input device to get started"))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -211,7 +211,7 @@ struct AudioInputSettingsView: View {
         
         return Group {
             if unprioritizedDevices.isEmpty {
-                Text("No additional devices available")
+                Text(tr("No additional devices available"))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 8)
             } else {
@@ -328,7 +328,7 @@ struct DeviceSelectionCard: View {
                 Spacer()
                 
                 if isActive {
-                    Label("Active", systemImage: "wave.3.right")
+                    Label(tr("Active"), systemImage: "wave.3.right")
                         .font(.caption)
                         .foregroundStyle(.green)
                         .padding(.horizontal, 10)
@@ -383,7 +383,7 @@ struct DevicePriorityCard: View {
             HStack(spacing: 12) {
                 // Active status
                 if isActive {
-                    Label("Active", systemImage: "wave.3.right")
+                    Label(tr("Active"), systemImage: "wave.3.right")
                         .font(.caption)
                         .foregroundStyle(.green)
                         .padding(.horizontal, 10)
@@ -393,7 +393,7 @@ struct DevicePriorityCard: View {
                                 .fill(.green.opacity(0.1))
                         )
                 } else if !isAvailable && isPrioritized {
-                    Label("Unavailable", systemImage: "exclamationmark.triangle")
+                    Label(tr("Unavailable"), systemImage: "exclamationmark.triangle")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 10)

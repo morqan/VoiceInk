@@ -47,12 +47,12 @@ struct OnboardingModelDownloadView: View {
                             
                             // Title and description
                             VStack(spacing: 12) {
-                                Text("Download AI Model")
+                                Text(tr("Download AI Model"))
                                     .font(.title2)
                                     .fontWeight(.bold)
                                     .foregroundColor(.white)
                                 
-                                Text("We'll download the optimized model to get you started.")
+                                Text(tr("We'll download the optimized model to get you started."))
                                     .font(.body)
                                     .foregroundColor(.white.opacity(0.7))
                                     .multilineTextAlignment(.center)
@@ -217,7 +217,7 @@ struct OnboardingModelDownloadView: View {
     
     private func ramUsageLabel(gb: Double) -> some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("RAM")
+            Text(tr("RAM"))
                 .font(.caption)
                 .foregroundColor(.white.opacity(0.7))
             

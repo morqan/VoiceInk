@@ -86,7 +86,7 @@ struct AddCustomModelCardView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundColor(.orange)
                             .font(.caption)
-                        Text("Only OpenAI-compatible transcription APIs are supported")
+                        Text(tr("Only OpenAI-compatible transcription APIs are supported"))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -102,7 +102,7 @@ struct AddCustomModelCardView: View {
                         FormField(title: "API Key", text: $apiKey, placeholder: "your-api-key", isSecure: true)
                         FormField(title: "Model Name", text: $modelName, placeholder: "whisper-1")
                         
-                        Toggle("Multilingual Model", isOn: $isMultilingual)
+                        Toggle(tr("Multilingual Model"), isOn: $isMultilingual)
                     }
                     
                     // Action buttons
@@ -113,7 +113,7 @@ struct AddCustomModelCardView: View {
                                 clearForm()
                             }
                         }) {
-                            Text("Cancel")
+                            Text(tr("Cancel"))
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundColor(.secondary)
                                 .frame(maxWidth: .infinity)
@@ -163,7 +163,7 @@ struct AddCustomModelCardView: View {
             }
         }
         .alert("Validation Errors", isPresented: $showingAlert) {
-            Button("OK") { }
+            Button(tr("OK")) { }
         } message: {
             Text(validationErrors.joined(separator: "\n"))
         }

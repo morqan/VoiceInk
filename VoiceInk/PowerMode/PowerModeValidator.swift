@@ -106,7 +106,7 @@ extension View {
                 if let firstError = errors.first {
                     Text(firstError.localizedDescription)
                 } else {
-                    Text("Please fix the validation errors before saving.")
+                    Text(tr("Please fix the validation errors before saving."))
                 }
             }
         )

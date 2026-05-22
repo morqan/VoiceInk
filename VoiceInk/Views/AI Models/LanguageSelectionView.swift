@@ -107,18 +107,18 @@ struct LanguageSelectionView: View {
     
     private var languageSelectionSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Transcription Language")
+            Text(tr("Transcription Language"))
                 .font(.headline)
 
             if transcriptionModelManager.currentTranscriptionModel != nil
             {
                 if languageSelectionDisabled() {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Language: Autodetected")
+                        Text(tr("Language: Autodetected"))
                             .font(.subheadline)
                             .foregroundColor(.primary)
 
-                        Text("The transcription language is automatically detected by the model.")
+                        Text(tr("The transcription language is automatically detected by the model."))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -154,7 +154,7 @@ struct LanguageSelectionView: View {
                 } else {
                     // For English-only models, force set language to English
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Language: English")
+                        Text(tr("Language: English"))
                             .font(.subheadline)
                             .foregroundColor(.primary)
 
@@ -170,7 +170,7 @@ struct LanguageSelectionView: View {
                     }
                 }
             } else {
-                Text("No model selected")
+                Text(tr("No model selected"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -188,7 +188,7 @@ struct LanguageSelectionView: View {
                 Button {
                     // Do nothing, just showing info
                 } label: {
-                    Text("Language: Autodetected")
+                    Text(tr("Language: Autodetected"))
                         .foregroundColor(.secondary)
                 }
                 .disabled(true)
@@ -230,7 +230,7 @@ struct LanguageSelectionView: View {
                 Button {
                     // Do nothing, just showing info
                 } label: {
-                    Text("Language: English (only)")
+                    Text(tr("Language: English (only)"))
                         .foregroundColor(.secondary)
                 }
                 .disabled(true)

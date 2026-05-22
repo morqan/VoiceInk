@@ -55,7 +55,7 @@ struct FluidAudioModelCardView: View {
                 .foregroundColor(Color(.labelColor))
 
             if model.supportsStreaming && isDownloaded {
-                Toggle("Real-time", isOn: $streamingEnabled)
+                Toggle(tr("Real-time"), isOn: $streamingEnabled)
                     .toggleStyle(.switch)
                     .controlSize(.mini)
                     .font(.system(size: 11, weight: .medium))
@@ -75,12 +75,12 @@ struct FluidAudioModelCardView: View {
             Label(model.language, systemImage: "globe")
             Label(model.size, systemImage: "internaldrive")
             HStack(spacing: 3) {
-                Text("Speed")
+                Text(tr("Speed"))
                 progressDotsWithNumber(value: model.speed * 10)
             }
             .fixedSize(horizontal: true, vertical: false)
             HStack(spacing: 3) {
-                Text("Accuracy")
+                Text(tr("Accuracy"))
                 progressDotsWithNumber(value: model.accuracy * 10)
             }
             .fixedSize(horizontal: true, vertical: false)
@@ -128,7 +128,7 @@ struct FluidAudioModelCardView: View {
     private var actionSection: some View {
         HStack(spacing: 8) {
             if isCurrent {
-                Text("Default Model")
+                Text(tr("Default Model"))
                     .font(.system(size: 12))
                     .foregroundColor(Color(.secondaryLabelColor))
             } else if isDownloaded {
@@ -137,7 +137,7 @@ struct FluidAudioModelCardView: View {
                         transcriptionModelManager.setDefaultTranscriptionModel(model)
                     }
                 }) {
-                    Text("Set as Default")
+                    Text(tr("Set as Default"))
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.bordered)
@@ -167,13 +167,13 @@ struct FluidAudioModelCardView: View {
                     Button(action: {
                         fluidAudioModelManager.deleteFluidAudioModel(model)
                     }) {
-                        Label("Delete Model", systemImage: "trash")
+                        Label(tr("Delete Model"), systemImage: "trash")
                     }
 
                     Button {
                         fluidAudioModelManager.showFluidAudioModelInFinder(model)
                     } label: {
-                        Label("Show in Finder", systemImage: "folder")
+                        Label(tr("Show in Finder"), systemImage: "folder")
                     }
 
                 } label: {

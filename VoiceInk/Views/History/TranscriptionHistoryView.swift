@@ -83,13 +83,13 @@ struct TranscriptionHistoryView: View {
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
                 Button(action: { withAnimation { isLeftSidebarVisible.toggle() } }) {
-                    Label("Toggle Sidebar", systemImage: "sidebar.left")
+                    Label(tr("Toggle Sidebar"), systemImage: "sidebar.left")
                 }
             }
 
             ToolbarItemGroup(placement: .automatic) {
                 Button(action: { withAnimation { isRightSidebarVisible.toggle() } }) {
-                    Label("Toggle Inspector", systemImage: "sidebar.right")
+                    Label(tr("Toggle Inspector"), systemImage: "sidebar.right")
                 }
             }
         }
@@ -188,7 +188,7 @@ struct TranscriptionHistoryView: View {
                         Image(systemName: "doc.text.magnifyingglass")
                             .font(.system(size: 40))
                             .foregroundColor(.secondary)
-                        Text("No transcriptions")
+                        Text(tr("No transcriptions"))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.secondary)
                     }
@@ -255,10 +255,10 @@ struct TranscriptionHistoryView: View {
                             Image(systemName: "doc.text")
                                 .font(.system(size: 50))
                                 .foregroundColor(.secondary)
-                            Text("No Selection")
+                            Text(tr("No Selection"))
                                 .font(.system(size: 18, weight: .medium))
                                 .foregroundColor(.secondary)
-                            Text("Select a transcription to view details")
+                            Text(tr("Select a transcription to view details"))
                                 .font(.system(size: 14))
                                 .foregroundColor(.secondary)
                         }
@@ -288,7 +288,7 @@ struct TranscriptionHistoryView: View {
                     Image(systemName: "info.circle")
                         .font(.system(size: 40))
                         .foregroundColor(.secondary)
-                    Text("No Metadata")
+                    Text(tr("No Metadata"))
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.secondary)
                 }
@@ -305,14 +305,14 @@ struct TranscriptionHistoryView: View {
     private var selectionToolbar: some View {
         HStack(spacing: 12) {
             if allSelected {
-                Button("Deselect All") {
+                Button(tr("Deselect All")) {
                     selectedTranscriptions.removeAll()
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
             } else {
-                Button("Select All") {
+                Button(tr("Select All")) {
                     Task { await selectAllTranscriptions() }
                 }
                 .buttonStyle(.plain)
@@ -332,7 +332,7 @@ struct TranscriptionHistoryView: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Analyze")
+                .help(tr("Analyze"))
 
                 Button(action: {
                     exportService.exportTranscriptionsToCSV(transcriptions: Array(selectedTranscriptions))
@@ -342,7 +342,7 @@ struct TranscriptionHistoryView: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Export")
+                .help(tr("Export"))
 
                 Button(action: { showDeleteConfirmation = true }) {
                     Image(systemName: "trash")
@@ -350,7 +350,7 @@ struct TranscriptionHistoryView: View {
                         .foregroundColor(.secondary)
                 }
                 .buttonStyle(.plain)
-                .help("Delete")
+                .help(tr("Delete"))
             }
 
             Spacer()

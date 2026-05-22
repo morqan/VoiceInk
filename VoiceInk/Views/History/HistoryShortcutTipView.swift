@@ -10,9 +10,9 @@ struct HistoryShortcutTipView: View {
                     .frame(width: 24, height: 24)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Quick Access")
+                    Text(tr("Quick Access"))
                         .font(.headline)
-                    Text("Open history from anywhere with a global shortcut")
+                    Text(tr("Open history from anywhere with a global shortcut"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
@@ -22,7 +22,7 @@ struct HistoryShortcutTipView: View {
                 .padding(.vertical, 4)
 
             HStack(spacing: 12) {
-                Text("Open History Window")
+                Text(tr("Open History Window"))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.secondary)
 

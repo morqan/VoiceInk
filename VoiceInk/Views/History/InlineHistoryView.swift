@@ -183,7 +183,7 @@ struct InlineHistoryView: View {
                 panelMode = .analysis
                 withAnimation(.smooth(duration: 0.3)) { isPanelPresented = true }
             }) {
-                Label("Analyze", systemImage: "chart.bar.xaxis")
+                Label(tr("Analyze"), systemImage: "chart.bar.xaxis")
                     .font(.system(size: 12, weight: .medium))
             }
             .buttonStyle(.plain)
@@ -192,14 +192,14 @@ struct InlineHistoryView: View {
             Button(action: {
                 exportService.exportTranscriptionsToCSV(transcriptions: Array(selectedTranscriptions))
             }) {
-                Label("Export", systemImage: "square.and.arrow.up")
+                Label(tr("Export"), systemImage: "square.and.arrow.up")
                     .font(.system(size: 12, weight: .medium))
             }
             .buttonStyle(.plain)
             .foregroundColor(.secondary)
 
             Button(action: { showDeleteConfirmation = true }) {
-                Label("Delete", systemImage: "trash")
+                Label(tr("Delete"), systemImage: "trash")
                     .font(.system(size: 12, weight: .medium))
             }
             .buttonStyle(.plain)
@@ -209,14 +209,14 @@ struct InlineHistoryView: View {
                 .frame(height: 16)
 
             if allSelected {
-                Button("Deselect All") {
+                Button(tr("Deselect All")) {
                     selectedTranscriptions.removeAll()
                 }
                 .font(.system(size: 12, weight: .medium))
                 .buttonStyle(.plain)
                 .foregroundColor(.secondary)
             } else {
-                Button("Select All") {
+                Button(tr("Select All")) {
                     Task { await selectAllTranscriptions() }
                 }
                 .font(.system(size: 12, weight: .medium))
@@ -326,7 +326,7 @@ struct InlineHistoryView: View {
     private var infoPanelContent: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                Text("Info")
+                Text(tr("Info"))
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
@@ -610,7 +610,7 @@ private struct HistoryCardRow: View {
                             .foregroundColor(.secondary)
                     }
                     .buttonStyle(.plain)
-                    .help("View details")
+                    .help(tr("View details"))
                 }
             }
         }

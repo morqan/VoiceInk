@@ -86,7 +86,7 @@ struct CloudModelCardView: View {
     }
 
     private var streamingModeBadge: some View {
-        Toggle("Real-time", isOn: isStreamingOnly ? .constant(true) : $streamingEnabled)
+        Toggle(tr("Real-time"), isOn: isStreamingOnly ? .constant(true) : $streamingEnabled)
             .toggleStyle(.switch)
             .controlSize(.mini)
             .font(.system(size: 11, weight: .medium))
@@ -130,7 +130,7 @@ struct CloudModelCardView: View {
 
             // Speed
             HStack(spacing: 3) {
-                Text("Speed")
+                Text(tr("Speed"))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.speed * 10)
@@ -140,7 +140,7 @@ struct CloudModelCardView: View {
 
             // Accuracy
             HStack(spacing: 3) {
-                Text("Accuracy")
+                Text(tr("Accuracy"))
                     .font(.system(size: 11, weight: .medium))
                     .foregroundColor(Color(.secondaryLabelColor))
                 progressDotsWithNumber(value: model.accuracy * 10)
@@ -163,12 +163,12 @@ struct CloudModelCardView: View {
     private var actionSection: some View {
         HStack(spacing: 8) {
             if isCurrent {
-                Text("Default Model")
+                Text(tr("Default Model"))
                     .font(.system(size: 12))
                     .foregroundColor(Color(.secondaryLabelColor))
             } else if isConfigured {
                 Button(action: setDefaultAction) {
-                    Text("Set as Default")
+                    Text(tr("Set as Default"))
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.bordered)
@@ -180,7 +180,7 @@ struct CloudModelCardView: View {
                     }
                 }) {
                     HStack(spacing: 4) {
-                        Text("Configure")
+                        Text(tr("Configure"))
                             .font(.system(size: 12, weight: .medium))
                         Image(systemName: "gear")
                             .font(.system(size: 12, weight: .medium))
@@ -202,7 +202,7 @@ struct CloudModelCardView: View {
                     Button {
                         clearAPIKey()
                     } label: {
-                        Label("Remove API Key", systemImage: "trash")
+                        Label(tr("Remove API Key"), systemImage: "trash")
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
@@ -217,7 +217,7 @@ struct CloudModelCardView: View {
     
     private var configurationSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("API Key Configuration")
+            Text(tr("API Key Configuration"))
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Color(.labelColor))
             
@@ -257,12 +257,12 @@ struct CloudModelCardView: View {
                         .font(.caption)
                         .foregroundColor(Color(.systemRed))
                 } else {
-                    Text("Verification failed")
+                    Text(tr("Verification failed"))
                         .font(.caption)
                         .foregroundColor(Color(.systemRed))
                 }
             } else if verificationStatus == .success {
-                Text("API key verified successfully!")
+                Text(tr("API key verified successfully!"))
                     .font(.caption)
                     .foregroundColor(Color(.systemGreen))
             }

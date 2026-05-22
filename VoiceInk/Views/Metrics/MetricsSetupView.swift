@@ -16,11 +16,11 @@ struct MetricsSetupView: View {
                         .padding(.bottom, 20)
                        
                     VStack(spacing: 4) {
-                        Text("Welcome to VoiceInk")
+                        Text(tr("Welcome to VoiceInk"))
                             .font(.system(size: 28, weight: .bold, design: .rounded))
                             .multilineTextAlignment(.center)
                         
-                        Text("Complete the setup to get started")
+                        Text(tr("Complete the setup to get started"))
                             .font(.system(size: 16))
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
@@ -179,7 +179,7 @@ struct MetricsSetupView: View {
     }
     
     private var helpText: some View {
-        Text("Need help? Check the Help menu for support options")
+        Text(tr("Need help? Check the Help menu for support options"))
             .font(.caption)
             .foregroundColor(.secondary)
     }

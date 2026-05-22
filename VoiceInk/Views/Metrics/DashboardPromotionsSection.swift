@@ -154,7 +154,7 @@ private struct DashboardPromotionCard: View {
                 }
                 .buttonStyle(.plain)
                 .padding(12)
-                .help("Dismiss this promotion")
+                .help(tr("Dismiss this promotion"))
             }
         }
         .background(

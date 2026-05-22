@@ -7,10 +7,10 @@ struct SaveIconButton: View {
 
     var body: some View {
         Menu {
-            Button("Save as TXT") {
+            Button(tr("Save as TXT")) {
                 saveFile(as: .plainText, extension: "txt")
             }
-            Button("Save as MD") {
+            Button(tr("Save as MD")) {
                 saveFile(as: .text, extension: "md")
             }
         } label: {
@@ -22,7 +22,7 @@ struct SaveIconButton: View {
                 .clipShape(Circle())
         }
         .buttonStyle(.plain)
-        .help("Save to file")
+        .help(tr("Save to file"))
     }
 
     private func saveFile(as contentType: UTType, extension fileExtension: String) {

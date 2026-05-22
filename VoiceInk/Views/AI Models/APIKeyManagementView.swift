@@ -32,7 +32,7 @@ struct APIKeyManagementView: View {
                     Circle()
                         .fill(Color.green)
                         .frame(width: 8, height: 8)
-                    Text("Connected")
+                    Text(tr("Connected"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 } else if aiService.selectedProvider == .ollama {
@@ -44,14 +44,14 @@ struct APIKeyManagementView: View {
                         Circle()
                             .fill(Color.green)
                             .frame(width: 8, height: 8)
-                        Text("Connected")
+                        Text(tr("Connected"))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     } else {
                         Circle()
                             .fill(Color.red)
                             .frame(width: 8, height: 8)
-                        Text("Disconnected")
+                        Text(tr("Disconnected"))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -71,7 +71,7 @@ struct APIKeyManagementView: View {
                 if aiService.selectedProvider == .openRouter {
                     if aiService.availableModels.isEmpty {
                         HStack {
-                            Text("No models loaded")
+                            Text(tr("No models loaded"))
                                 .foregroundColor(.secondary)
                             Spacer()
                             Button(action: {
@@ -79,7 +79,7 @@ struct APIKeyManagementView: View {
                                     await aiService.fetchOpenRouterModels()
                                 }
                             }) {
-                                Label("Refresh", systemImage: "arrow.clockwise")
+                                Label(tr("Refresh"), systemImage: "arrow.clockwise")
                             }
                         }
                     } else {
@@ -100,7 +100,7 @@ struct APIKeyManagementView: View {
                                     await aiService.fetchOpenRouterModels()
                                 }
                             }) {
-                                Label("Refresh", systemImage: "arrow.clockwise")
+                                Label(tr("Refresh"), systemImage: "arrow.clockwise")
                             }
                         }
                     }
@@ -124,7 +124,7 @@ struct APIKeyManagementView: View {
                             TextField("Base URL", text: $ollamaBaseURL)
                                 .textFieldStyle(.roundedBorder)
                             
-                            Button("Save") {
+                            Button(tr("Save")) {
                                 aiService.updateOllamaBaseURL(ollamaBaseURL)
                                 checkOllamaConnection()
                                 isEditingURL = false
@@ -134,7 +134,7 @@ struct APIKeyManagementView: View {
                         HStack {
                             Text("Server: \(ollamaBaseURL)")
                             Spacer()
-                            Button("Edit") { isEditingURL = true }
+                            Button(tr("Edit")) { isEditingURL = true }
                             Button(action: {
                                 ollamaBaseURL = "http://localhost:11434"
                                 aiService.updateOllamaBaseURL(ollamaBaseURL)
@@ -142,7 +142,7 @@ struct APIKeyManagementView: View {
                             }) {
                                 Image(systemName: "arrow.counterclockwise")
                             }
-                            .help("Reset to default")
+                            .help(tr("Reset to default"))
                         }
                     }
 
@@ -162,7 +162,7 @@ struct APIKeyManagementView: View {
                 } else if aiService.selectedProvider == .localCLI {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
-                            Text("Command")
+                            Text(tr("Command"))
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                             Spacer()
@@ -211,30 +211,30 @@ struct APIKeyManagementView: View {
                         aiService.updateLocalCLITimeoutSeconds(newValue)
                     }
 
-                    Text("Environment variables available: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. VoiceInk also writes VOICEINK_FULL_PROMPT to stdin for every command.")
+                    Text(tr("Environment variables available: VOICEINK_SYSTEM_PROMPT, VOICEINK_USER_PROMPT, VOICEINK_FULL_PROMPT. VoiceInk also writes VOICEINK_FULL_PROMPT to stdin for every command."))
                         .font(.caption)
                         .foregroundColor(.secondary)
 
                     if !aiService.isAPIKeyValid {
-                        Text("Load a template or enter a command to enable Local CLI enhancement.")
+                        Text(tr("Load a template or enter a command to enable Local CLI enhancement."))
                             .font(.caption)
                             .foregroundColor(.orange)
                     }
 
                 } else if aiService.selectedProvider == .custom {
-                    TextField("API Endpoint URL", text: $aiService.customBaseURL, prompt: Text("e.g. https://api.openai.com/v1/chat/completions"))
+                    TextField("API Endpoint URL", text: $aiService.customBaseURL, prompt: Text(tr("e.g. https://api.openai.com/v1/chat/completions")))
                         .textFieldStyle(.roundedBorder)
 
                     Divider()
 
-                    TextField("Model Name", text: $aiService.customModel, prompt: Text("e.g. gemini-3.1-pro-preview, gpt-5.5"))
+                    TextField("Model Name", text: $aiService.customModel, prompt: Text(tr("e.g. gemini-3.1-pro-preview, gpt-5.5")))
                         .textFieldStyle(.roundedBorder)
 
                     Divider()
 
                     if aiService.isAPIKeyValid {
                         HStack {
-                            Text("API Key Set")
+                            Text(tr("API Key Set"))
                             Spacer()
                             Button("Remove Key", role: .destructive) {
                                 aiService.clearAPIKey()
@@ -244,7 +244,7 @@ struct APIKeyManagementView: View {
                         SecureField("API Key", text: $apiKey)
                             .textFieldStyle(.roundedBorder)
 
-                        Button("Verify and Save") {
+                        Button(tr("Verify and Save")) {
                             isVerifying = true
                             aiService.saveAPIKey(apiKey) { success, errorMessage in
                                 isVerifying = false
@@ -261,7 +261,7 @@ struct APIKeyManagementView: View {
                 } else {
                     if aiService.isAPIKeyValid {
                         HStack {
-                            Text("API Key")
+                            Text(tr("API Key"))
                             Spacer()
                             Text("••••••••")
                                 .foregroundColor(.secondary)
@@ -278,7 +278,7 @@ struct APIKeyManagementView: View {
                                 Link(destination: url) {
                                     HStack {
                                         Image(systemName: "key.fill")
-                                        Text("Get API Key")
+                                        Text(tr("Get API Key"))
                                     }
                                     .font(.caption)
                                     .foregroundColor(.blue)
@@ -307,7 +307,7 @@ struct APIKeyManagementView: View {
                                     if isVerifying {
                                         ProgressView().controlSize(.small)
                                     }
-                                    Text("Verify and Save")
+                                    Text(tr("Verify and Save"))
                                 }
                             }
                             .disabled(apiKey.isEmpty)

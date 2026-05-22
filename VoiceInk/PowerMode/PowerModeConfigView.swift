@@ -138,7 +138,7 @@ struct ConfigurationView: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .help("Close")
+                .help(tr("Close"))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -176,7 +176,7 @@ struct ConfigurationView: View {
                 Section("Trigger Scenarios") {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
-                            Text("Applications")
+                            Text(tr("Applications"))
                             Spacer()
                             AddIconButton(helpText: "Add application") {
                                 loadInstalledApps()
@@ -192,7 +192,7 @@ struct ConfigurationView: View {
                         }
 
                         if selectedAppConfigs.isEmpty {
-                            Text("No applications added")
+                            Text(tr("No applications added"))
                                 .foregroundColor(.secondary)
                                 .font(.subheadline)
                         } else {
@@ -235,7 +235,7 @@ struct ConfigurationView: View {
                     .padding(.vertical, 2)
 
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("Websites")
+                        Text(tr("Websites"))
 
                         HStack {
                             TextField("Enter website URL", text: $newWebsiteURL)
@@ -248,7 +248,7 @@ struct ConfigurationView: View {
                         }
 
                         if websiteConfigs.isEmpty {
-                            Text("No websites added")
+                            Text(tr("No websites added"))
                                 .foregroundColor(.secondary)
                                 .font(.subheadline)
                         } else {
@@ -284,7 +284,7 @@ struct ConfigurationView: View {
 
                 Section("Transcription") {
                     if transcriptionModelManager.usableModels.isEmpty {
-                        Text("No transcription models available. Please connect to a cloud service or download a local model in the AI Models tab.")
+                        Text(tr("No transcription models available. Please connect to a cloud service or download a local model in the AI Models tab."))
                             .foregroundColor(.secondary)
                     } else {
                         let modelBinding = Binding<String?>(
@@ -310,8 +310,8 @@ struct ConfigurationView: View {
                     }
 
                     if languageSelectionDisabled() {
-                        LabeledContent("Language") {
-                            Text("Autodetected")
+                        LabeledContent(tr("Language")) {
+                            Text(tr("Autodetected"))
                                 .foregroundColor(.secondary)
                         }
                         .onAppear {
@@ -350,7 +350,7 @@ struct ConfigurationView: View {
                         }
                     } label: {
                         HStack {
-                            Text("Transcript Formatting")
+                            Text(tr("Transcript Formatting"))
                             Spacer()
                             Image(systemName: "chevron.right")
                                 .font(.system(size: 11, weight: .semibold))
@@ -365,7 +365,7 @@ struct ConfigurationView: View {
                         VStack(alignment: .leading, spacing: 10) {
                             Toggle(isOn: $isTextFormattingEnabled) {
                                 HStack(spacing: 4) {
-                                    Text("Paragraph breaks")
+                                    Text(tr("Paragraph breaks"))
                                     InfoTip("Apply intelligent text formatting to break large block of text into paragraphs.")
                                 }
                             }
@@ -376,7 +376,7 @@ struct ConfigurationView: View {
                                 }
                             } label: {
                                 HStack(spacing: 4) {
-                                    Text("Punctuation")
+                                    Text(tr("Punctuation"))
                                     InfoTip("Keep preserves punctuation as transcribed. Remove all strips punctuation marks from the transcribed text. Remove trailing period only removes a final period from the transcribed text.")
                                 }
                             }
@@ -384,7 +384,7 @@ struct ConfigurationView: View {
 
                             Toggle(isOn: $lowercaseTranscription) {
                                 HStack(spacing: 4) {
-                                    Text("Lowercase output")
+                                    Text(tr("Lowercase output"))
                                     InfoTip("Convert transcription output to lowercase.")
                                 }
                             }
@@ -394,7 +394,7 @@ struct ConfigurationView: View {
                 }
 
                 Section("AI Enhancement") {
-                    Toggle("AI Enhancement", isOn: $isAIEnhancementEnabled)
+                    Toggle(tr("AI Enhancement"), isOn: $isAIEnhancementEnabled)
                         .onChange(of: isAIEnhancementEnabled) { _, newValue in
                             if newValue {
                                 if selectedAIProvider == nil {
@@ -425,8 +425,8 @@ struct ConfigurationView: View {
 
                     if isAIEnhancementEnabled {
                         if aiService.connectedProviders.isEmpty {
-                            LabeledContent("AI Provider") {
-                                Text("No providers connected")
+                            LabeledContent(tr("AI Provider")) {
+                                Text(tr("No providers connected"))
                                     .foregroundColor(.secondary)
                                     .italic()
                             }
@@ -448,7 +448,7 @@ struct ConfigurationView: View {
                            provider != .custom {
                             let models = aiService.availableModels(for: provider)
                             if models.isEmpty {
-                                LabeledContent("AI Model") {
+                                LabeledContent(tr("AI Model")) {
                                     Text(provider == .openRouter ? "No models loaded" : "No models available")
                                         .foregroundColor(.secondary)
                                         .italic()
@@ -471,17 +471,17 @@ struct ConfigurationView: View {
                                 }
 
                                 if provider == .openRouter {
-                                    Button("Refresh Models") {
+                                    Button(tr("Refresh Models")) {
                                         Task { await aiService.fetchOpenRouterModels() }
                                     }
-                                    .help("Refresh models")
+                                    .help(tr("Refresh models"))
                                 }
                             }
                         }
 
                         if enhancementService.allPrompts.isEmpty {
-                            LabeledContent("Enhancement Prompt") {
-                                Text("No prompts available")
+                            LabeledContent(tr("Enhancement Prompt")) {
+                                Text(tr("No prompts available"))
                                     .foregroundColor(.secondary)
                             }
                         } else {
@@ -492,14 +492,14 @@ struct ConfigurationView: View {
                             }
                         }
 
-                        Toggle("Context Awareness", isOn: $useScreenCapture)
+                        Toggle(tr("Context Awareness"), isOn: $useScreenCapture)
                     }
                 }
 
                 Section("Advanced") {
                     Toggle(isOn: $isDefault) {
                         HStack(spacing: 6) {
-                            Text("Set as default")
+                            Text(tr("Set as default"))
                             InfoTip("Default power mode is used when no specific app or website matches are found.")
                         }
                     }
@@ -510,13 +510,13 @@ struct ConfigurationView: View {
                         }
                     } label: {
                         HStack(spacing: 6) {
-                            Text("Auto Send")
+                            Text(tr("Auto Send"))
                             InfoTip("Automatically presses a key combination after pasting text. Useful for chat applications or forms that use different send shortcuts.")
                         }
                     }
 
                     HStack {
-                        Text("Keyboard Shortcut")
+                        Text(tr("Keyboard Shortcut"))
                         InfoTip("Assign a unique keyboard shortcut to instantly activate this Power Mode and start recording.")
 
                         Spacer()
@@ -585,7 +585,7 @@ struct ConfigurationView: View {
                         }
                         .buttonStyle(.bordered)
                     } else {
-                        Button("Cancel") { onDismiss() }
+                        Button(tr("Cancel")) { onDismiss() }
                             .keyboardShortcut(.escape, modifiers: [])
                             .buttonStyle(.plain)
                             .foregroundColor(.secondary)
@@ -596,7 +596,7 @@ struct ConfigurationView: View {
                     Button {
                         saveConfiguration()
                     } label: {
-                        Text("Save Changes")
+                        Text(tr("Save Changes"))
                             .frame(minWidth: 100)
                     }
                     .buttonStyle(.borderedProminent)

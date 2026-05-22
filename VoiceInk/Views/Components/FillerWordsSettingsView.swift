@@ -46,7 +46,7 @@ struct FillerWordsSettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("Remove filler words")
+                Text(tr("Remove filler words"))
                 InfoTip("Automatically remove filler words like 'uh', 'um', 'hmm' from transcriptions.")
                 Spacer()
                 Toggle("", isOn: $removeFillerWords)
@@ -91,7 +91,7 @@ struct FillerWordsSettingsView: View {
         .alert("Duplicate Word", isPresented: $showDuplicateAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("This filler word is already in the list.")
+            Text(tr("This filler word is already in the list."))
         }
     }
 

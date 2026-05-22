@@ -62,7 +62,7 @@ struct ModelManagementView: View {
             Alert(
                 title: Text(alertTitle),
                 message: Text(alertMessage),
-                primaryButton: .destructive(Text("Delete"), action: deleteActionClosure),
+                primaryButton: .destructive(Text(tr("Delete")), action: deleteActionClosure),
                 secondaryButton: .cancel()
             )
         }
@@ -72,7 +72,7 @@ struct ModelManagementView: View {
         VStack(spacing: 0) {
             // Header
             HStack(spacing: 12) {
-                Text("Model Settings")
+                Text(tr("Model Settings"))
                     .font(.headline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
@@ -88,7 +88,7 @@ struct ModelManagementView: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
-                .help("Close")
+                .help(tr("Close"))
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
@@ -104,7 +104,7 @@ struct ModelManagementView: View {
     
     private var defaultModelSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Default Model")
+            Text(tr("Default Model"))
                 .font(.headline)
                 .foregroundColor(.secondary)
             Text(transcriptionModelManager.currentTranscriptionModel?.displayName ?? "No model selected")
@@ -222,7 +222,7 @@ struct ModelManagementView: View {
                             Button(action: { presentImportPanel() }) {
                                 HStack(spacing: 8) {
                                     Image(systemName: "square.and.arrow.down")
-                                    Text("Import Local Model…")
+                                    Text(tr("Import Local Model…"))
                                         .font(.system(size: 12, weight: .semibold))
                                 }
                                 .frame(maxWidth: .infinity)
@@ -236,7 +236,7 @@ struct ModelManagementView: View {
                                 "Add a custom fine-tuned whisper model to use with VoiceInk. Select the downloaded .bin file.",
                                 learnMoreURL: "https://tryvoiceink.com/docs/custom-local-whisper-models"
                             )
-                            .help("Read more about custom local models")
+                            .help(tr("Read more about custom local models"))
                         }
                     }
                     
@@ -244,7 +244,7 @@ struct ModelManagementView: View {
                         HStack(spacing: 6) {
                             Image(systemName: "info.circle")
                                 .font(.system(size: 12))
-                            Text("Only OpenAI-compatible transcription APIs are supported.")
+                            Text(tr("Only OpenAI-compatible transcription APIs are supported."))
                                 .font(.system(size: 12))
                         }
                         .foregroundColor(.secondary)
@@ -272,7 +272,7 @@ struct ModelManagementView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.orange)
 
-            Text("Local models don't work reliably on Intel Macs")
+            Text(tr("Local models don't work reliably on Intel Macs"))
                 .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.primary.opacity(0.85))
 
@@ -284,7 +284,7 @@ struct ModelManagementView: View {
                 }
             }) {
                 HStack(spacing: 4) {
-                    Text("Use Cloud")
+                    Text(tr("Use Cloud"))
                         .font(.system(size: 12, weight: .semibold))
                     Image(systemName: "arrow.right")
                         .font(.system(size: 10, weight: .bold))

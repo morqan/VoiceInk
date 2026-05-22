@@ -18,7 +18,7 @@ struct MenuBarView: View {
     
     var body: some View {
         VStack {
-            Button("Toggle Recorder") {
+            Button(tr("Toggle Recorder")) {
                 recorderUIManager.handleToggleMiniRecorder()
             }
 
@@ -42,7 +42,7 @@ struct MenuBarView: View {
 
                 Divider()
 
-                Button("Manage Models") {
+                Button(tr("Manage Models")) {
                     menuBarManager.openMainWindowAndNavigate(to: "AI Models")
                 }
             } label: {
@@ -55,7 +55,7 @@ struct MenuBarView: View {
             
             Divider()
             
-            Toggle("AI Enhancement", isOn: $enhancementService.isEnhancementEnabled)
+            Toggle(tr("AI Enhancement"), isOn: $enhancementService.isEnhancementEnabled)
             
             Menu {
                 ForEach(enhancementService.allPrompts) { prompt in
@@ -96,7 +96,7 @@ struct MenuBarView: View {
                 }
 
                 if aiService.connectedProviders.isEmpty {
-                    Text("No providers connected")
+                    Text(tr("No providers connected"))
                         .foregroundColor(.secondary)
                 }
             } label: {
@@ -122,7 +122,7 @@ struct MenuBarView: View {
                 }
 
                 if aiService.availableModels.isEmpty {
-                    Text("No models available")
+                    Text(tr("No models available"))
                         .foregroundColor(.secondary)
                 }
             } label: {
@@ -150,12 +150,12 @@ struct MenuBarView: View {
                 }
 
                 if audioDeviceManager.availableDevices.isEmpty {
-                    Text("No devices available")
+                    Text(tr("No devices available"))
                         .foregroundColor(.secondary)
                 }
             } label: {
                 HStack {
-                    Text("Audio Input")
+                    Text(tr("Audio Input"))
                     Image(systemName: "chevron.up.chevron.down")
                         .font(.system(size: 10))
                 }
@@ -167,7 +167,7 @@ struct MenuBarView: View {
                     menuRefreshTrigger.toggle()
                 } label: {
                     HStack {
-                        Text("Clipboard Context")
+                        Text(tr("Clipboard Context"))
                         Spacer()
                         if enhancementService.useClipboardContext {
                             Image(systemName: "checkmark")
@@ -180,7 +180,7 @@ struct MenuBarView: View {
                     menuRefreshTrigger.toggle()
                 } label: {
                     HStack {
-                        Text("Context Awareness")
+                        Text(tr("Context Awareness"))
                         Spacer()
                         if enhancementService.useScreenCaptureContext {
                             Image(systemName: "checkmark")
@@ -192,7 +192,7 @@ struct MenuBarView: View {
             
             Divider()
 
-            Button("Retry Last Transcription") {
+            Button(tr("Retry Last Transcription")) {
                 LastTranscriptionService.retryLastTranscription(
                     from: engine.modelContext,
                     transcriptionModelManager: transcriptionModelManager,
@@ -201,17 +201,17 @@ struct MenuBarView: View {
                 )
             }
 
-            Button("Copy Last Transcription") {
+            Button(tr("Copy Last Transcription")) {
                 LastTranscriptionService.copyLastTranscription(from: engine.modelContext)
             }
             .keyboardShortcut("c", modifiers: [.command, .shift])
             
-            Button("History") {
+            Button(tr("History")) {
                 menuBarManager.openHistoryWindow()
             }
             .keyboardShortcut("h", modifiers: [.command, .shift])
             
-            Button("Settings") {
+            Button(tr("Settings")) {
                 menuBarManager.openMainWindowAndNavigate(to: "Settings")
             }
             .keyboardShortcut(",", modifiers: .command)
@@ -221,25 +221,25 @@ struct MenuBarView: View {
             }
             .keyboardShortcut("d", modifiers: [.command, .shift])
             
-            Toggle("Launch at Login", isOn: $launchAtLoginEnabled)
+            Toggle(tr("Launch at Login"), isOn: $launchAtLoginEnabled)
                 .onChange(of: launchAtLoginEnabled) { oldValue, newValue in
                     LaunchAtLogin.isEnabled = newValue
                 }
             
             Divider()
             
-            Button("Check for Updates") {
+            Button(tr("Check for Updates")) {
                 updaterViewModel.checkForUpdates()
             }
             .disabled(!updaterViewModel.canCheckForUpdates)
             
-            Button("Help and Support") {
+            Button(tr("Help and Support")) {
                 EmailSupport.openSupportEmail()
             }
             
             Divider()
 
-            Button("Quit VoiceInk") {
+            Button(tr("Quit VoiceInk")) {
                 NSApplication.shared.terminate(nil)
             }
         }

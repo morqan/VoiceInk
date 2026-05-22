@@ -37,7 +37,7 @@ struct NativeAppleModelCardView: View {
     private var metadataSection: some View {
         HStack(spacing: 12) {
             // Native Apple
-            Label("Native Apple", systemImage: "apple.logo")
+            Label(tr("Native Apple"), systemImage: "apple.logo")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
@@ -49,13 +49,13 @@ struct NativeAppleModelCardView: View {
                 .lineLimit(1)
             
             // On-Device
-            Label("On-Device", systemImage: "checkmark.shield")
+            Label(tr("On-Device"), systemImage: "checkmark.shield")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
             
             // Requires macOS 26+
-            Label("macOS 26+", systemImage: "macbook")
+            Label(tr("macOS 26+"), systemImage: "macbook")
                 .font(.system(size: 11))
                 .foregroundColor(Color(.secondaryLabelColor))
                 .lineLimit(1)
@@ -75,12 +75,12 @@ struct NativeAppleModelCardView: View {
     private var actionSection: some View {
         HStack(spacing: 8) {
             if isCurrent {
-                Text("Default Model")
+                Text(tr("Default Model"))
                     .font(.system(size: 12))
                     .foregroundColor(Color(.secondaryLabelColor))
             } else {
                 Button(action: setDefaultAction) {
-                    Text("Set as Default")
+                    Text(tr("Set as Default"))
                         .font(.system(size: 12))
                 }
                 .buttonStyle(.bordered)

@@ -68,13 +68,13 @@ struct AudioTranscribeView: View {
                         .font(.system(size: 32))
                         .foregroundColor(isDropTargeted ? .accentColor : .gray)
 
-                    Text("Drop audio or video files here")
+                    Text(tr("Drop audio or video files here"))
                         .font(.headline)
 
-                    Text("or")
+                    Text(tr("or"))
                         .foregroundColor(.secondary)
 
-                    Button("Choose Files") {
+                    Button(tr("Choose Files")) {
                         selectFiles()
                     }
                     .buttonStyle(.bordered)
@@ -83,7 +83,7 @@ struct AudioTranscribeView: View {
             }
             .frame(maxWidth: 480, maxHeight: 200)
 
-            Text("Supports WAV, MP3, M4A, AIFF, MP4, MOV, AAC, FLAC, CAF, AMR, OGG, OPUS, 3GP")
+            Text(tr("Supports WAV, MP3, M4A, AIFF, MP4, MOV, AAC, FLAC, CAF, AMR, OGG, OPUS, 3GP"))
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .padding(.top, 12)
@@ -130,7 +130,7 @@ struct AudioTranscribeView: View {
             .formStyle(.grouped)
             .scrollContentBackground(.hidden)
             .safeAreaInset(edge: .bottom) {
-                Text("Drop files anywhere to add more")
+                Text(tr("Drop files anywhere to add more"))
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity)
@@ -153,7 +153,7 @@ struct AudioTranscribeView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "plus")
                         .font(.system(size: 12, weight: .medium))
-                    Text("Add")
+                    Text(tr("Add"))
                         .font(.system(size: 12, weight: .medium))
                 }
                 .foregroundColor(.secondary)
@@ -165,7 +165,7 @@ struct AudioTranscribeView: View {
                 )
             }
             .buttonStyle(.plain)
-            .help("Add files")
+            .help(tr("Add files"))
 
             Spacer()
 
@@ -178,7 +178,7 @@ struct AudioTranscribeView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "stop.fill")
                             .font(.system(size: 10, weight: .medium))
-                        Text("Cancel")
+                        Text(tr("Cancel"))
                             .font(.system(size: 12, weight: .medium))
                     }
                     .foregroundColor(.red)
@@ -190,7 +190,7 @@ struct AudioTranscribeView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .help("Cancel transcription")
+                .help(tr("Cancel transcription"))
             } else if transcriptionManager.hasPendingItems {
                 Button {
                     transcriptionManager.startProcessing(modelContext: modelContext, engine: engine)
@@ -198,7 +198,7 @@ struct AudioTranscribeView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "play.fill")
                             .font(.system(size: 10, weight: .medium))
-                        Text("Start")
+                        Text(tr("Start"))
                             .font(.system(size: 12, weight: .semibold))
                     }
                     .foregroundColor(.white)
@@ -222,7 +222,7 @@ struct AudioTranscribeView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "xmark.bin")
                         .font(.system(size: 12, weight: .medium))
-                    Text("Clear")
+                    Text(tr("Clear"))
                         .font(.system(size: 12, weight: .medium))
                 }
                 .foregroundColor(.secondary)
@@ -234,7 +234,7 @@ struct AudioTranscribeView: View {
                 )
             }
             .buttonStyle(.plain)
-            .help("Clear all items")
+            .help(tr("Clear all items"))
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 10)
@@ -242,7 +242,7 @@ struct AudioTranscribeView: View {
 
     private var enhancementControls: some View {
         HStack(spacing: 8) {
-            Toggle("AI Enhancement", isOn: $isEnhancementEnabled)
+            Toggle(tr("AI Enhancement"), isOn: $isEnhancementEnabled)
                 .toggleStyle(.switch)
                 .controlSize(.small)
                 .onChange(of: isEnhancementEnabled) { _, newValue in
@@ -287,7 +287,7 @@ struct AudioTranscribeView: View {
                     .fill(Color.accentColor.opacity(0.06))
             )
             .overlay {
-                Text("Drop to add files")
+                Text(tr("Drop to add files"))
                     .font(.subheadline.weight(.medium))
                     .foregroundColor(.accentColor)
             }

@@ -9,7 +9,7 @@ struct EnhancementPromptPopover: View {
         VStack(alignment: .leading, spacing: 8) {
             // Enhancement Toggle at the top
             HStack(spacing: 8) {
-                Toggle("AI Enhancement", isOn: $enhancementService.isEnhancementEnabled)
+                Toggle(tr("AI Enhancement"), isOn: $enhancementService.isEnhancementEnabled)
                     .foregroundColor(.white.opacity(0.9))
                     .font(.headline)
                     .lineLimit(1)
