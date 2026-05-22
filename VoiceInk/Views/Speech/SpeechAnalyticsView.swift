@@ -52,6 +52,7 @@ struct SpeechAnalyticsView: View {
                     emptyState
                 } else {
                     aggregatedMetrics
+                    VoiceProfileSection(metrics: filteredMetrics)
                     streaksSection
                     if period != .today {
                         trendCharts
