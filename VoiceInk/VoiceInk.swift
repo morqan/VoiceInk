@@ -53,7 +53,9 @@ struct VoiceInkApp: App {
             Transcription.self,
             VocabularyWord.self,
             WordReplacement.self,
-            SessionMetric.self
+            SessionMetric.self,
+            // speech analytics
+            SpeechMetric.self
         ])
         var initializationFailed = false
         let resolvedContainer: ModelContainer
@@ -92,6 +94,13 @@ struct VoiceInkApp: App {
 
         container = resolvedContainer
         containerInitializationFailed = initializationFailed
+
+        // автоматическая синхронизация словаря с Obsidian Vault.
+        // Читает ~/Documents/Obsidian Vault/99 - Claude Context/voiceink-dictionary.md
+        // и добавляет новые слова в VocabularyWord. Silent skip если файла нет.
+        if !initializationFailed {
+            VaultDictionarySync.syncFromVault(context: resolvedContainer.mainContext)
+        }
 
         // Initialize services with proper sharing of instances
         let aiService = AIService()

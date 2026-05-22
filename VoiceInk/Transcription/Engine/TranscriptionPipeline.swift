@@ -195,6 +195,14 @@ class TranscriptionPipeline {
                 } catch {
                     logger.error("Failed to record session metric: \(error.localizedDescription, privacy: .public)")
                 }
+
+                // speech analytics — fillers / anglicisms / sentence length / WPM
+                if let speechMetric = SpeechMetricsAnalyzer.analyze(
+                    text: transcription.text,
+                    durationSeconds: transcription.duration
+                ) {
+                    modelContext.insert(speechMetric)
+                }
             }
 
             do {
