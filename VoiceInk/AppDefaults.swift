@@ -53,6 +53,12 @@ enum AppDefaults {
             // Model
             "PrewarmModelOnWake": true,
 
+            // Vault Sync
+            // Vocabulary автоматически подтягивается из markdown-файла в Obsidian Vault.
+            // Если файл по этому пути не найден — sync silent skip, приложение работает как обычно.
+            UserDefaults.Keys.vaultSyncEnabled: true,
+            UserDefaults.Keys.vaultDictionaryPath: "~/Documents/Obsidian Vault/99 - Claude Context/voiceink-dictionary.md",
+
         ])
 
         PunctuationCleanupMode.migrateLegacyUserDefaultIfNeeded()

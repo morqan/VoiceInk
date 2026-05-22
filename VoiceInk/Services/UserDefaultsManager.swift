@@ -6,6 +6,10 @@ extension UserDefaults {
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
         static let prioritizedDevices = "prioritizedDevices"
         static let affiliatePromotionDismissed = "VoiceInkAffiliatePromotionDismissed"
+
+        // Vault Sync
+        static let vaultSyncEnabled = "VoiceInkVaultSyncEnabled"
+        static let vaultDictionaryPath = "VoiceInkVaultDictionaryPath"
     }
 
     // MARK: - Audio Input Mode

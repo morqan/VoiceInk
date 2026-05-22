@@ -61,6 +61,8 @@ struct DictionarySettingsView: View {
         VStack(spacing: 40) {
             sectionSelector
             selectedSectionContent
+            // блок настройки авто-синхронизации словаря с Vault
+            VaultSyncSection()
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 40)
