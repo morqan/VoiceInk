@@ -57,6 +57,7 @@ struct SpeechAnalyticsView: View {
                     }
                     topFillers
                     topAnglicisms
+                    topRepetitions
                     recentSessions
                 }
             }
@@ -389,6 +390,39 @@ struct SpeechAnalyticsView: View {
         }
     }
 
+    // MARK: - Top repetitions
+
+    private var topRepetitions: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Text("Top repeated words")
+                    .font(.system(size: 16, weight: .heavy, design: .rounded))
+                Text("(≥ 5 раз в одной диктовке)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+
+            if topRepetitionList.isEmpty {
+                Text("No word over-repetition detected")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .padding(.vertical, 6)
+            } else {
+                VStack(spacing: 6) {
+                    ForEach(topRepetitionList.prefix(10), id: \.word) { item in
+                        wordCountRow(item.word, count: item.count, color: .purple)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.thinMaterial)
+        )
+    }
+
     // MARK: - Recent sessions
 
     private var recentSessions: some View {
@@ -429,6 +463,9 @@ struct SpeechAnalyticsView: View {
                 }
                 if metric.anglicismCount > 0 {
                     metricBadge("\(metric.anglicismCount)en", color: .pink)
+                }
+                if metric.repetitionCount > 0 {
+                    metricBadge("\(metric.repetitionCount)rep", color: .purple)
                 }
             }
         }
@@ -510,6 +547,17 @@ struct SpeechAnalyticsView: View {
         var totals: [String: Int] = [:]
         for metric in filteredMetrics {
             for (word, count) in metric.anglicismsByWord {
+                totals[word, default: 0] += count
+            }
+        }
+        return totals.map { (word: $0.key, count: $0.value) }
+            .sorted { $0.count > $1.count }
+    }
+
+    private var topRepetitionList: [(word: String, count: Int)] {
+        var totals: [String: Int] = [:]
+        for metric in filteredMetrics {
+            for (word, count) in metric.repetitionsByWord {
                 totals[word, default: 0] += count
             }
         }

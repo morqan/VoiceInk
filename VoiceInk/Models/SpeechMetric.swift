@@ -51,6 +51,10 @@ final class SpeechMetric {
     /// 0 = чистый русский, 1 = чистый английский
     var enRuRatio: Double = 0
 
+    /// Повторы — слова которые встретились ≥ 5 раз в одной диктовке (исключая паразитов/англицизмов).
+    /// JSON-сериализация {"проект": 7, "задача": 5, ...}
+    var repetitionsByWordJSON: String = "{}"
+
     /// Полный текст транскрипции (для возможности peek в UI)
     var text: String = ""
 
@@ -67,6 +71,7 @@ final class SpeechMetric {
         anglicismCount: Int = 0,
         anglicismsByWordJSON: String = "{}",
         enRuRatio: Double = 0,
+        repetitionsByWordJSON: String = "{}",
         text: String = ""
     ) {
         self.id = id
@@ -81,6 +86,7 @@ final class SpeechMetric {
         self.anglicismCount = anglicismCount
         self.anglicismsByWordJSON = anglicismsByWordJSON
         self.enRuRatio = enRuRatio
+        self.repetitionsByWordJSON = repetitionsByWordJSON
         self.text = text
     }
 
@@ -106,6 +112,16 @@ final class SpeechMetric {
     /// Десериализованный словарь англицизмов с count.
     var anglicismsByWord: [String: Int] {
         decodeJSON(anglicismsByWordJSON)
+    }
+
+    /// Десериализованный словарь повторов с count.
+    var repetitionsByWord: [String: Int] {
+        decodeJSON(repetitionsByWordJSON)
+    }
+
+    /// Общее число повторяющихся уникальных слов (≥5 раз) в этой диктовке.
+    var repetitionCount: Int {
+        repetitionsByWord.count
     }
 
     private func decodeJSON(_ json: String) -> [String: Int] {

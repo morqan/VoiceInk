@@ -24,7 +24,7 @@ struct DashboardPromotionsSection: View {
     }
     
     private var shouldShowPromotions: Bool {
-        // Morgan personal fork: убрали все промо с Dashboard
+        // убрали все промо с Dashboard
         // Оригинал: shouldShowUpgradePromotion || shouldShowAffiliatePromotion
         false
     }

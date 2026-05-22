@@ -70,6 +70,12 @@ enum SpeechMetricsAnalyzer {
 
         let enRuRatio = calculateEnRuRatio(text: cleanText)
 
+        let repetitionsByWord = countRepetitions(
+            words: words,
+            fillers: Set(fillersByWord.keys),
+            anglicisms: Set(anglicismsByWord.keys)
+        )
+
         let metric = SpeechMetric(
             timestamp: Date(),
             durationSeconds: durationSeconds,
@@ -82,6 +88,7 @@ enum SpeechMetricsAnalyzer {
             anglicismCount: anglicismCount,
             anglicismsByWordJSON: encodeJSON(anglicismsByWord),
             enRuRatio: enRuRatio,
+            repetitionsByWordJSON: encodeJSON(repetitionsByWord),
             text: cleanText
         )
 
@@ -89,7 +96,8 @@ enum SpeechMetricsAnalyzer {
             Analyzed: \(words.count) words, \(sentenceCount) sentences, \
             avg sentence \(String(format: "%.1f", avgSentenceLength)) words, \
             WPM \(String(format: "%.1f", wpm)), \
-            \(fillerCount) fillers, \(anglicismCount) anglicisms
+            \(fillerCount) fillers, \(anglicismCount) anglicisms, \
+            \(repetitionsByWord.count) repetitions
             """)
 
         return metric
@@ -211,6 +219,33 @@ enum SpeechMetricsAnalyzer {
 
         guard totalLetters > 0 else { return 0 }
         return Double(latinCount) / Double(totalLetters)
+    }
+
+    // MARK: - Repetitions
+
+    /// Минимальная частота для маркировки слова как «повтор».
+    /// 5 — баланс между «нормально повторил» и «зациклился».
+    static let repetitionThreshold = 5
+
+    /// Минимальная длина слова для учёта в повторах.
+    /// Короткие («что», «как», «но», «то») — высокочастотные служебные, не маркер.
+    static let repetitionMinWordLength = 4
+
+    /// Считает слова которые повторены ≥ 5 раз в одной диктовке.
+    /// Исключает: паразитов (они в counts отдельно), англицизмы, короткие слова.
+    static func countRepetitions(
+        words: [String],
+        fillers: Set<String>,
+        anglicisms: Set<String>
+    ) -> [String: Int] {
+        var totals: [String: Int] = [:]
+        for word in words {
+            guard word.count >= repetitionMinWordLength else { continue }
+            guard !fillers.contains(word) else { continue }
+            guard !anglicisms.contains(word) else { continue }
+            totals[word, default: 0] += 1
+        }
+        return totals.filter { $0.value >= repetitionThreshold }
     }
 
     // MARK: - JSON helper
