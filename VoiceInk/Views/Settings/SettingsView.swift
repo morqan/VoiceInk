@@ -272,6 +272,18 @@ struct SettingsView: View {
                 Text("Control how VoiceInk handles your transcription data and audio recordings.")
             }
 
+            // MARK: - Language / Язык
+            Section {
+                LanguagePickerRow()
+            } header: {
+                LocalizedText(en: "Language", ru: "Язык интерфейса")
+            } footer: {
+                LocalizedText(
+                    en: "Affects custom additions (Speech, Voice Profile, Vault Sync). Native VoiceInk UI stays in English.",
+                    ru: "Влияет на кастомные добавления (Speech, Voice Profile, Vault Sync). Родной интерфейс VoiceInk остаётся на английском."
+                )
+            }
+
             // MARK: - Backup
             Section {
                 LabeledContent("Export Settings") {

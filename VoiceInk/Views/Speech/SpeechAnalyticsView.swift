@@ -18,12 +18,21 @@ import SwiftData
 import Charts
 
 enum SpeechPeriod: String, CaseIterable, Identifiable {
-    case today = "Today"
-    case week = "Week"
-    case month = "Month"
-    case all = "All"
+    case today
+    case week
+    case month
+    case all
 
     var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .today: return L10n.t(en: "Today", ru: "Сегодня")
+        case .week:  return L10n.t(en: "Week", ru: "Неделя")
+        case .month: return L10n.t(en: "Month", ru: "Месяц")
+        case .all:   return L10n.t(en: "All", ru: "Всё")
+        }
+    }
 
     /// Начало периода. Возвращает nil для .all (без фильтра).
     func startDate(now: Date = Date()) -> Date? {
@@ -77,10 +86,13 @@ struct SpeechAnalyticsView: View {
                     .font(.system(size: 28, weight: .semibold))
                     .foregroundStyle(.white)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Speech Analytics")
+                    LocalizedText(en: "Speech Analytics", ru: "Аналитика речи")
                         .font(.system(size: 24, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
-                    Text("Track your speech patterns and improve over time")
+                    LocalizedText(
+                        en: "Track your speech patterns and improve over time",
+                        ru: "Отслеживай паттерны речи и улучшайся со временем"
+                    )
                         .font(.system(size: 13, weight: .medium))
                         .foregroundStyle(.white.opacity(0.85))
                 }
@@ -109,7 +121,7 @@ struct SpeechAnalyticsView: View {
                 Button {
                     period = p
                 } label: {
-                    Text(p.rawValue)
+                    Text(p.displayName)
                         .font(.system(size: 13, weight: .semibold))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 7)
@@ -122,7 +134,10 @@ struct SpeechAnalyticsView: View {
                 .buttonStyle(.plain)
             }
             Spacer()
-            Text("\(filteredMetrics.count) session\(filteredMetrics.count == 1 ? "" : "s")")
+            Text(L10n.t(
+                en: "\(filteredMetrics.count) session\(filteredMetrics.count == 1 ? "" : "s")",
+                ru: "\(filteredMetrics.count) \(filteredMetrics.count == 1 ? "сессия" : "сессий")"
+            ))
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
         }
@@ -135,9 +150,15 @@ struct SpeechAnalyticsView: View {
             Image(systemName: "waveform")
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
-            Text("No dictations in this period yet")
+            LocalizedText(
+                en: "No dictations in this period yet",
+                ru: "В этом периоде ещё нет диктовок"
+            )
                 .font(.system(size: 15, weight: .semibold))
-            Text("Speech metrics are recorded after each dictation ≥ 15 words")
+            LocalizedText(
+                en: "Speech metrics are recorded after each dictation ≥ 15 words",
+                ru: "Метрики записываются после каждой диктовки ≥ 15 слов"
+            )
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
         }
@@ -154,59 +175,59 @@ struct SpeechAnalyticsView: View {
     private var aggregatedMetrics: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
             statCard(
-                title: "Fillers",
+                title: L10n.t(en: "Fillers", ru: "Паразиты"),
                 value: String(format: "%.1f", aggFillerRate),
-                unit: "/100w",
-                detail: "Target ≤ 2",
+                unit: L10n.t(en: "/100w", ru: "/100сл"),
+                detail: L10n.t(en: "Target ≤ 2", ru: "Цель ≤ 2"),
                 color: fillerColor(aggFillerRate),
                 icon: "text.bubble"
             )
             statCard(
-                title: "Avg sentence",
+                title: L10n.t(en: "Avg sentence", ru: "Длина предложения"),
                 value: String(format: "%.0f", aggSentenceLength),
-                unit: "words",
-                detail: "Target ≤ 18",
+                unit: L10n.t(en: "words", ru: "слов"),
+                detail: L10n.t(en: "Target ≤ 18", ru: "Цель ≤ 18"),
                 color: sentenceColor(aggSentenceLength),
                 icon: "text.alignleft"
             )
             statCard(
-                title: "Anglicisms",
+                title: L10n.t(en: "Anglicisms", ru: "Англицизмы"),
                 value: String(format: "%.1f", aggAnglicismRate),
-                unit: "/100w",
-                detail: "Target ≤ 1",
+                unit: L10n.t(en: "/100w", ru: "/100сл"),
+                detail: L10n.t(en: "Target ≤ 1", ru: "Цель ≤ 1"),
                 color: anglicismColor(aggAnglicismRate),
                 icon: "globe"
             )
             statCard(
-                title: "Speed",
+                title: L10n.t(en: "Speed", ru: "Темп"),
                 value: String(format: "%.0f", aggWPM),
                 unit: "WPM",
-                detail: "Avg speaking pace",
+                detail: L10n.t(en: "Avg speaking pace", ru: "Средний темп речи"),
                 color: .blue,
                 icon: "speedometer"
             )
             statCard(
-                title: "Total words",
+                title: L10n.t(en: "Total words", ru: "Всего слов"),
                 value: "\(aggWordCount)",
                 unit: "",
-                detail: "in this period",
+                detail: L10n.t(en: "in this period", ru: "за период"),
                 color: .indigo,
                 icon: "text.alignleft"
             )
             statCard(
-                title: "EN / RU ratio",
+                title: L10n.t(en: "EN / RU ratio", ru: "EN / RU"),
                 value: String(format: "%.0f%%", aggEnRatio * 100),
                 unit: "",
-                detail: "English chars share",
+                detail: L10n.t(en: "English chars share", ru: "Доля латинских букв"),
                 color: .pink,
                 icon: "character.textbox"
             )
 
             statCard(
-                title: "Complexity",
+                title: L10n.t(en: "Complexity", ru: "Сложность"),
                 value: String(format: "%.1f", aggComplexity),
                 unit: "",
-                detail: "Подчинения в предложении",
+                detail: L10n.t(en: "Subordinations per sentence", ru: "Подчинения в предложении"),
                 color: .teal,
                 icon: "arrow.triangle.branch"
             )
@@ -264,7 +285,7 @@ struct SpeechAnalyticsView: View {
 
     private var trendCharts: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Trends")
+            LocalizedText(en: "Trends", ru: "Тренды")
                 .font(.system(size: 16, weight: .heavy, design: .rounded))
 
             HStack(alignment: .top, spacing: 12) {
@@ -275,7 +296,7 @@ struct SpeechAnalyticsView: View {
                     yAxisLabel: "WPM"
                 )
                 chartCard(
-                    title: "Fillers / 100 words",
+                    title: L10n.t(en: "Fillers / 100 words", ru: "Паразиты / 100 слов"),
                     series: dailyFillerRateSeries,
                     color: .orange,
                     yAxisLabel: "rate"
@@ -295,7 +316,7 @@ struct SpeechAnalyticsView: View {
                 .font(.system(size: 13, weight: .semibold))
 
             if series.isEmpty {
-                Text("Not enough data")
+                LocalizedText(en: "Not enough data", ru: "Недостаточно данных")
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
                     .frame(height: 120)
@@ -338,11 +359,11 @@ struct SpeechAnalyticsView: View {
 
     private var topFillers: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Top fillers")
+            LocalizedText(en: "Top fillers", ru: "Топ паразитов")
                 .font(.system(size: 16, weight: .heavy, design: .rounded))
 
             if topFillerList.isEmpty {
-                Text("No fillers detected — well done!")
+                LocalizedText(en: "No fillers detected — well done!", ru: "Паразитов нет — молодец!")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 6)
@@ -366,11 +387,11 @@ struct SpeechAnalyticsView: View {
 
     private var topAnglicisms: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Top anglicisms")
+            LocalizedText(en: "Top anglicisms", ru: "Топ англицизмов")
                 .font(.system(size: 16, weight: .heavy, design: .rounded))
 
             if topAnglicismList.isEmpty {
-                Text("No anglicisms detected")
+                LocalizedText(en: "No anglicisms detected", ru: "Англицизмов не обнаружено")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 6)
@@ -409,32 +430,35 @@ struct SpeechAnalyticsView: View {
                 Image(systemName: "flame.fill")
                     .font(.system(size: 14))
                     .foregroundStyle(.orange)
-                Text("Streaks")
+                LocalizedText(en: "Streaks", ru: "Стрики")
                     .font(.system(size: 16, weight: .heavy, design: .rounded))
-                Text("(дней подряд под целью)")
+                LocalizedText(
+                    en: "(consecutive days under the target)",
+                    ru: "(дней подряд под целью)"
+                )
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 12)], spacing: 12) {
                 streakCard(
-                    title: "Без паразитов",
+                    title: L10n.t(en: "Filler-free", ru: "Без паразитов"),
                     value: fillerStreak,
-                    subtitle: "≤ 2 / 100 слов",
+                    subtitle: L10n.t(en: "≤ 2 / 100 words", ru: "≤ 2 / 100 слов"),
                     color: .orange,
                     icon: "text.bubble"
                 )
                 streakCard(
-                    title: "Без англицизмов",
+                    title: L10n.t(en: "Anglicism-free", ru: "Без англицизмов"),
                     value: anglicismStreak,
-                    subtitle: "≤ 1 / 100 слов",
+                    subtitle: L10n.t(en: "≤ 1 / 100 words", ru: "≤ 1 / 100 слов"),
                     color: .pink,
                     icon: "globe"
                 )
                 streakCard(
-                    title: "Короткие предложения",
+                    title: L10n.t(en: "Short sentences", ru: "Короткие предложения"),
                     value: sentenceStreak,
-                    subtitle: "≤ 18 слов",
+                    subtitle: L10n.t(en: "≤ 18 words", ru: "≤ 18 слов"),
                     color: .green,
                     icon: "text.alignleft"
                 )
@@ -464,7 +488,7 @@ struct SpeechAnalyticsView: View {
                     Text("\(value)")
                         .font(.system(size: 22, weight: .black, design: .rounded))
                         .foregroundColor(color)
-                    Text(value == 1 ? "день" : (value < 5 && value > 0 ? "дня" : "дней"))
+                    Text(daysLabel(for: value))
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                     if value >= 7 {
@@ -531,6 +555,16 @@ struct SpeechAnalyticsView: View {
         return streak
     }
 
+    /// Корректная форма «день/дня/дней» с учётом языка.
+    private func daysLabel(for value: Int) -> String {
+        if L10n.current == .english {
+            return value == 1 ? "day" : "days"
+        }
+        if value == 1 { return "день" }
+        if value > 1 && value < 5 { return "дня" }
+        return "дней"
+    }
+
     private var fillerStreak: Int {
         computeStreak { fillers, _, words, _ in
             guard words > 0 else { return false }
@@ -557,15 +591,18 @@ struct SpeechAnalyticsView: View {
     private var topRepetitions: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 6) {
-                Text("Top repeated words")
+                LocalizedText(en: "Top repeated words", ru: "Топ повторяющихся слов")
                     .font(.system(size: 16, weight: .heavy, design: .rounded))
-                Text("(≥ 5 раз в одной диктовке)")
+                LocalizedText(
+                    en: "(≥ 5 times in one dictation)",
+                    ru: "(≥ 5 раз в одной диктовке)"
+                )
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
             }
 
             if topRepetitionList.isEmpty {
-                Text("No word over-repetition detected")
+                LocalizedText(en: "No word over-repetition detected", ru: "Повторов не обнаружено")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 6)
@@ -589,7 +626,7 @@ struct SpeechAnalyticsView: View {
 
     private var recentSessions: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recent sessions")
+            LocalizedText(en: "Recent sessions", ru: "Недавние сессии")
                 .font(.system(size: 16, weight: .heavy, design: .rounded))
 
             VStack(spacing: 6) {

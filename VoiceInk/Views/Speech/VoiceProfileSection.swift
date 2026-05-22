@@ -30,7 +30,7 @@ struct VoiceProfileSection: View {
                     emptyState
                 }
             } else {
-                Text("Выбери целевой стиль ↑")
+                LocalizedText(en: "Choose a target style ↑", ru: "Выбери целевой стиль ↑")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -49,9 +49,9 @@ struct VoiceProfileSection: View {
             Image(systemName: "person.fill.viewfinder")
                 .font(.system(size: 14))
                 .foregroundStyle(.indigo)
-            Text("Voice Profile Match")
+            LocalizedText(en: "Voice Profile Match", ru: "Совпадение со стилем")
                 .font(.system(size: 16, weight: .heavy, design: .rounded))
-            Text("(целевой стиль речи)")
+            LocalizedText(en: "(target speech style)", ru: "(целевой стиль речи)")
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
@@ -67,7 +67,7 @@ struct VoiceProfileSection: View {
                         HStack(spacing: 6) {
                             Image(systemName: p.iconName)
                                 .font(.system(size: 11, weight: .semibold))
-                            Text(p.name)
+                            Text(profileDisplayName(p))
                                 .font(.system(size: 12, weight: .semibold))
                         }
                         .padding(.horizontal, 12)
@@ -84,8 +84,37 @@ struct VoiceProfileSection: View {
         }
     }
 
+    /// Перевод названий пресетов на английский. Если профиль кастомный (не preset) —
+    /// возвращаем как есть.
+    private func profileDisplayName(_ p: VoiceProfileTarget) -> String {
+        guard p.isPreset, L10n.current == .english else { return p.name }
+        switch p.name {
+        case "Эриксоновский гипнотизёр": return "Ericksonian Hypnotist"
+        case "Жёсткий переговорщик":      return "Tactical Negotiator"
+        case "Спокойный лидер":           return "Calm Leader"
+        case "Харизматичный спикер":      return "Charismatic Speaker"
+        default: return p.name
+        }
+    }
+
+    /// Перевод summary пресета.
+    private func profileSummaryText(_ p: VoiceProfileTarget) -> String {
+        guard p.isPreset, L10n.current == .english else { return p.summary }
+        switch p.name {
+        case "Эриксоновский гипнотизёр":
+            return "Slow pace, long subordinate sentences, embedded commands. Bypasses critical thinking through enveloping."
+        case "Жёсткий переговорщик":
+            return "Short direct sentences, framing constructions, minimum fluff. Controls conversation pace via clarity."
+        case "Спокойный лидер":
+            return "Medium pace, structured. List before action, clear priorities, zero fluff."
+        case "Харизматичный спикер":
+            return "Fast varied pace, direct address, few repetitions, emotional imagery."
+        default: return p.summary
+        }
+    }
+
     private func profileSummary(_ profile: VoiceProfileTarget) -> some View {
-        Text(profile.summary)
+        Text(profileSummaryText(profile))
             .font(.system(size: 11))
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -109,7 +138,7 @@ struct VoiceProfileSection: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text("Match Score")
+                LocalizedText(en: "Match Score", ru: "Совпадение")
                     .font(.system(size: 13, weight: .semibold))
                 Text(matchVerdict(result.totalScore))
                     .font(.system(size: 11))
@@ -122,11 +151,11 @@ struct VoiceProfileSection: View {
 
     private func breakdown(_ result: VoiceProfileMatcher.MatchResult) -> some View {
         VStack(spacing: 6) {
-            metricRow("Темп (WPM)", actual: result.actualWPM, format: "%.0f", score: result.wpmScore)
-            metricRow("Длина предложения", actual: result.actualSentenceLength, format: "%.0f", score: result.sentenceLengthScore)
-            metricRow("Сложность", actual: result.actualComplexity, format: "%.1f", score: result.complexityScore)
-            metricRow("Паразиты / 100w", actual: result.actualFillerRate, format: "%.1f", score: result.fillerScore)
-            metricRow("Marker phrases / 100w", actual: result.actualMarkerRatePer100Words, format: "%.1f", score: result.markerScore)
+            metricRow(L10n.t(en: "Speed (WPM)", ru: "Темп (WPM)"), actual: result.actualWPM, format: "%.0f", score: result.wpmScore)
+            metricRow(L10n.t(en: "Sentence length", ru: "Длина предложения"), actual: result.actualSentenceLength, format: "%.0f", score: result.sentenceLengthScore)
+            metricRow(L10n.t(en: "Complexity", ru: "Сложность"), actual: result.actualComplexity, format: "%.1f", score: result.complexityScore)
+            metricRow(L10n.t(en: "Fillers / 100w", ru: "Паразиты / 100w"), actual: result.actualFillerRate, format: "%.1f", score: result.fillerScore)
+            metricRow(L10n.t(en: "Marker phrases / 100w", ru: "Маркеры / 100w"), actual: result.actualMarkerRatePer100Words, format: "%.1f", score: result.markerScore)
         }
         .padding(.top, 6)
     }
@@ -164,7 +193,10 @@ struct VoiceProfileSection: View {
             Image(systemName: "lightbulb.fill")
                 .foregroundStyle(.yellow)
                 .font(.system(size: 12))
-            Text("Подтягивай в первую очередь: **\(weak.name)** (\(Int(weak.score))%)")
+            Text(L10n.t(
+                en: "Pull up first: **\(weak.name)** (\(Int(weak.score))%)",
+                ru: "Подтягивай в первую очередь: **\(weak.name)** (\(Int(weak.score))%)"
+            ))
                 .font(.system(size: 11))
                 .foregroundStyle(.secondary)
         }
@@ -172,7 +204,10 @@ struct VoiceProfileSection: View {
     }
 
     private var emptyState: some View {
-        Text("Метрики появятся после первой диктовки ≥ 15 слов")
+        LocalizedText(
+            en: "Metrics will appear after your first dictation ≥ 15 words",
+            ru: "Метрики появятся после первой диктовки ≥ 15 слов"
+        )
             .font(.system(size: 11))
             .foregroundStyle(.secondary)
     }
@@ -198,11 +233,11 @@ struct VoiceProfileSection: View {
 
     private func matchVerdict(_ score: Double) -> String {
         switch score {
-        case 90...: return "Звучишь как этот стиль"
-        case 75..<90: return "Близко к стилю"
-        case 50..<75: return "Местами совпадает — есть к чему расти"
-        case 25..<50: return "Далеко от стиля — много работы"
-        default: return "Совсем другой стиль речи"
+        case 90...:    return L10n.t(en: "You sound like this style", ru: "Звучишь как этот стиль")
+        case 75..<90:  return L10n.t(en: "Close to the style", ru: "Близко к стилю")
+        case 50..<75:  return L10n.t(en: "Partial match — room to grow", ru: "Местами совпадает — есть к чему расти")
+        case 25..<50:  return L10n.t(en: "Far from the style — lots to do", ru: "Далеко от стиля — много работы")
+        default:       return L10n.t(en: "Completely different style", ru: "Совсем другой стиль речи")
         }
     }
 }

@@ -48,9 +48,12 @@ struct VaultSyncSection: View {
                 .foregroundStyle(enabled ? .blue : .secondary)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("Vault Sync")
+                LocalizedText(en: "Vault Sync", ru: "Синхрон. с Vault")
                     .font(.headline)
-                Text("Auto-import Vocabulary from a markdown file")
+                LocalizedText(
+                    en: "Auto-import Vocabulary from a markdown file",
+                    ru: "Авто-импорт словаря из markdown-файла"
+                )
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -64,7 +67,10 @@ struct VaultSyncSection: View {
     }
 
     private var description: some View {
-        Text("Reads the «Правильное написание» column from a markdown table on app launch and adds new words to Vocabulary. Designed for Obsidian Vault notes, but works with any markdown file containing such a table.")
+        LocalizedText(
+            en: "Reads the «Правильное написание» column from a markdown table on app launch and adds new words to Vocabulary. Designed for Obsidian Vault notes, but works with any markdown file containing such a table.",
+            ru: "Читает колонку «Правильное написание» из markdown-таблицы при запуске и добавляет новые слова в Vocabulary. Сделано для заметок Obsidian Vault, но работает с любым markdown-файлом с такой таблицей."
+        )
             .font(.caption)
             .foregroundStyle(.secondary)
             .fixedSize(horizontal: false, vertical: true)
@@ -78,12 +84,15 @@ struct VaultSyncSection: View {
             )
             .textFieldStyle(.roundedBorder)
             .disabled(!enabled)
-            .help("Path to a markdown file with a Vocabulary table")
+            .help(L10n.t(
+                en: "Path to a markdown file with a Vocabulary table",
+                ru: "Путь к markdown-файлу с таблицей Vocabulary"
+            ))
 
             Button {
                 selectFile()
             } label: {
-                Label("Browse…", systemImage: "folder")
+                Label(L10n.t(en: "Browse…", ru: "Выбрать…"), systemImage: "folder")
             }
             .disabled(!enabled)
         }
@@ -94,7 +103,7 @@ struct VaultSyncSection: View {
             Button {
                 runSync()
             } label: {
-                Label("Sync Now", systemImage: "arrow.triangle.2.circlepath")
+                Label(L10n.t(en: "Sync Now", ru: "Синхронизировать"), systemImage: "arrow.triangle.2.circlepath")
             }
             .disabled(!enabled || path.isEmpty)
 

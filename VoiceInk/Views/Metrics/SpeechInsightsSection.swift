@@ -43,11 +43,14 @@ struct SpeechInsightsSection: View {
             Image(systemName: "waveform.path.ecg")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(.blue)
-            Text("Speech Today")
+            LocalizedText(en: "Speech Today", ru: "Речь сегодня")
                 .font(.system(size: 18, weight: .heavy, design: .rounded))
             Spacer()
             if !todayMetrics.isEmpty {
-                Text("\(todayMetrics.count) session\(todayMetrics.count == 1 ? "" : "s")")
+                Text(L10n.t(
+                    en: "\(todayMetrics.count) session\(todayMetrics.count == 1 ? "" : "s")",
+                    ru: "\(todayMetrics.count) \(todayMetrics.count == 1 ? "сессия" : "сессий")"
+                ))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
             }
@@ -61,10 +64,13 @@ struct SpeechInsightsSection: View {
                 Image(systemName: "mic.slash")
                     .font(.system(size: 28))
                     .foregroundStyle(.secondary)
-                Text("No dictations today yet")
+                LocalizedText(en: "No dictations today yet", ru: "Сегодня ещё нет диктовок")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
-                Text("Speech metrics will appear after your first dictation ≥ 15 words")
+                LocalizedText(
+                    en: "Speech metrics will appear after your first dictation ≥ 15 words",
+                    ru: "Метрики появятся после первой диктовки ≥ 15 слов"
+                )
                     .font(.system(size: 11))
                     .foregroundStyle(.tertiary)
             }
@@ -81,34 +87,34 @@ struct SpeechInsightsSection: View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
             SpeechMetricCard(
                 icon: "text.bubble",
-                title: "Fillers",
+                title: L10n.t(en: "Fillers", ru: "Паразиты"),
                 value: String(format: "%.1f", avgFillerRate),
-                unit: "/ 100 words",
-                detail: "Target ≤ 2",
+                unit: L10n.t(en: "/ 100 words", ru: "/ 100 слов"),
+                detail: L10n.t(en: "Target ≤ 2", ru: "Цель ≤ 2"),
                 color: fillerColor
             )
 
             SpeechMetricCard(
                 icon: "text.alignleft",
-                title: "Avg sentence",
+                title: L10n.t(en: "Avg sentence", ru: "Длина предл."),
                 value: String(format: "%.0f", avgSentenceLength),
-                unit: "words",
-                detail: "Target ≤ 18",
+                unit: L10n.t(en: "words", ru: "слов"),
+                detail: L10n.t(en: "Target ≤ 18", ru: "Цель ≤ 18"),
                 color: sentenceColor
             )
 
             SpeechMetricCard(
                 icon: "globe",
-                title: "Anglicisms",
+                title: L10n.t(en: "Anglicisms", ru: "Англицизмы"),
                 value: String(format: "%.1f", avgAnglicismRate),
-                unit: "/ 100 words",
-                detail: "Target ≤ 1",
+                unit: L10n.t(en: "/ 100 words", ru: "/ 100 слов"),
+                detail: L10n.t(en: "Target ≤ 1", ru: "Цель ≤ 1"),
                 color: anglicismColor
             )
 
             SpeechMetricCard(
                 icon: "speedometer",
-                title: "Speed",
+                title: L10n.t(en: "Speed", ru: "Темп"),
                 value: String(format: "%.0f", avgWPM),
                 unit: "WPM",
                 detail: averageWPMDetail,
@@ -117,10 +123,10 @@ struct SpeechInsightsSection: View {
 
             SpeechMetricCard(
                 icon: "character.textbox",
-                title: "EN / RU ratio",
+                title: L10n.t(en: "EN / RU ratio", ru: "EN / RU"),
                 value: String(format: "%.0f", avgEnRuRatio * 100),
                 unit: "%",
-                detail: "English chars share",
+                detail: L10n.t(en: "English chars share", ru: "Доля латинских букв"),
                 color: .pink
             )
         }
@@ -173,10 +179,9 @@ struct SpeechInsightsSection: View {
 
     private var averageWPMDetail: String {
         if avgWPM == 0 { return "—" }
-        // Подкастер ~150 WPM, твоё среднее VoiceInk 88.7
-        if avgWPM < 80 { return "Slower than average" }
-        if avgWPM < 140 { return "Conversational pace" }
-        return "Fast pace"
+        if avgWPM < 80 { return L10n.t(en: "Slower than average", ru: "Медленнее среднего") }
+        if avgWPM < 140 { return L10n.t(en: "Conversational pace", ru: "Разговорный темп") }
+        return L10n.t(en: "Fast pace", ru: "Быстрый темп")
     }
 
     // MARK: - Color thresholds
