@@ -2,13 +2,18 @@
 //  LanguagePickerRow.swift
 //  VoiceInk
 //
-//  Drop-down для выбора языка наших добавлений (Auto / English / Русский).
+//  Drop-down для выбора языка интерфейса (Auto / English / Русский).
+//  При смене показывает alert «Restart required» — без перезапуска часть UI
+//  не перерисуется (Text(tr("X")) кэшируется на жизнь view).
 //
 
 import SwiftUI
+import AppKit
 
 struct LanguagePickerRow: View {
     @AppStorage(L10n.storageKey) private var rawLang: String = AppLanguage.auto.rawValue
+    @State private var showRestartAlert = false
+    @State private var previousLang: String?
 
     var body: some View {
         LabeledContent {
@@ -20,8 +25,40 @@ struct LanguagePickerRow: View {
             .labelsHidden()
             .pickerStyle(.menu)
             .frame(maxWidth: 220)
+            .onChange(of: rawLang) { _, newValue in
+                if previousLang != nil && previousLang != newValue {
+                    showRestartAlert = true
+                }
+                previousLang = newValue
+            }
+            .onAppear {
+                if previousLang == nil { previousLang = rawLang }
+            }
         } label: {
             LocalizedText(en: "Display language", ru: "Язык отображения")
         }
+        .alert(
+            L10n.t(en: "Restart required", ru: "Нужен перезапуск"),
+            isPresented: $showRestartAlert
+        ) {
+            Button(L10n.t(en: "Restart now", ru: "Перезапустить сейчас")) {
+                restartApp()
+            }
+            Button(L10n.t(en: "Later", ru: "Позже"), role: .cancel) {}
+        } message: {
+            LocalizedText(
+                en: "Most of the interface only updates after restart. Restart VoiceInk now?",
+                ru: "Большая часть интерфейса обновится только после перезапуска. Перезапустить VoiceInk сейчас?"
+            )
+        }
+    }
+
+    private func restartApp() {
+        guard let bundleURL = Bundle.main.bundleURL as URL? else { return }
+        let task = Process()
+        task.launchPath = "/usr/bin/open"
+        task.arguments = ["-n", bundleURL.path]
+        try? task.run()
+        NSApp.terminate(nil)
     }
 }
