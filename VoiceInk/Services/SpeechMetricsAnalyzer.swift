@@ -58,6 +58,8 @@ enum SpeechMetricsAnalyzer {
             ? Double(words.count) / Double(sentenceCount)
             : Double(words.count)
 
+        let avgSentenceComplexity = calculateComplexity(text: cleanText, sentenceCount: sentenceCount)
+
         let wpm = durationSeconds > 0
             ? Double(words.count) / (durationSeconds / 60.0)
             : 0
@@ -82,6 +84,7 @@ enum SpeechMetricsAnalyzer {
             wordCount: words.count,
             sentenceCount: sentenceCount,
             avgSentenceLength: avgSentenceLength,
+            avgSentenceComplexity: avgSentenceComplexity,
             wpm: wpm,
             fillerCount: fillerCount,
             fillersByWordJSON: encodeJSON(fillersByWord),
@@ -219,6 +222,48 @@ enum SpeechMetricsAnalyzer {
 
         guard totalLetters > 0 else { return 0 }
         return Double(latinCount) / Double(totalLetters)
+    }
+
+    // MARK: - Sentence complexity
+
+    /// Маркеры подчинения для русского — союзы и относительные местоимения.
+    /// Каждое вхождение в текст = +1 к сложности (per sentence average).
+    static let subordinationMarkers: [String] = [
+        "который", "которая", "которое", "которые", "которых", "которым", "которой",
+        "что", "чтобы",
+        "если", "когда", "пока", "хотя",
+        "потому что", "так как", "несмотря на",
+        "поскольку", "ибо",
+        "будто", "словно", "как будто"
+    ]
+
+    /// Считает среднюю сложность предложения. Чем выше — тем больше подчинённых
+    /// конструкций (длинные обволакивающие предложения, как у Эриксона).
+    ///
+    /// Формула: (маркеры_подчинения + 0.3 × запятые) / sentenceCount
+    static func calculateComplexity(text: String, sentenceCount: Int) -> Double {
+        guard sentenceCount > 0 else { return 0 }
+        let lower = text.lowercased()
+
+        var markerHits = 0
+        for marker in subordinationMarkers {
+            var searchRange = lower.startIndex..<lower.endIndex
+            while let range = lower.range(of: marker, range: searchRange) {
+                // Проверка что это отдельное слово, а не подстрока
+                let isWordStart = range.lowerBound == lower.startIndex
+                    || !lower[lower.index(before: range.lowerBound)].isLetter
+                let isWordEnd = range.upperBound == lower.endIndex
+                    || !lower[range.upperBound].isLetter
+                if isWordStart && isWordEnd {
+                    markerHits += 1
+                }
+                searchRange = range.upperBound..<lower.endIndex
+            }
+        }
+
+        let commaCount = text.filter { $0 == "," }.count
+        let totalScore = Double(markerHits) + 0.3 * Double(commaCount)
+        return totalScore / Double(sentenceCount)
     }
 
     // MARK: - Repetitions

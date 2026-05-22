@@ -199,6 +199,15 @@ struct SpeechAnalyticsView: View {
                 color: .pink,
                 icon: "character.textbox"
             )
+
+            statCard(
+                title: "Complexity",
+                value: String(format: "%.1f", aggComplexity),
+                unit: "",
+                detail: "Подчинения в предложении",
+                color: .teal,
+                icon: "arrow.triangle.branch"
+            )
         }
     }
 
@@ -530,6 +539,12 @@ struct SpeechAnalyticsView: View {
     private var aggEnRatio: Double {
         guard !filteredMetrics.isEmpty else { return 0 }
         return filteredMetrics.reduce(0) { $0 + $1.enRuRatio } / Double(filteredMetrics.count)
+    }
+
+    private var aggComplexity: Double {
+        let valid = filteredMetrics.filter { $0.avgSentenceComplexity > 0 }
+        guard !valid.isEmpty else { return 0 }
+        return valid.reduce(0) { $0 + $1.avgSentenceComplexity } / Double(valid.count)
     }
 
     private var topFillerList: [(word: String, count: Int)] {

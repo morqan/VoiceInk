@@ -31,6 +31,12 @@ final class SpeechMetric {
     /// Средняя длина предложения в словах
     var avgSentenceLength: Double = 0
 
+    /// Средняя сложность предложения. Считается по маркерам подчинения
+    /// («который», «что», «потому что», «если», «когда», «пока», «чтобы» и т.д.)
+    /// плюс по запятым (как proxy для сложных конструкций).
+    /// 0 = чистая простая речь. 5+ = подчинительные конструкции каждый раз.
+    var avgSentenceComplexity: Double = 0
+
     /// WPM = wordCount / (durationSeconds / 60)
     var wpm: Double = 0
 
@@ -65,6 +71,7 @@ final class SpeechMetric {
         wordCount: Int = 0,
         sentenceCount: Int = 0,
         avgSentenceLength: Double = 0,
+        avgSentenceComplexity: Double = 0,
         wpm: Double = 0,
         fillerCount: Int = 0,
         fillersByWordJSON: String = "{}",
@@ -80,6 +87,7 @@ final class SpeechMetric {
         self.wordCount = wordCount
         self.sentenceCount = sentenceCount
         self.avgSentenceLength = avgSentenceLength
+        self.avgSentenceComplexity = avgSentenceComplexity
         self.wpm = wpm
         self.fillerCount = fillerCount
         self.fillersByWordJSON = fillersByWordJSON
