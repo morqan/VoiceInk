@@ -265,7 +265,6 @@ extension L10n {
         // MARK: - Word replacement
         "Edit Word Replacement": "Редактировать замену",
         "Edit replacement": "Редактировать замену",
-        "Edit": "Редактировать",
         "Add word replacement": "Добавить замену слов",
         "Remove replacement": "Удалить замену",
         "Replacement Text": "Текст замены",
