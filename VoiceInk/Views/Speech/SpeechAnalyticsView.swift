@@ -52,6 +52,7 @@ struct SpeechAnalyticsView: View {
                     emptyState
                 } else {
                     aggregatedMetrics
+                    streaksSection
                     if period != .today {
                         trendCharts
                     }
@@ -396,6 +397,157 @@ struct SpeechAnalyticsView: View {
             Text("\(count)×")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(color)
+        }
+    }
+
+    // MARK: - Streaks
+
+    private var streaksSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 6) {
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.orange)
+                Text("Streaks")
+                    .font(.system(size: 16, weight: .heavy, design: .rounded))
+                Text("(дней подряд под целью)")
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 12)], spacing: 12) {
+                streakCard(
+                    title: "Без паразитов",
+                    value: fillerStreak,
+                    subtitle: "≤ 2 / 100 слов",
+                    color: .orange,
+                    icon: "text.bubble"
+                )
+                streakCard(
+                    title: "Без англицизмов",
+                    value: anglicismStreak,
+                    subtitle: "≤ 1 / 100 слов",
+                    color: .pink,
+                    icon: "globe"
+                )
+                streakCard(
+                    title: "Короткие предложения",
+                    value: sentenceStreak,
+                    subtitle: "≤ 18 слов",
+                    color: .green,
+                    icon: "text.alignleft"
+                )
+            }
+        }
+    }
+
+    private func streakCard(
+        title: String,
+        value: Int,
+        subtitle: String,
+        color: Color,
+        icon: String
+    ) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(color.opacity(0.15))
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(color)
+            }
+            .frame(width: 36, height: 36)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("\(value)")
+                        .font(.system(size: 22, weight: .black, design: .rounded))
+                        .foregroundColor(color)
+                    Text(value == 1 ? "день" : (value < 5 && value > 0 ? "дня" : "дней"))
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundColor(.secondary)
+                    if value >= 7 {
+                        Text("🔥")
+                            .font(.system(size: 14))
+                    }
+                }
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold))
+                Text(subtitle)
+                    .font(.system(size: 10))
+                    .foregroundColor(.secondary)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(.thinMaterial)
+        )
+    }
+
+    // MARK: - Streak calculation
+
+    /// Группирует ВСЕ metrics (не filtered) по дням, считает streak с сегодня назад.
+    /// Streak ломается на первом дне с данными где criteria failed.
+    /// Дни без данных пропускаются (не ломают streak).
+    private func computeStreak(
+        passedCheck: (Int /* fillers */, Int /* anglicisms */, Int /* words */, Double /* avgSentenceLength */) -> Bool
+    ) -> Int {
+        let cal = Calendar.current
+        // Группируем все metrics по дням
+        var byDay: [Date: (fillers: Int, anglicisms: Int, words: Int, sentenceLengthSum: Double, sentenceCount: Int)] = [:]
+        for m in allMetrics {
+            let day = cal.startOfDay(for: m.timestamp)
+            var d = byDay[day, default: (0, 0, 0, 0, 0)]
+            d.fillers += m.fillerCount
+            d.anglicisms += m.anglicismCount
+            d.words += m.wordCount
+            d.sentenceLengthSum += m.avgSentenceLength
+            d.sentenceCount += 1
+            byDay[day] = d
+        }
+
+        guard !byDay.isEmpty else { return 0 }
+
+        // Идём с сегодня назад
+        var streak = 0
+        var cursor = cal.startOfDay(for: Date())
+        let earliest = byDay.keys.min() ?? cursor
+
+        while cursor >= earliest {
+            if let d = byDay[cursor] {
+                let avgSentence = d.sentenceCount > 0 ? d.sentenceLengthSum / Double(d.sentenceCount) : 0
+                if passedCheck(d.fillers, d.anglicisms, d.words, avgSentence) {
+                    streak += 1
+                } else {
+                    break
+                }
+            }
+            // День без данных — пропускаем, не ломаем streak
+            cursor = cal.date(byAdding: .day, value: -1, to: cursor) ?? earliest
+        }
+        return streak
+    }
+
+    private var fillerStreak: Int {
+        computeStreak { fillers, _, words, _ in
+            guard words > 0 else { return false }
+            return Double(fillers) / Double(words) * 100 <= 2.0
+        }
+    }
+
+    private var anglicismStreak: Int {
+        computeStreak { _, anglicisms, words, _ in
+            guard words > 0 else { return false }
+            return Double(anglicisms) / Double(words) * 100 <= 1.0
+        }
+    }
+
+    private var sentenceStreak: Int {
+        computeStreak { _, _, words, avgSentence in
+            guard words > 0 else { return false }
+            return avgSentence <= 18.0
         }
     }
 
