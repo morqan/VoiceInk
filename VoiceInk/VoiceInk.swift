@@ -240,10 +240,20 @@ struct VoiceInkApp: App {
                 cloudKitDatabase: .none
             )
 
+            // Speech analytics store (метрики речи + voice profile targets)
+            let speechStoreURL = appSupportURL.appendingPathComponent("speech.store")
+            let speechSchema = Schema([SpeechMetric.self, VoiceProfileTarget.self])
+            let speechConfig = ModelConfiguration(
+                "speech",
+                schema: speechSchema,
+                url: speechStoreURL,
+                cloudKitDatabase: .none
+            )
+
             // Initialize container
             return try ModelContainer(
                 for: schema,
-                configurations: transcriptConfig, dictionaryConfig, statsConfig
+                configurations: transcriptConfig, dictionaryConfig, statsConfig, speechConfig
             )
         } catch {
             logger.error("❌ Failed to create persistent ModelContainer: \(error.localizedDescription, privacy: .public)")
@@ -276,7 +286,18 @@ struct VoiceInkApp: App {
                 isStoredInMemoryOnly: true
             )
 
-            return try ModelContainer(for: schema, configurations: transcriptConfig, dictionaryConfig, statsConfig)
+            // Speech store (fallback in-memory)
+            let speechSchema = Schema([SpeechMetric.self, VoiceProfileTarget.self])
+            let speechConfig = ModelConfiguration(
+                "speech",
+                schema: speechSchema,
+                isStoredInMemoryOnly: true
+            )
+
+            return try ModelContainer(
+                for: schema,
+                configurations: transcriptConfig, dictionaryConfig, statsConfig, speechConfig
+            )
         } catch {
             logger.error("❌ Failed to create in-memory ModelContainer: \(error.localizedDescription, privacy: .public)")
             return nil
