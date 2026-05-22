@@ -106,6 +106,8 @@ struct MetricsContent: View {
 
                             heroSection
                             metricsSection
+                            // today's speech analytics
+                            SpeechInsightsSection()
                             HStack(alignment: .top, spacing: 18) {
                                 HelpAndResourcesSection()
                                 DashboardPromotionsSection(licenseState: licenseState)
