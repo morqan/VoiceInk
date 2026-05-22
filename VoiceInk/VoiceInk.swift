@@ -55,7 +55,8 @@ struct VoiceInkApp: App {
             WordReplacement.self,
             SessionMetric.self,
             // speech analytics
-            SpeechMetric.self
+            SpeechMetric.self,
+            VoiceProfileTarget.self
         ])
         var initializationFailed = false
         let resolvedContainer: ModelContainer
@@ -100,6 +101,7 @@ struct VoiceInkApp: App {
         // и добавляет новые слова в VocabularyWord. Silent skip если файла нет.
         if !initializationFailed {
             VaultDictionarySync.syncFromVault(context: resolvedContainer.mainContext)
+            VoiceProfileSeed.seedIfNeeded(context: resolvedContainer.mainContext)
         }
 
         // Initialize services with proper sharing of instances
