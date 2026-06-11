@@ -10,6 +10,9 @@ extension UserDefaults {
         // Vault Sync
         static let vaultSyncEnabled = "VoiceInkVaultSyncEnabled"
         static let vaultDictionaryPath = "VoiceInkVaultDictionaryPath"
+
+        // Speech weekly report export (папка в Obsidian Vault)
+        static let speechReportFolder = "VoiceInkSpeechReportFolder"
     }
 
     // MARK: - Audio Input Mode
