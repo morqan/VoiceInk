@@ -431,6 +431,12 @@ class UpdaterViewModel: ObservableObject {
     @Published var automaticallyChecksForUpdates = false
 
     init() {
+        #if LOCAL_BUILD
+        // Локальная сборка форка: Sparkle не должен дёргать апстримный appcast
+        // (https://beingpax.github.io/VoiceInk/appcast.xml) — иначе официальный
+        // installer перезапишет форк со всеми кастомизациями.
+        updaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil)
+        #else
         updaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: nil, userDriverDelegate: nil)
 
         automaticallyChecksForUpdates = updaterController.updater.automaticallyChecksForUpdates
@@ -440,6 +446,7 @@ class UpdaterViewModel: ObservableObject {
 
         updaterController.updater.publisher(for: \.automaticallyChecksForUpdates)
             .assign(to: &$automaticallyChecksForUpdates)
+        #endif
     }
 
     func setAutomaticallyChecksForUpdates(_ value: Bool) {
@@ -456,8 +463,12 @@ struct CheckForUpdatesView: View {
     @ObservedObject var updaterViewModel: UpdaterViewModel
 
     var body: some View {
+        #if LOCAL_BUILD
+        EmptyView()
+        #else
         Button("Check for Updates…", action: updaterViewModel.checkForUpdates)
             .disabled(!updaterViewModel.canCheckForUpdates)
+        #endif
     }
 }
 

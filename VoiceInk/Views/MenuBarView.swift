@@ -227,12 +227,14 @@ struct MenuBarView: View {
                 }
             
             Divider()
-            
+
+            #if !LOCAL_BUILD
             Button(tr("Check for Updates")) {
                 updaterViewModel.checkForUpdates()
             }
             .disabled(!updaterViewModel.canCheckForUpdates)
-            
+            #endif
+
             Button(tr("Help and Support")) {
                 EmailSupport.openSupportEmail()
             }

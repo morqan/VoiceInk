@@ -4,7 +4,13 @@ WHISPER_CPP_DIR := $(DEPS_DIR)/whisper.cpp
 FRAMEWORK_PATH := $(WHISPER_CPP_DIR)/build-apple/whisper.xcframework
 LOCAL_DERIVED_DATA := $(CURDIR)/.local-build
 
-.PHONY: all clean whisper setup build local check healthcheck help dev run
+# Подпись локальной сборки. Ad-hoc ("-") меняет хэш при каждой пересборке,
+# из-за чего macOS сбрасывает выданные TCC-разрешения (Accessibility, Screen
+# Recording). Если в Keychain есть самоподписанный сертификат "VoiceInk Local",
+# используем его — подпись стабильна и разрешения переживают пересборки.
+LOCAL_SIGN_IDENTITY := $(shell security find-identity -v -p codesigning 2>/dev/null | grep -q '"VoiceInk Local"' && echo VoiceInk Local || echo -)
+
+.PHONY: all clean whisper setup build local install check healthcheck help dev run
 
 # Default target
 all: check build
@@ -47,17 +53,30 @@ build: setup
 # Build for local use without Apple Developer certificate
 local: check setup
 	@echo "Building VoiceInk for local use (no Apple Developer certificate required)..."
+	@echo "Code signing identity: $(LOCAL_SIGN_IDENTITY)"
 	@rm -rf "$(LOCAL_DERIVED_DATA)"
 	xcodebuild -project VoiceInk.xcodeproj -scheme VoiceInk -configuration Debug \
 		-derivedDataPath "$(LOCAL_DERIVED_DATA)" \
 		-xcconfig LocalBuild.xcconfig \
-		CODE_SIGN_IDENTITY="-" \
+		CODE_SIGN_IDENTITY="$(LOCAL_SIGN_IDENTITY)" \
 		CODE_SIGNING_REQUIRED=NO \
 		CODE_SIGNING_ALLOWED=YES \
 		DEVELOPMENT_TEAM="" \
 		CODE_SIGN_ENTITLEMENTS="$(CURDIR)/VoiceInk/VoiceInk.local.entitlements" \
 		SWIFT_ACTIVE_COMPILATION_CONDITIONS='$$(inherited) LOCAL_BUILD' \
 		build
+	@# xcodebuild с xcconfig игнорирует переданную identity и ставит ad-hoc,
+	@# а ad-hoc меняет хэш каждую сборку → TCC-разрешения слетают. Переподписываем
+	@# весь бандл стабильным сертификатом явно (без hardened runtime — иначе
+	@# ad-hoc вложенные фреймворки не дадут приложению запуститься).
+	@if [ "$(LOCAL_SIGN_IDENTITY)" != "-" ]; then \
+		echo "Re-signing with stable identity ($(LOCAL_SIGN_IDENTITY))..."; \
+		codesign --force --deep --sign "$(LOCAL_SIGN_IDENTITY)" \
+			--entitlements "$(CURDIR)/VoiceInk/VoiceInk.local.entitlements" \
+			"$(LOCAL_DERIVED_DATA)/Build/Products/Debug/VoiceInk.app" >/dev/null 2>&1 \
+			&& echo "Re-signed OK (permissions will persist across rebuilds)" \
+			|| echo "Re-sign failed — falling back to ad-hoc build"; \
+	fi
 	@APP_PATH="$(LOCAL_DERIVED_DATA)/Build/Products/Debug/VoiceInk.app" && \
 	if [ -d "$$APP_PATH" ]; then \
 		echo "Copying VoiceInk.app to ~/Downloads..."; \
@@ -74,6 +93,30 @@ local: check setup
 	else \
 		echo "Error: Could not find built VoiceInk.app at $$APP_PATH"; \
 		exit 1; \
+	fi
+
+# Build and install to /Applications — единственный источник запуска.
+# Док и login items указывают на /Applications; установка туда исключает
+# одновременный запуск двух копий из разных путей.
+install: local
+	@echo "Quitting running VoiceInk (if any)..."
+	@osascript -e 'tell application "VoiceInk" to quit' >/dev/null 2>&1 || true
+	@sleep 2
+	@pkill -f "VoiceInk.app/Contents/MacOS/VoiceInk" 2>/dev/null || true
+	@sleep 1
+	@echo "Installing to /Applications/VoiceInk.app..."
+	@rm -rf /Applications/VoiceInk.app
+	@ditto "$(LOCAL_DERIVED_DATA)/Build/Products/Debug/VoiceInk.app" /Applications/VoiceInk.app
+	@xattr -cr /Applications/VoiceInk.app 2>/dev/null || true
+	@open /Applications/VoiceInk.app
+	@echo ""
+	@echo "Installed and launched /Applications/VoiceInk.app"
+	@if [ "$(LOCAL_SIGN_IDENTITY)" = "-" ]; then \
+		echo ""; \
+		echo "ВНИМАНИЕ: ad-hoc подпись — после КАЖДОЙ пересборки macOS сбросит"; \
+		echo "разрешения Accessibility/Screen Recording (нужно выдавать заново)."; \
+		echo "Один раз создай сертификат 'VoiceInk Local' и доверь его для подписи"; \
+		echo "кода — тогда разрешения сохранятся навсегда."; \
 	fi
 
 # Run application
@@ -107,6 +150,7 @@ help:
 	@echo "  setup              Copy whisper XCFramework to VoiceInk project"
 	@echo "  build              Build the VoiceInk Xcode project"
 	@echo "  local              Build for local use (no Apple Developer certificate needed)"
+	@echo "  install            Build + replace /Applications/VoiceInk.app + relaunch"
 	@echo "  run                Launch the built VoiceInk app"
 	@echo "  dev                Build and run the app (for development)"
 	@echo "  all                Run full build process (default)"

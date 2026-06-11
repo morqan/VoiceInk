@@ -237,10 +237,12 @@ struct SettingsView: View {
 
                 LaunchAtLogin.Toggle("Launch at Login")
 
+                #if !LOCAL_BUILD
                 Toggle(tr("Auto-check Updates"), isOn: Binding(
                     get: { updaterViewModel.automaticallyChecksForUpdates },
                     set: { updaterViewModel.setAutomaticallyChecksForUpdates($0) }
                 ))
+                #endif
 
                 Toggle(tr("Show Announcements"), isOn: $enableAnnouncements)
                     .onChange(of: enableAnnouncements) { _, newValue in
@@ -252,10 +254,12 @@ struct SettingsView: View {
                     }
 
                 HStack {
+                    #if !LOCAL_BUILD
                     Button(tr("Check for Updates")) {
                         updaterViewModel.checkForUpdates()
                     }
                     .disabled(!updaterViewModel.canCheckForUpdates)
+                    #endif
 
                     Button(tr("Reset Onboarding")) {
                         showResetOnboardingAlert = true
