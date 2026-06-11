@@ -50,6 +50,19 @@ struct SpeechAnalyticsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var period: SpeechPeriod = .week
     @Query(sort: \SpeechMetric.timestamp, order: .reverse) private var allMetrics: [SpeechMetric]
+    @Query(sort: \VoiceProfileTarget.name) private var styleProfiles: [VoiceProfileTarget]
+    @State private var selectedMetric: SpeechMetric?
+    @State private var exportFeedback: String?
+    @State private var exportFeedbackTask: DispatchWorkItem?
+    @State private var showExportSettings = false
+    /// Кэш дневной серии Match Score: compute() сканирует тексты всех сессий
+    /// периода — пересчитывать на каждый рендер body слишком дорого.
+    @State private var cachedMatchSeries: [(date: Date, value: Double)] = []
+    @AppStorage(UserDefaults.Keys.speechReportFolder) private var reportFolder: String = SpeechVaultExport.defaultFolder
+
+    private var activeStyleProfile: VoiceProfileTarget? {
+        styleProfiles.first { $0.isActive }
+    }
 
     var body: some View {
         ScrollView {
@@ -75,6 +88,15 @@ struct SpeechAnalyticsView: View {
             .padding(28)
         }
         .background(Color(.windowBackgroundColor))
+        .task(id: matchSeriesCacheKey) {
+            cachedMatchSeries = computeDailyMatchSeries()
+        }
+    }
+
+    /// Ключ инвалидации кэша Match Score серии: период, активный профиль, данные.
+    private var matchSeriesCacheKey: String {
+        let newest = allMetrics.first?.timestamp.timeIntervalSince1970 ?? 0
+        return "\(period.rawValue)|\(activeStyleProfile?.id.uuidString ?? "none")|\(allMetrics.count)|\(newest)"
     }
 
     // MARK: - Hero
@@ -97,6 +119,7 @@ struct SpeechAnalyticsView: View {
                         .foregroundStyle(.white.opacity(0.85))
                 }
                 Spacer()
+                exportButton
             }
         }
         .padding(24)
@@ -111,6 +134,83 @@ struct SpeechAnalyticsView: View {
                     )
                 )
         )
+    }
+
+    /// Экспорт недельного отчёта в Obsidian Vault + настройка папки.
+    private var exportButton: some View {
+        VStack(alignment: .trailing, spacing: 5) {
+            HStack(spacing: 6) {
+                Button {
+                    runExport()
+                } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 10, weight: .semibold))
+                        Text(L10n.t(en: "Export week", ru: "Экспорт недели"))
+                            .font(.system(size: 11, weight: .semibold))
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(.white.opacity(0.18)))
+                    .foregroundStyle(.white)
+                }
+                .buttonStyle(.plain)
+                .help(L10n.t(
+                    en: "Save the weekly speech report to Obsidian Vault",
+                    ru: "Сохранить недельный отчёт речи в Obsidian Vault"
+                ))
+
+                Button {
+                    showExportSettings.toggle()
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.white.opacity(0.7))
+                        .padding(4)
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $showExportSettings) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        LocalizedText(en: "Report folder", ru: "Папка отчётов")
+                            .font(.system(size: 11, weight: .semibold))
+                        TextField(SpeechVaultExport.defaultFolder, text: $reportFolder)
+                            .textFieldStyle(.roundedBorder)
+                            .font(.system(size: 11))
+                            .frame(width: 320)
+                        LocalizedText(
+                            en: "File: Speech Week YYYY-Www.md (overwritten on re-export)",
+                            ru: "Файл: Speech Week YYYY-Www.md (перезаписывается при повторном экспорте)"
+                        )
+                            .font(.system(size: 10))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(12)
+                }
+            }
+
+            if let exportFeedback {
+                Text(exportFeedback)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .lineLimit(2)
+                    .frame(maxWidth: 220, alignment: .trailing)
+            }
+        }
+    }
+
+    private func runExport() {
+        let result = SpeechVaultExport.exportWeek(allMetrics: allMetrics, profile: activeStyleProfile)
+        if result.succeeded {
+            exportFeedback = L10n.t(en: "Saved to Vault ✓", ru: "Сохранено в Vault ✓")
+        } else {
+            exportFeedback = result.error
+        }
+        // Отменяем предыдущий таймер: два экспорта подряд не должны
+        // стирать фидбек второго раньше времени
+        exportFeedbackTask?.cancel()
+        let task = DispatchWorkItem { exportFeedback = nil }
+        exportFeedbackTask = task
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4, execute: task)
     }
 
     // MARK: - Period selector
@@ -178,7 +278,8 @@ struct SpeechAnalyticsView: View {
                 detail: L10n.t(en: "Target ≤ 2", ru: "Цель ≤ 2"),
                 color: fillerColor(aggFillerRate),
                 icon: "text.bubble",
-                tip: SpeechMetricTips.fillers
+                tip: SpeechMetricTips.fillers,
+                delta: delta(fillerRate).map { CardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
             )
             statCard(
                 title: L10n.t(en: "Avg sentence", ru: "Длина предложения"),
@@ -187,7 +288,14 @@ struct SpeechAnalyticsView: View {
                 detail: L10n.t(en: "Target ≤ 18", ru: "Цель ≤ 18"),
                 color: sentenceColor(aggSentenceLength),
                 icon: "text.alignleft",
-                tip: SpeechMetricTips.sentenceLength
+                tip: SpeechMetricTips.sentenceLength,
+                delta: delta(sentenceLength).map { d in
+                    // «Лучше» = ближе к цели активного стиля (для Эриксона длиннее — хорошо)
+                    let target = activeStyleProfile?.targetSentenceLength ?? 18
+                    let improved = abs(sentenceLength(of: filteredMetrics) - target)
+                        < abs(sentenceLength(of: previousMetrics) - target)
+                    return CardDelta(value: d, format: "%.0f", improved: improved)
+                }
             )
             statCard(
                 title: L10n.t(en: "Anglicisms", ru: "Англицизмы"),
@@ -196,7 +304,8 @@ struct SpeechAnalyticsView: View {
                 detail: L10n.t(en: "Target ≤ 1", ru: "Цель ≤ 1"),
                 color: anglicismColor(aggAnglicismRate),
                 icon: "globe",
-                tip: SpeechMetricTips.anglicisms
+                tip: SpeechMetricTips.anglicisms,
+                delta: delta(anglicismRate).map { CardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
             )
             statCard(
                 title: L10n.t(en: "Speed", ru: "Темп"),
@@ -205,7 +314,8 @@ struct SpeechAnalyticsView: View {
                 detail: L10n.t(en: "Avg speaking pace", ru: "Средний темп речи"),
                 color: .blue,
                 icon: "speedometer",
-                tip: SpeechMetricTips.wpm
+                tip: SpeechMetricTips.wpm,
+                delta: delta(wpm).map { CardDelta(value: $0, format: "%.0f", improved: nil) }
             )
             statCard(
                 title: L10n.t(en: "Total words", ru: "Всего слов"),
@@ -214,7 +324,8 @@ struct SpeechAnalyticsView: View {
                 detail: L10n.t(en: "in this period", ru: "за период"),
                 color: .indigo,
                 icon: "text.alignleft",
-                tip: SpeechMetricTips.totalWords
+                tip: SpeechMetricTips.totalWords,
+                delta: delta({ Double(wordCount(of: $0)) }).map { CardDelta(value: $0, format: "%.0f", improved: nil) }
             )
             statCard(
                 title: L10n.t(en: "EN / RU ratio", ru: "EN / RU"),
@@ -223,7 +334,8 @@ struct SpeechAnalyticsView: View {
                 detail: L10n.t(en: "English chars share", ru: "Доля латинских букв"),
                 color: .pink,
                 icon: "character.textbox",
-                tip: SpeechMetricTips.enRuRatio
+                tip: SpeechMetricTips.enRuRatio,
+                delta: delta({ enRatio(of: $0) * 100 }).map { CardDelta(value: $0, format: "%.0f", improved: nil) }
             )
 
             statCard(
@@ -233,9 +345,20 @@ struct SpeechAnalyticsView: View {
                 detail: L10n.t(en: "Subordinations per sentence", ru: "Подчинения в предложении"),
                 color: .teal,
                 icon: "arrow.triangle.branch",
-                tip: SpeechMetricTips.complexity
+                tip: SpeechMetricTips.complexity,
+                delta: delta(complexity).map { CardDelta(value: $0, format: "%.1f", improved: nil) }
             )
         }
+    }
+
+    /// Дельта карточки к прошлому периоду.
+    /// improved: true → зелёный, false → красный, nil → нейтральная метрика (серый).
+    /// Вычисляется на месте вызова — например, длина предложения «улучшилась»,
+    /// если приблизилась к цели активного профиля, а не просто упала.
+    struct CardDelta {
+        let value: Double
+        let format: String
+        let improved: Bool?
     }
 
     private func statCard(
@@ -245,7 +368,8 @@ struct SpeechAnalyticsView: View {
         detail: String,
         color: Color,
         icon: String,
-        tip: String? = nil
+        tip: String? = nil,
+        delta: CardDelta? = nil
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
@@ -275,6 +399,9 @@ struct SpeechAnalyticsView: View {
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(.secondary)
                 }
+                if let delta {
+                    deltaBadge(delta)
+                }
             }
 
             Text(detail)
@@ -290,6 +417,25 @@ struct SpeechAnalyticsView: View {
         )
     }
 
+    @ViewBuilder
+    private func deltaBadge(_ delta: CardDelta) -> some View {
+        let formatted = String(format: delta.format, abs(delta.value))
+        // «↑0» со стрелкой и цветом вводит в заблуждение — нулевую дельту не показываем
+        if (Double(formatted) ?? 0) != 0 {
+            HStack(spacing: 1) {
+                Image(systemName: delta.value >= 0 ? "arrow.up" : "arrow.down")
+                    .font(.system(size: 8, weight: .bold))
+                Text(formatted)
+                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+            }
+            .foregroundColor(delta.improved.map { $0 ? Color.green : .red } ?? .secondary)
+            .help(L10n.t(
+                en: "vs previous period of the same length",
+                ru: "к предыдущему периоду той же длины"
+            ))
+        }
+    }
+
     // MARK: - Charts (Stage 4)
 
     private var trendCharts: some View {
@@ -303,7 +449,7 @@ struct SpeechAnalyticsView: View {
             HStack(alignment: .top, spacing: 12) {
                 chartCard(
                     title: "WPM",
-                    series: dailySeries(\.wpm, average: true),
+                    series: dailyWPMSeries,
                     color: .blue,
                     yAxisLabel: "WPM"
                 )
@@ -315,6 +461,17 @@ struct SpeechAnalyticsView: View {
                     targetLine: 2
                 )
             }
+
+            // Динамика совпадения с активным стилем — главный мотиватор тренера
+            if activeStyleProfile != nil {
+                chartCard(
+                    title: L10n.t(en: "Match Score (style)", ru: "Match Score (стиль)"),
+                    series: cachedMatchSeries,
+                    color: .indigo,
+                    yAxisLabel: "score",
+                    yDomain: 0...100
+                )
+            }
         }
     }
 
@@ -323,7 +480,8 @@ struct SpeechAnalyticsView: View {
         series: [(date: Date, value: Double)],
         color: Color,
         yAxisLabel: String,
-        targetLine: Double? = nil
+        targetLine: Double? = nil,
+        yDomain: ClosedRange<Double>? = nil
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
@@ -358,6 +516,7 @@ struct SpeechAnalyticsView: View {
                     }
                 }
                 .frame(height: 120)
+                .modifier(OptionalYDomain(domain: yDomain))
                 .chartXAxis {
                     AxisMarks(values: .stride(by: .day, count: max(1, series.count / 5))) { value in
                         AxisGridLine()
@@ -543,19 +702,18 @@ struct SpeechAnalyticsView: View {
     /// Streak ломается на первом дне с данными где criteria failed.
     /// Дни без данных пропускаются (не ломают streak).
     private func computeStreak(
-        passedCheck: (Int /* fillers */, Int /* anglicisms */, Int /* words */, Double /* avgSentenceLength */) -> Bool
+        passedCheck: (Int /* fillers */, Int /* anglicisms */, Int /* words */, Int /* sentences */) -> Bool
     ) -> Int {
         let cal = Calendar.current
         // Группируем все metrics по дням
-        var byDay: [Date: (fillers: Int, anglicisms: Int, words: Int, sentenceLengthSum: Double, sentenceCount: Int)] = [:]
+        var byDay: [Date: (fillers: Int, anglicisms: Int, words: Int, sentences: Int)] = [:]
         for m in allMetrics {
             let day = cal.startOfDay(for: m.timestamp)
-            var d = byDay[day, default: (0, 0, 0, 0, 0)]
+            var d = byDay[day, default: (0, 0, 0, 0)]
             d.fillers += m.fillerCount
             d.anglicisms += m.anglicismCount
             d.words += m.wordCount
-            d.sentenceLengthSum += m.avgSentenceLength
-            d.sentenceCount += 1
+            d.sentences += m.sentenceCount
             byDay[day] = d
         }
 
@@ -568,8 +726,7 @@ struct SpeechAnalyticsView: View {
 
         while cursor >= earliest {
             if let d = byDay[cursor] {
-                let avgSentence = d.sentenceCount > 0 ? d.sentenceLengthSum / Double(d.sentenceCount) : 0
-                if passedCheck(d.fillers, d.anglicisms, d.words, avgSentence) {
+                if passedCheck(d.fillers, d.anglicisms, d.words, d.sentences) {
                     streak += 1
                 } else {
                     break
@@ -604,9 +761,10 @@ struct SpeechAnalyticsView: View {
     }
 
     private var sentenceStreak: Int {
-        computeStreak { _, _, words, avgSentence in
-            guard words > 0 else { return false }
-            return avgSentence <= 18.0
+        computeStreak { _, _, words, sentences in
+            guard words > 0, sentences > 0 else { return false }
+            // Дневной агрегат: слова дня ÷ предложения дня (взвешенно, как в карточке)
+            return Double(words) / Double(sentences) <= 18.0
         }
     }
 
@@ -659,7 +817,14 @@ struct SpeechAnalyticsView: View {
 
             VStack(spacing: 6) {
                 ForEach(filteredMetrics.prefix(15)) { metric in
-                    sessionRow(metric)
+                    Button {
+                        selectedMetric = metric
+                    } label: {
+                        sessionRow(metric)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .help(L10n.t(en: "Open dictation breakdown", ru: "Открыть разбор диктовки"))
                 }
             }
         }
@@ -669,6 +834,9 @@ struct SpeechAnalyticsView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(.thinMaterial)
         )
+        .sheet(item: $selectedMetric) { metric in
+            SpeechSessionDetailView(metric: metric, profile: activeStyleProfile)
+        }
     }
 
     private func sessionRow(_ metric: SpeechMetric) -> some View {
@@ -714,6 +882,9 @@ struct SpeechAnalyticsView: View {
                         help: L10n.t(en: "Words repeated ≥ 5 times", ru: "Слов с повторами ≥ 5 раз")
                     )
                 }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.tertiary)
             }
         }
         .padding(.vertical, 4)
@@ -739,51 +910,83 @@ struct SpeechAnalyticsView: View {
         return allMetrics.filter { $0.timestamp >= start }
     }
 
+    /// Метрики предыдущего окна той же длины — для дельт на карточках.
+    /// Для «Всё» прошлого окна нет.
+    private var previousMetrics: [SpeechMetric] {
+        guard let start = period.startDate() else { return [] }
+        let days: Int
+        switch period {
+        case .today: days = 1
+        case .week:  days = 7
+        case .month: days = 30
+        case .all:   return []
+        }
+        guard let prevStart = Calendar.current.date(byAdding: .day, value: -days, to: start) else { return [] }
+        return allMetrics.filter { $0.timestamp >= prevStart && $0.timestamp < start }
+    }
+
     // MARK: - Aggregations
+    // Параметризованы по набору метрик: считаются и для текущего, и для прошлого периода.
 
-    private var aggWordCount: Int {
-        filteredMetrics.reduce(0) { $0 + $1.wordCount }
+    private func wordCount(of ms: [SpeechMetric]) -> Int {
+        ms.reduce(0) { $0 + $1.wordCount }
     }
 
-    private var aggFillerCount: Int {
-        filteredMetrics.reduce(0) { $0 + $1.fillerCount }
+    private func fillerRate(of ms: [SpeechMetric]) -> Double {
+        let words = wordCount(of: ms)
+        guard words > 0 else { return 0 }
+        return Double(ms.reduce(0) { $0 + $1.fillerCount }) / Double(words) * 100
     }
 
-    private var aggAnglicismCount: Int {
-        filteredMetrics.reduce(0) { $0 + $1.anglicismCount }
+    private func anglicismRate(of ms: [SpeechMetric]) -> Double {
+        let words = wordCount(of: ms)
+        guard words > 0 else { return 0 }
+        return Double(ms.reduce(0) { $0 + $1.anglicismCount }) / Double(words) * 100
     }
 
-    private var aggFillerRate: Double {
-        guard aggWordCount > 0 else { return 0 }
-        return Double(aggFillerCount) / Double(aggWordCount) * 100
+    private func sentenceLength(of ms: [SpeechMetric]) -> Double {
+        let sentences = ms.reduce(0) { $0 + $1.sentenceCount }
+        guard sentences > 0 else { return 0 }
+        return Double(wordCount(of: ms)) / Double(sentences)
     }
 
-    private var aggAnglicismRate: Double {
-        guard aggWordCount > 0 else { return 0 }
-        return Double(aggAnglicismCount) / Double(aggWordCount) * 100
+    /// WPM — pooled: все слова ÷ суммарное время записей (вместо невзвешенного
+    /// среднего по сессиям, где 16-словная реплика весила как 10-минутная диктовка).
+    private func wpm(of ms: [SpeechMetric]) -> Double {
+        let timed = ms.filter { $0.durationSeconds > 0 && $0.wordCount > 0 }
+        let minutes = timed.reduce(0.0) { $0 + $1.durationSeconds } / 60.0
+        guard minutes > 0 else { return 0 }
+        return Double(timed.reduce(0) { $0 + $1.wordCount }) / minutes
     }
 
-    private var aggSentenceLength: Double {
-        let totalSentences = filteredMetrics.reduce(0) { $0 + $1.sentenceCount }
-        guard totalSentences > 0 else { return 0 }
-        return Double(aggWordCount) / Double(totalSentences)
+    /// EN/RU — взвешенно по словам сессий (длинная сессия весит больше короткой).
+    private func enRatio(of ms: [SpeechMetric]) -> Double {
+        let words = wordCount(of: ms)
+        guard words > 0 else { return 0 }
+        return ms.reduce(0.0) { $0 + $1.enRuRatio * Double($1.wordCount) } / Double(words)
     }
 
-    private var aggWPM: Double {
-        let valid = filteredMetrics.filter { $0.wpm > 0 }
-        guard !valid.isEmpty else { return 0 }
-        return valid.reduce(0) { $0 + $1.wpm } / Double(valid.count)
+    /// Сложность — взвешенно по словам, включая нулевые сессии
+    /// (исключение нулей смещало среднее вверх).
+    private func complexity(of ms: [SpeechMetric]) -> Double {
+        let words = wordCount(of: ms)
+        guard words > 0 else { return 0 }
+        return ms.reduce(0.0) { $0 + $1.avgSentenceComplexity * Double($1.wordCount) } / Double(words)
     }
 
-    private var aggEnRatio: Double {
-        guard !filteredMetrics.isEmpty else { return 0 }
-        return filteredMetrics.reduce(0) { $0 + $1.enRuRatio } / Double(filteredMetrics.count)
-    }
+    private var aggWordCount: Int { wordCount(of: filteredMetrics) }
+    private var aggFillerRate: Double { fillerRate(of: filteredMetrics) }
+    private var aggAnglicismRate: Double { anglicismRate(of: filteredMetrics) }
+    private var aggSentenceLength: Double { sentenceLength(of: filteredMetrics) }
+    private var aggWPM: Double { wpm(of: filteredMetrics) }
+    private var aggEnRatio: Double { enRatio(of: filteredMetrics) }
+    private var aggComplexity: Double { complexity(of: filteredMetrics) }
 
-    private var aggComplexity: Double {
-        let valid = filteredMetrics.filter { $0.avgSentenceComplexity > 0 }
-        guard !valid.isEmpty else { return 0 }
-        return valid.reduce(0) { $0 + $1.avgSentenceComplexity } / Double(valid.count)
+    /// Дельта к прошлому окну, nil если прошлых данных нет.
+    private func delta(_ value: (([SpeechMetric]) -> Double)) -> Double? {
+        let prev = previousMetrics
+        guard !prev.isEmpty else { return nil }
+        return value(filteredMetrics) - value(prev)
     }
 
     private var topFillerList: [(word: String, count: Int)] {
@@ -821,16 +1024,37 @@ struct SpeechAnalyticsView: View {
 
     // MARK: - Daily series for charts
 
-    /// Группирует filteredMetrics по дням, для каждого дня — среднее значение поля.
-    private func dailySeries(_ keyPath: KeyPath<SpeechMetric, Double>, average: Bool) -> [(date: Date, value: Double)] {
+    /// Дневной WPM — pooled: слова дня ÷ время записей дня.
+    private var dailyWPMSeries: [(date: Date, value: Double)] {
         let cal = Calendar.current
-        var buckets: [Date: [Double]] = [:]
-        for m in filteredMetrics {
+        var buckets: [Date: (words: Int, seconds: Double)] = [:]
+        for m in filteredMetrics where m.durationSeconds > 0 && m.wordCount > 0 {
             let day = cal.startOfDay(for: m.timestamp)
-            buckets[day, default: []].append(m[keyPath: keyPath])
+            let prev = buckets[day, default: (0, 0)]
+            buckets[day] = (prev.words + m.wordCount, prev.seconds + m.durationSeconds)
         }
         return buckets
-            .map { (date: $0.key, value: average ? ($0.value.reduce(0, +) / Double($0.value.count)) : $0.value.reduce(0, +)) }
+            .compactMap { day, t -> (date: Date, value: Double)? in
+                guard t.seconds > 0 else { return nil }
+                return (date: day, value: Double(t.words) / (t.seconds / 60.0))
+            }
+            .sorted { $0.date < $1.date }
+    }
+
+    /// Дневной Match Score по активному профилю — кривая «дохожу до стиля».
+    /// Вызывается только из .task при смене ключа кэша — не на каждый рендер.
+    private func computeDailyMatchSeries() -> [(date: Date, value: Double)] {
+        guard let active = activeStyleProfile else { return [] }
+        let cal = Calendar.current
+        var buckets: [Date: [SpeechMetric]] = [:]
+        for m in filteredMetrics {
+            buckets[cal.startOfDay(for: m.timestamp), default: []].append(m)
+        }
+        return buckets
+            .compactMap { day, ms -> (date: Date, value: Double)? in
+                guard let result = VoiceProfileMatcher.compute(target: active, metrics: ms) else { return nil }
+                return (date: day, value: result.totalScore)
+            }
             .sorted { $0.date < $1.date }
     }
 
@@ -873,5 +1097,18 @@ struct SpeechAnalyticsView: View {
         if rate <= 1 { return .green }
         if rate <= 3 { return .orange }
         return .red
+    }
+}
+
+/// Опциональный фиксированный домен оси Y (для Match Score 0–100).
+private struct OptionalYDomain: ViewModifier {
+    let domain: ClosedRange<Double>?
+
+    func body(content: Content) -> some View {
+        if let domain {
+            content.chartYScale(domain: domain)
+        } else {
+            content
+        }
     }
 }
