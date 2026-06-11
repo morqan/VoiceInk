@@ -624,18 +624,8 @@ private struct MarkerChip: View {
             Text(usage.phrase)
                 .font(.system(size: 10, weight: .medium))
             if usage.isUsed {
-                if usage.isAmbiguousSingleToken {
-                    // Возможно ложное срабатывание (substring внутри другого слова)
-                    Image(systemName: "questionmark.circle")
-                        .font(.system(size: 8))
-                        .help(L10n.t(
-                            en: "Matched by substring — may be a false positive (inside another word)",
-                            ru: "Засчитано по подстроке — возможно ложно (внутри другого слова)"
-                        ))
-                } else {
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 8, weight: .bold))
-                }
+                Image(systemName: "checkmark")
+                    .font(.system(size: 8, weight: .bold))
             } else {
                 Button {
                     NSPasteboard.general.clearContents()
@@ -664,9 +654,7 @@ private struct MarkerChip: View {
     }
 
     private var chipFill: Color {
-        guard usage.isUsed else { return Color.gray.opacity(0.08) }
-        // надёжно использованная — насыщенный indigo; возможно ложная — приглушённый
-        return usage.isAmbiguousSingleToken ? Color.indigo.opacity(0.45) : Color.indigo
+        usage.isUsed ? Color.indigo : Color.gray.opacity(0.08)
     }
 }
 

@@ -185,6 +185,9 @@ struct VoiceInkApp: App {
         AppShortcuts.updateAppShortcutParameters()
 
         let migrationTask = SessionMetricMigrationService.shared.runIfNeeded(modelContainer: resolvedContainer)
+        // Одноразовый пересчёт speech-метрик под честные формулы
+        // (границы слов, сложность без «что») — иначе тренды смешивают две линейки
+        SpeechMetricRecalcService.shared.runIfNeeded(modelContainer: resolvedContainer)
         let mainContext = resolvedContainer.mainContext
         Task {
             await migrationTask?.value

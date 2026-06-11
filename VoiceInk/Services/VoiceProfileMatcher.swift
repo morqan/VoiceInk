@@ -55,14 +55,13 @@ enum VoiceProfileMatcher {
     }
 
     /// Разбивка одной marker-фразы: встретилась хоть раз = used.
+    /// Подсчёт по границам слов (PhraseOccurrenceScanner) — без ложных
+    /// срабатываний внутри других слов.
     struct MarkerPhraseUsage: Identifiable {
         let phrase: String
         var id: String { phrase }
         let count: Int              // суммарно по всем текстам периода
         var isUsed: Bool { count > 0 }
-        /// true, если фраза — один токен без пробелов: substring-матч без границ
-        /// слова легко даёт ложное «used» (например «цель» внутри «целься»).
-        let isAmbiguousSingleToken: Bool
     }
 
     /// Развёрнутый результат сравнения. Каждый под-score 0..100.
@@ -118,22 +117,36 @@ enum VoiceProfileMatcher {
         let totalFillers = metrics.reduce(0) { $0 + $1.fillerCount }
         let totalSentences = metrics.reduce(0) { $0 + $1.sentenceCount }
 
-        let validWPM = metrics.filter { $0.wpm > 0 }
-        let actualWPM = validWPM.isEmpty ? 0 : validWPM.reduce(0) { $0 + $1.wpm } / Double(validWPM.count)
+        // WPM — pooled: все слова периода ÷ суммарное время записей.
+        // Невзвешенное среднее по сессиям давало 16-словной реплике вес 10-минутной диктовки.
+        let timed = metrics.filter { $0.durationSeconds > 0 && $0.wordCount > 0 }
+        let timedWords = timed.reduce(0) { $0 + $1.wordCount }
+        let timedMinutes = timed.reduce(0.0) { $0 + $1.durationSeconds } / 60.0
+        let actualWPM = timedMinutes > 0 ? Double(timedWords) / timedMinutes : 0
 
         let actualSentenceLength = totalSentences > 0
             ? Double(totalWords) / Double(totalSentences)
             : 0
 
-        let validComplexity = metrics.filter { $0.avgSentenceComplexity > 0 }
-        let actualComplexity = validComplexity.isEmpty
-            ? 0
-            : validComplexity.reduce(0) { $0 + $1.avgSentenceComplexity } / Double(validComplexity.count)
+        // Сложность — взвешенная по словам, включая нулевые сессии
+        // (исключение нулей смещало среднее вверх — survivorship bias).
+        let actualComplexity = metrics.reduce(0.0) {
+            $0 + $1.avgSentenceComplexity * Double($1.wordCount)
+        } / Double(totalWords)
 
         let actualFillerRate = Double(totalFillers) / Double(totalWords) * 100
 
-        let actualMarkerHits = countMarkerHits(in: metrics.map { $0.text }, phrases: target.markerPhrases)
-        let actualMarkerRate = Double(actualMarkerHits) / Double(totalWords) * 100
+        // Маркеры: per-phrase подсчёт по границам слов. Для скоринга — анти-накрутка:
+        // одна фраза покрывает не более 40% целевых вхождений, стилю нужен репертуар,
+        // а не «возможно» сто раз подряд. Кап применяется только при ≥ 3 фразах в
+        // профиле — иначе 100% по оси была бы математически недостижима.
+        let perPhrase = countMarkerHitsPerPhrase(in: metrics.map { $0.text }, phrases: target.markerPhrases)
+        let targetHits = target.targetMarkerRatePer100Words * Double(totalWords) / 100.0
+        let perPhraseCap = target.markerPhrases.count >= 3
+            ? max(1, Int((targetHits * 0.4).rounded(.up)))
+            : Int.max
+        let scoredMarkerHits = perPhrase.values.reduce(0) { $0 + min($1, perPhraseCap) }
+        let actualMarkerRate = Double(scoredMarkerHits) / Double(totalWords) * 100
 
         // Под-scores
         let wpmS = proximityScore(actual: actualWPM, target: target.targetWPM)
@@ -175,19 +188,14 @@ enum VoiceProfileMatcher {
             return a.weightedGain > b.weightedGain
         }
 
-        // Per-phrase использование маркеров (для chips тренера).
-        // Дедупим по lowercased — у кастомных профилей возможны дубли/регистровые
-        // варианты, иначе ForEach получит дубль Identifiable id.
-        let perPhrase = countMarkerHitsPerPhrase(in: metrics.map { $0.text }, phrases: target.markerPhrases)
+        // Per-phrase использование маркеров (для chips тренера) — сырые counts,
+        // без анти-накруточного капа. Дедуп по lowercased: у кастомных профилей
+        // возможны дубли, иначе ForEach получит дубль Identifiable id.
         var seenPhrases = Set<String>()
         let markerUsage: [MarkerPhraseUsage] = target.markerPhrases.compactMap { phrase in
             let key = phrase.lowercased()
             guard seenPhrases.insert(key).inserted else { return nil }
-            return MarkerPhraseUsage(
-                phrase: phrase,
-                count: perPhrase[key] ?? 0,
-                isAmbiguousSingleToken: !phrase.contains(" ")
-            )
+            return MarkerPhraseUsage(phrase: phrase, count: perPhrase[key] ?? 0)
         }
 
         return MatchResult(
@@ -244,28 +252,16 @@ enum VoiceProfileMatcher {
     // MARK: - Marker counting
 
     /// Считает вхождения КАЖДОЙ marker phrase отдельно: [phrase.lowercased(): count].
-    /// substring-матч без границ слов (поведение сохранено намеренно — иначе total score поедет).
+    /// Честный матчинг: границы слов, длинные фразы первыми, без двойного счёта
+    /// пересечений («именно поэтому» не даёт ещё и «поэтому»).
     static func countMarkerHitsPerPhrase(in texts: [String], phrases: [String]) -> [String: Int] {
         guard !phrases.isEmpty else { return [:] }
-        let lowerTexts = texts.map { $0.lowercased() }
         var result: [String: Int] = [:]
-        for phrase in phrases {
-            let p = phrase.lowercased()
-            var count = 0
-            for lower in lowerTexts {
-                var searchRange = lower.startIndex..<lower.endIndex
-                while let range = lower.range(of: p, range: searchRange) {
-                    count += 1
-                    searchRange = range.upperBound..<lower.endIndex
-                }
+        for text in texts {
+            for (phrase, count) in PhraseOccurrenceScanner.counts(of: phrases, in: text) {
+                result[phrase, default: 0] += count
             }
-            result[p] = count
         }
         return result
-    }
-
-    /// Суммарное число вхождений всех marker phrases — обёртка над per-phrase подсчётом.
-    private static func countMarkerHits(in texts: [String], phrases: [String]) -> Int {
-        countMarkerHitsPerPhrase(in: texts, phrases: phrases).values.reduce(0, +)
     }
 }

@@ -145,7 +145,7 @@ enum VoiceStyleCoaching {
                 "Ты уже дочитал до этого места, это значит что часть тебя хочет разобраться, так что давай разберёмся.",
                 "По мере того как ты привыкаешь к новому ритму, это значит что старая тревога теряет власть."
             ],
-            axis: .complexity, relatedMarkers: ["это значит что", "так что", "и когда", "по мере того как"]),
+            axis: .markers, relatedMarkers: ["это значит что", "так что", "и когда", "по мере того как"]),
         CoachingPattern(
             name: LocStr("Двойная связка иллюзорного выбора", "Double bind (illusory choice)"),
             what: LocStr(
@@ -379,14 +379,14 @@ enum VoiceStyleCoaching {
         CoachingPattern(
             name: LocStr("Микро-история", "Micro-story"),
             what: LocStr(
-                "Замени абстрактный тезис коротким случаем «был момент, когда…». Конкретные существительные и глаголы действия снижают сложность и держат внимание лучше любого аргумента.",
-                "Swap an abstract claim for a short «there was a moment when…». Concrete nouns and action verbs lower complexity and hold attention."),
+                "Замени абстрактный тезис коротким случаем. Конкретные существительные и глаголы действия снижают сложность и держат внимание лучше любого аргумента. Рассказывай через двоеточие и тире, а не через «когда» — союз поднял бы сложность обратно.",
+                "Swap an abstract claim for a short case. Concrete nouns and action verbs lower complexity and hold attention. Tell it with a colon and a dash, not «when» — the conjunction would push complexity back up."),
             formula: LocStr(
-                "Был [момент / история], когда [конкретное действие] — и [что изменилось]",
-                "There was a [moment] when [a concrete action] — and [what changed]"),
+                "Помню [момент / историю]: [конкретное действие] — и [что изменилось]",
+                "I remember a [moment / story]: [a concrete action] — and [what changed]"),
             examples: [
-                "Был момент, когда я чуть не бросил — а потом одно письмо всё развернуло.",
-                "Помню момент: экран потух, и стало понятно, что бэкапа нет."
+                "Помню момент: я чуть не бросил — а потом одно письмо всё развернуло.",
+                "Расскажу историю: клиент позвонил в пятницу в шесть вечера — и всё закрутилось."
             ],
             axis: .complexity, relatedMarkers: ["история", "момент"]),
         CoachingPattern(
@@ -428,8 +428,8 @@ enum VoiceStyleCoaching {
                 "Тебе надо УДЛИНЯТЬ до 30 слов. Не ставь точку после первой мысли: цепляй вторую через «и пока», «по мере того как». Держи интонацию ровной — модель ставит точку на паузе.",
                 "You need to LENGTHEN toward 30 words. Don't end after the first thought: chain a second via «и пока». Keep intonation level."),
             .complexity: LocStr(
-                "Цель 5 — многоэтажные конструкции. Поднимай придаточными «который», «когда», «если» и причинными «это значит что», «так что». Дроби длинную фразу паузами, не точками.",
-                "Target 5 means multi-level constructions. Raise it with «который», «когда», «если» and causal «это значит что». Break long phrases with pauses, not periods."),
+                "Цель 5 — многоэтажные конструкции. Поднимай придаточными «который», «когда», «если», «пока», «чтобы» — это счётные маркеры подчинения. Связки «это значит что» / «так что» кормят ось маркер-фраз, а сложность поднимают только запятыми. Дроби длинную фразу паузами, не точками.",
+                "Target 5 means multi-level constructions. Raise it with «который», «когда», «если», «пока», «чтобы» — the counted subordination markers. The «это значит что» / «так что» connectors feed the marker axis and only add complexity via commas. Break long phrases with pauses, not periods."),
             .wpm: LocStr(
                 "Цель медленная — 105, не гонка. Гипноз живёт в плавности: говори чуть медленнее обычного, тяни гласные на связках. Перелёт штрафуется так же, как недолёт.",
                 "Target is slow — 105, not a race. Speak a touch slower, stretch vowels on connectors. Overshoot is penalized like undershoot."),

@@ -186,17 +186,19 @@ struct SpeechInsightsSection: View {
         return Double(totalWords) / Double(totalSentences)
     }
 
-    /// Средний WPM (среднее арифметическое по сессиям где WPM > 0)
+    /// WPM — pooled: слова дня ÷ суммарное время записей дня
+    /// (невзвешенное среднее по сессиям давало короткой реплике вес длинной диктовки).
     private var avgWPM: Double {
-        let valid = todayMetrics.filter { $0.wpm > 0 }
-        guard !valid.isEmpty else { return 0 }
-        return valid.reduce(0) { $0 + $1.wpm } / Double(valid.count)
+        let timed = todayMetrics.filter { $0.durationSeconds > 0 && $0.wordCount > 0 }
+        let minutes = timed.reduce(0.0) { $0 + $1.durationSeconds } / 60.0
+        guard minutes > 0 else { return 0 }
+        return Double(timed.reduce(0) { $0 + $1.wordCount }) / minutes
     }
 
-    /// Средняя доля латинских символов
+    /// Доля латинских символов — взвешенно по словам сессий
     private var avgEnRuRatio: Double {
-        guard !todayMetrics.isEmpty else { return 0 }
-        return todayMetrics.reduce(0) { $0 + $1.enRuRatio } / Double(todayMetrics.count)
+        guard totalWords > 0 else { return 0 }
+        return todayMetrics.reduce(0.0) { $0 + $1.enRuRatio * Double($1.wordCount) } / Double(totalWords)
     }
 
     private var averageWPMDetail: String {

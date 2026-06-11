@@ -24,7 +24,7 @@ enum SpeechMetricsAnalyzer {
 
     /// Список слов-паразитов Моргана из speech-tracker.md.
     /// Хранится в lowercase для регистронезависимого матчинга.
-    /// Многословные ("как бы", "это самое", "в общем") матчатся через contains в полном тексте.
+    /// Многословные ("как бы", "это самое", "в общем") — через PhraseOccurrenceScanner (границы слов).
     static let singleWordFillers: Set<String> = [
         "короче", "типа", "ну", "вот",
         "блин", "значит", "собственно", "понимаешь",
@@ -139,7 +139,8 @@ enum SpeechMetricsAnalyzer {
 
     /// Считает паразитов в тексте.
     /// Single-word — по точному матчу слова в массиве слов.
-    /// Multi-word — поиск подстроки в lowercased тексте.
+    /// Multi-word — через PhraseOccurrenceScanner: границы слов, чтобы «то есть»
+    /// не матчился внутри «прос[то есть]ь».
     static func countFillers(text: String, words: [String]) -> [String: Int] {
         var counts: [String: Int] = [:]
 
@@ -151,18 +152,8 @@ enum SpeechMetricsAnalyzer {
         }
 
         // Multi-word fillers
-        let lowerText = text.lowercased()
-        for phrase in multiWordFillers {
-            // Регулярное вхождение через ranges
-            var searchRange = lowerText.startIndex..<lowerText.endIndex
-            var phraseCount = 0
-            while let range = lowerText.range(of: phrase, range: searchRange) {
-                phraseCount += 1
-                searchRange = range.upperBound..<lowerText.endIndex
-            }
-            if phraseCount > 0 {
-                counts[phrase] = phraseCount
-            }
+        for (phrase, count) in PhraseOccurrenceScanner.counts(of: multiWordFillers, in: text) where count > 0 {
+            counts[phrase] = count
         }
 
         return counts
@@ -228,9 +219,11 @@ enum SpeechMetricsAnalyzer {
 
     /// Маркеры подчинения для русского — союзы и относительные местоимения.
     /// Каждое вхождение в текст = +1 к сложности (per sentence average).
+    /// Стоявшее здесь голое «что» убрано: это сверхчастотное слово («что делать?»,
+    /// «а что по срокам») давало львиную долю балла без всякого подчинения.
     static let subordinationMarkers: [String] = [
         "который", "которая", "которое", "которые", "которых", "которым", "которой",
-        "что", "чтобы",
+        "чтобы",
         "если", "когда", "пока", "хотя",
         "потому что", "так как", "несмотря на",
         "поскольку", "ибо",
@@ -241,26 +234,12 @@ enum SpeechMetricsAnalyzer {
     /// конструкций (длинные обволакивающие предложения, как у Эриксона).
     ///
     /// Формула: (маркеры_подчинения + 0.3 × запятые) / sentenceCount
+    /// Маркеры — через PhraseOccurrenceScanner: границы слов + без двойного счёта
+    /// вложений («как будто» больше не даёт ещё и «будто»).
     static func calculateComplexity(text: String, sentenceCount: Int) -> Double {
         guard sentenceCount > 0 else { return 0 }
-        let lower = text.lowercased()
 
-        var markerHits = 0
-        for marker in subordinationMarkers {
-            var searchRange = lower.startIndex..<lower.endIndex
-            while let range = lower.range(of: marker, range: searchRange) {
-                // Проверка что это отдельное слово, а не подстрока
-                let isWordStart = range.lowerBound == lower.startIndex
-                    || !lower[lower.index(before: range.lowerBound)].isLetter
-                let isWordEnd = range.upperBound == lower.endIndex
-                    || !lower[range.upperBound].isLetter
-                if isWordStart && isWordEnd {
-                    markerHits += 1
-                }
-                searchRange = range.upperBound..<lower.endIndex
-            }
-        }
-
+        let markerHits = PhraseOccurrenceScanner.totalCount(of: subordinationMarkers, in: text)
         let commaCount = text.filter { $0 == "," }.count
         let totalScore = Double(markerHits) + 0.3 * Double(commaCount)
         return totalScore / Double(sentenceCount)

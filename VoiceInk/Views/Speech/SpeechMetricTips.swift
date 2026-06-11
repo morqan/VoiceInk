@@ -37,8 +37,8 @@ enum SpeechMetricTips {
 
     static var wpm: String {
         L10n.t(
-            en: "Words per minute: word count ÷ full recording duration. Pauses and thinking time are included, so the value is lower than your articulation pace; the period average is per-session, not weighted by length. The card has no target of its own — the active style profile sets it. Conversational range is roughly 80–140.",
-            ru: "Слов в минуту: число слов ÷ длительность записи целиком. Паузы и раздумья входят в хронометраж, поэтому показатель занижен относительно чистого темпа речи; среднее за период считается по сессиям без взвешивания по длине. Своей цели у карточки нет — целевой темп задаёт активный профиль стиля. Разговорный диапазон — примерно 80–140."
+            en: "Words per minute: words of recordings with known duration ÷ their total time (pooled — a long dictation rightly weighs more than a short one). Pauses and thinking time are included, so the value is lower than your articulation pace. The card has no target of its own — the active style profile sets it. Conversational range is roughly 80–140.",
+            ru: "Слов в минуту: слова записей с известной длительностью ÷ их суммарное время (взвешенно — длинная диктовка справедливо весит больше короткой). Паузы и раздумья входят в хронометраж, поэтому показатель занижен относительно чистого темпа речи. Своей цели у карточки нет — целевой темп задаёт активный профиль стиля. Разговорный диапазон — примерно 80–140."
         )
     }
 
@@ -58,8 +58,8 @@ enum SpeechMetricTips {
 
     static var complexity: String {
         L10n.t(
-            en: "Speech subordination: (subordinating markers «который / что / чтобы / если / потому что…» + 0.3 × commas) ÷ sentence count. Reference: 0 — clipped simple phrases, ~1 — one clause per sentence, 5+ — multi-level constructions. Commas come from the speech model, and the frequent «что» inflates the score — treat it as a guide, not a precise measure. Target depends on the profile: Negotiator 1, Leader and Speaker 2, Erickson 5.",
-            ru: "Подчинённость речи: (подчинительные союзы «который / что / чтобы / если / потому что…» + 0,3 × запятые) ÷ число предложений. Ориентир: 0 — рубленые простые фразы, ~1 — один оборот на предложение, 5+ — многоэтажные конструкции. Запятые ставит модель распознавания, а частое «что» завышает балл — это ориентир, не точное измерение. Цель зависит от профиля: Переговорщик 1, Лидер и Спикер 2, Эриксон 5."
+            en: "Speech subordination: (subordinating markers «который / чтобы / если / когда / потому что…» + 0.3 × commas) ÷ sentence count, word-boundary matched. Reference: 0 — clipped simple phrases, ~1 — one clause per sentence, 5+ — multi-level constructions. Commas come from the speech model — treat it as a guide, not a precise measure. Target depends on the profile: Negotiator 1, Leader and Speaker 2, Erickson 5.",
+            ru: "Подчинённость речи: (подчинительные союзы «который / чтобы / если / когда / потому что…» + 0,3 × запятые) ÷ число предложений, считается по границам слов. Ориентир: 0 — рубленые простые фразы, ~1 — один оборот на предложение, 5+ — многоэтажные конструкции. Запятые ставит модель распознавания — это ориентир, не точное измерение. Цель зависит от профиля: Переговорщик 1, Лидер и Спикер 2, Эриксон 5."
         )
     }
 
@@ -105,8 +105,8 @@ enum SpeechMetricTips {
         let suffixEn = phrases.isEmpty ? "" : " Profile phrases: \(list)."
         let suffixRu = phrases.isEmpty ? "" : " Фразы профиля: \(list)."
         return L10n.t(
-            en: "Frequency of the style's signature phrases per 100 words — the heaviest axis, 30% of the total. Overshoot isn't penalized, but mechanical repetition is gaming, not style: weave phrases into natural spots — opening a thought, concluding.\(suffixEn)",
-            ru: "Частота фирменных фраз стиля на 100 слов — самая тяжёлая ось, 30% итога. Перебор не штрафуется, но механическое повторение — это накрутка, а не стиль: вплетай фразы в естественные места — открытие мысли, вывод.\(suffixRu)"
+            en: "Frequency of the style's signature phrases per 100 words — the heaviest axis, 30% of the total. Counted at word boundaries, and one phrase covers at most 40% of the target — the style needs a repertoire, not one word on repeat. The shown value is already capped; raw per-phrase counts are on the chips below. Weave phrases into natural spots: opening a thought, concluding.\(suffixEn)",
+            ru: "Частота фирменных фраз стиля на 100 слов — самая тяжёлая ось, 30% итога. Считается по границам слов, и одна фраза покрывает не более 40% цели — стилю нужен репертуар, а не одно слово на повторе. Показанный факт — уже с капом; полные счётчики каждой фразы — на chips ниже. Вплетай фразы в естественные места: открытие мысли, вывод.\(suffixRu)"
         )
     }
 
@@ -114,15 +114,15 @@ enum SpeechMetricTips {
 
     static var streaks: String {
         L10n.t(
-            en: "How many consecutive days the daily aggregate stays on target (for sentence length — the average across the day's sessions). Computed over the whole history, regardless of the selected period. A day without dictations doesn't break the streak — it's skipped; only a failing day with data breaks it. Flame at 7 days.",
-            ru: "Сколько дней подряд дневной суммарный показатель держится в цели (для длины предложения — среднее по сессиям дня). Считается по всей истории, независимо от выбранного периода. День без диктовок стрик не ломает — он просто пропускается; ломает только день с данными, проваливший цель. Огонёк — с 7 дней."
+            en: "How many consecutive days the daily aggregate stays on target (for sentence length — day words ÷ day sentences, pooled like the card). Computed over the whole history, regardless of the selected period. A day without dictations doesn't break the streak — it's skipped; only a failing day with data breaks it. Flame at 7 days.",
+            ru: "Сколько дней подряд дневной суммарный показатель держится в цели (для длины предложения — слова дня ÷ предложения дня, взвешенно, как на карточке). Считается по всей истории, независимо от выбранного периода. День без диктовок стрик не ломает — он просто пропускается; ломает только день с данными, проваливший цель. Огонёк — с 7 дней."
         )
     }
 
     static var trends: String {
         L10n.t(
-            en: "Daily dynamics for the selected period. A WPM point is the day's per-session average; a fillers point is the day's rate (day fillers ÷ day words × 100); the dashed line on the fillers chart is the ≤ 2 target. Days without dictations aren't drawn as zeros — the line connects neighbors. Watch the slope over 2–4 weeks: individual points are noisy.",
-            ru: "Динамика по дням выбранного периода. Точка WPM — среднее по сессиям дня; точка паразитов — дневной rate (паразиты дня ÷ слова дня × 100); пунктир на графике паразитов — цель ≤ 2. Дни без диктовок не рисуются нулями — линия соединяет соседние точки. Смотри на наклон за 2–4 недели: отдельные точки шумные."
+            en: "Daily dynamics for the selected period. A WPM point is the day's pooled pace (day words ÷ day recording time); a fillers point is the day's rate (day fillers ÷ day words × 100), the dashed line is the ≤ 2 target; the Match Score point is the day's match with the active style. Days without dictations aren't drawn as zeros — the line connects neighbors. Watch the slope over 2–4 weeks: individual points are noisy.",
+            ru: "Динамика по дням выбранного периода. Точка WPM — честный дневной темп (слова дня ÷ время записей дня); точка паразитов — дневной rate (паразиты дня ÷ слова дня × 100), пунктир — цель ≤ 2; точка Match Score — дневное совпадение с активным стилем. Дни без диктовок не рисуются нулями — линия соединяет соседние точки. Смотри на наклон за 2–4 недели: отдельные точки шумные."
         )
     }
 
