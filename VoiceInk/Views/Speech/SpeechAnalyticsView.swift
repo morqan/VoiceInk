@@ -134,10 +134,7 @@ struct SpeechAnalyticsView: View {
                 .buttonStyle(.plain)
             }
             Spacer()
-            Text(L10n.t(
-                en: "\(filteredMetrics.count) session\(filteredMetrics.count == 1 ? "" : "s")",
-                ru: "\(filteredMetrics.count) \(filteredMetrics.count == 1 ? "сессия" : "сессий")"
-            ))
+            Text(L10n.sessionsCount(filteredMetrics.count))
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(.secondary)
         }
@@ -180,7 +177,8 @@ struct SpeechAnalyticsView: View {
                 unit: L10n.t(en: "/100w", ru: "/100сл"),
                 detail: L10n.t(en: "Target ≤ 2", ru: "Цель ≤ 2"),
                 color: fillerColor(aggFillerRate),
-                icon: "text.bubble"
+                icon: "text.bubble",
+                tip: SpeechMetricTips.fillers
             )
             statCard(
                 title: L10n.t(en: "Avg sentence", ru: "Длина предложения"),
@@ -188,7 +186,8 @@ struct SpeechAnalyticsView: View {
                 unit: L10n.t(en: "words", ru: "слов"),
                 detail: L10n.t(en: "Target ≤ 18", ru: "Цель ≤ 18"),
                 color: sentenceColor(aggSentenceLength),
-                icon: "text.alignleft"
+                icon: "text.alignleft",
+                tip: SpeechMetricTips.sentenceLength
             )
             statCard(
                 title: L10n.t(en: "Anglicisms", ru: "Англицизмы"),
@@ -196,7 +195,8 @@ struct SpeechAnalyticsView: View {
                 unit: L10n.t(en: "/100w", ru: "/100сл"),
                 detail: L10n.t(en: "Target ≤ 1", ru: "Цель ≤ 1"),
                 color: anglicismColor(aggAnglicismRate),
-                icon: "globe"
+                icon: "globe",
+                tip: SpeechMetricTips.anglicisms
             )
             statCard(
                 title: L10n.t(en: "Speed", ru: "Темп"),
@@ -204,7 +204,8 @@ struct SpeechAnalyticsView: View {
                 unit: "WPM",
                 detail: L10n.t(en: "Avg speaking pace", ru: "Средний темп речи"),
                 color: .blue,
-                icon: "speedometer"
+                icon: "speedometer",
+                tip: SpeechMetricTips.wpm
             )
             statCard(
                 title: L10n.t(en: "Total words", ru: "Всего слов"),
@@ -212,7 +213,8 @@ struct SpeechAnalyticsView: View {
                 unit: "",
                 detail: L10n.t(en: "in this period", ru: "за период"),
                 color: .indigo,
-                icon: "text.alignleft"
+                icon: "text.alignleft",
+                tip: SpeechMetricTips.totalWords
             )
             statCard(
                 title: L10n.t(en: "EN / RU ratio", ru: "EN / RU"),
@@ -220,7 +222,8 @@ struct SpeechAnalyticsView: View {
                 unit: "",
                 detail: L10n.t(en: "English chars share", ru: "Доля латинских букв"),
                 color: .pink,
-                icon: "character.textbox"
+                icon: "character.textbox",
+                tip: SpeechMetricTips.enRuRatio
             )
 
             statCard(
@@ -229,7 +232,8 @@ struct SpeechAnalyticsView: View {
                 unit: "",
                 detail: L10n.t(en: "Subordinations per sentence", ru: "Подчинения в предложении"),
                 color: .teal,
-                icon: "arrow.triangle.branch"
+                icon: "arrow.triangle.branch",
+                tip: SpeechMetricTips.complexity
             )
         }
     }
@@ -240,7 +244,8 @@ struct SpeechAnalyticsView: View {
         unit: String,
         detail: String,
         color: Color,
-        icon: String
+        icon: String,
+        tip: String? = nil
     ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
@@ -255,6 +260,10 @@ struct SpeechAnalyticsView: View {
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
                     .lineLimit(1)
+                if let tip {
+                    Spacer(minLength: 0)
+                    InfoTip(message: tip, iconSize: .small, iconColor: .secondary)
+                }
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -285,8 +294,11 @@ struct SpeechAnalyticsView: View {
 
     private var trendCharts: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LocalizedText(en: "Trends", ru: "Тренды")
-                .font(.system(size: 16, weight: .heavy, design: .rounded))
+            HStack(spacing: 2) {
+                LocalizedText(en: "Trends", ru: "Тренды")
+                    .font(.system(size: 16, weight: .heavy, design: .rounded))
+                InfoTip(message: SpeechMetricTips.trends, iconSize: .small, iconColor: .secondary)
+            }
 
             HStack(alignment: .top, spacing: 12) {
                 chartCard(
@@ -299,7 +311,8 @@ struct SpeechAnalyticsView: View {
                     title: L10n.t(en: "Fillers / 100 words", ru: "Паразиты / 100 слов"),
                     series: dailyFillerRateSeries,
                     color: .orange,
-                    yAxisLabel: "rate"
+                    yAxisLabel: "rate",
+                    targetLine: 2
                 )
             }
         }
@@ -309,7 +322,8 @@ struct SpeechAnalyticsView: View {
         title: String,
         series: [(date: Date, value: Double)],
         color: Color,
-        yAxisLabel: String
+        yAxisLabel: String,
+        targetLine: Double? = nil
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
@@ -323,6 +337,11 @@ struct SpeechAnalyticsView: View {
                     .frame(maxWidth: .infinity)
             } else {
                 Chart {
+                    if let targetLine {
+                        RuleMark(y: .value("Target", targetLine))
+                            .foregroundStyle(.green.opacity(0.6))
+                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                    }
                     ForEach(series, id: \.date) { point in
                         LineMark(
                             x: .value("Date", point.date),
@@ -359,8 +378,11 @@ struct SpeechAnalyticsView: View {
 
     private var topFillers: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LocalizedText(en: "Top fillers", ru: "Топ паразитов")
-                .font(.system(size: 16, weight: .heavy, design: .rounded))
+            HStack(spacing: 2) {
+                LocalizedText(en: "Top fillers", ru: "Топ паразитов")
+                    .font(.system(size: 16, weight: .heavy, design: .rounded))
+                InfoTip(message: SpeechMetricTips.topFillers, iconSize: .small, iconColor: .secondary)
+            }
 
             if topFillerList.isEmpty {
                 LocalizedText(en: "No fillers detected — well done!", ru: "Паразитов нет — молодец!")
@@ -387,8 +409,11 @@ struct SpeechAnalyticsView: View {
 
     private var topAnglicisms: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LocalizedText(en: "Top anglicisms", ru: "Топ англицизмов")
-                .font(.system(size: 16, weight: .heavy, design: .rounded))
+            HStack(spacing: 2) {
+                LocalizedText(en: "Top anglicisms", ru: "Топ англицизмов")
+                    .font(.system(size: 16, weight: .heavy, design: .rounded))
+                InfoTip(message: SpeechMetricTips.topAnglicisms, iconSize: .small, iconColor: .secondary)
+            }
 
             if topAnglicismList.isEmpty {
                 LocalizedText(en: "No anglicisms detected", ru: "Англицизмов не обнаружено")
@@ -433,11 +458,12 @@ struct SpeechAnalyticsView: View {
                 LocalizedText(en: "Streaks", ru: "Стрики")
                     .font(.system(size: 16, weight: .heavy, design: .rounded))
                 LocalizedText(
-                    en: "(consecutive days under the target)",
-                    ru: "(дней подряд под целью)"
+                    en: "(consecutive days on target — all history)",
+                    ru: "(дней подряд под целью — по всей истории)"
                 )
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
+                InfoTip(message: SpeechMetricTips.streaks, iconSize: .small, iconColor: .secondary)
             }
 
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 180), spacing: 12)], spacing: 12) {
@@ -560,9 +586,7 @@ struct SpeechAnalyticsView: View {
         if L10n.current == .english {
             return value == 1 ? "day" : "days"
         }
-        if value == 1 { return "день" }
-        if value > 1 && value < 5 { return "дня" }
-        return "дней"
+        return L10n.ruPlural(value, one: "день", few: "дня", many: "дней")
     }
 
     private var fillerStreak: Int {
@@ -599,6 +623,7 @@ struct SpeechAnalyticsView: View {
                 )
                     .font(.system(size: 11))
                     .foregroundStyle(.secondary)
+                InfoTip(message: SpeechMetricTips.topRepetitions, iconSize: .small, iconColor: .secondary)
             }
 
             if topRepetitionList.isEmpty {
@@ -626,8 +651,11 @@ struct SpeechAnalyticsView: View {
 
     private var recentSessions: some View {
         VStack(alignment: .leading, spacing: 12) {
-            LocalizedText(en: "Recent sessions", ru: "Недавние сессии")
-                .font(.system(size: 16, weight: .heavy, design: .rounded))
+            HStack(spacing: 2) {
+                LocalizedText(en: "Recent sessions", ru: "Недавние сессии")
+                    .font(.system(size: 16, weight: .heavy, design: .rounded))
+                InfoTip(message: SpeechMetricTips.recentSessions, iconSize: .small, iconColor: .secondary)
+            }
 
             VStack(spacing: 6) {
                 ForEach(filteredMetrics.prefix(15)) { metric in
@@ -655,23 +683,43 @@ struct SpeechAnalyticsView: View {
             }
             Spacer()
             HStack(spacing: 10) {
-                metricBadge("\(metric.wordCount)w", color: .secondary)
-                metricBadge(String(format: "%.0f wpm", metric.wpm), color: .blue)
+                metricBadge(
+                    "\(metric.wordCount)w",
+                    color: .secondary,
+                    help: L10n.t(en: "Words in this dictation", ru: "Слов в диктовке")
+                )
+                metricBadge(
+                    String(format: "%.0f wpm", metric.wpm),
+                    color: .blue,
+                    help: L10n.t(en: "Pace, words per minute", ru: "Темп, слов в минуту")
+                )
                 if metric.fillerCount > 0 {
-                    metricBadge("\(metric.fillerCount)f", color: .orange)
+                    metricBadge(
+                        "\(metric.fillerCount)f",
+                        color: .orange,
+                        help: L10n.t(en: "Filler words found", ru: "Найдено слов-паразитов")
+                    )
                 }
                 if metric.anglicismCount > 0 {
-                    metricBadge("\(metric.anglicismCount)en", color: .pink)
+                    metricBadge(
+                        "\(metric.anglicismCount)en",
+                        color: .pink,
+                        help: L10n.t(en: "Anglicisms found", ru: "Найдено англицизмов")
+                    )
                 }
                 if metric.repetitionCount > 0 {
-                    metricBadge("\(metric.repetitionCount)rep", color: .purple)
+                    metricBadge(
+                        "\(metric.repetitionCount)rep",
+                        color: .purple,
+                        help: L10n.t(en: "Words repeated ≥ 5 times", ru: "Слов с повторами ≥ 5 раз")
+                    )
                 }
             }
         }
         .padding(.vertical, 4)
     }
 
-    private func metricBadge(_ text: String, color: Color) -> some View {
+    private func metricBadge(_ text: String, color: Color, help: String) -> some View {
         Text(text)
             .font(.system(size: 10, weight: .semibold, design: .monospaced))
             .padding(.horizontal, 6)
@@ -681,6 +729,7 @@ struct SpeechAnalyticsView: View {
                     .fill(color.opacity(0.15))
             )
             .foregroundColor(color)
+            .help(help)
     }
 
     // MARK: - Filtering

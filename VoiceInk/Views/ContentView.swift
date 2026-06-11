@@ -162,6 +162,8 @@ struct ContentView: View {
                     selectedView = .transcribeAudio
                 case "Power Mode":
                     selectedView = .powerMode
+                case "Speech":
+                    selectedView = .speech
                 default:
                     break
                 }

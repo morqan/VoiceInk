@@ -47,14 +47,31 @@ struct SpeechInsightsSection: View {
                 .font(.system(size: 18, weight: .heavy, design: .rounded))
             Spacer()
             if !todayMetrics.isEmpty {
-                Text(L10n.t(
-                    en: "\(todayMetrics.count) session\(todayMetrics.count == 1 ? "" : "s")",
-                    ru: "\(todayMetrics.count) \(todayMetrics.count == 1 ? "сессия" : "сессий")"
-                ))
+                Text(L10n.sessionsCount(todayMetrics.count))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
             }
+            openAnalyticsButton
         }
+    }
+
+    /// Переход на полную страницу Speech Analytics — блок не должен быть тупиком.
+    private var openAnalyticsButton: some View {
+        Button {
+            NotificationCenter.default.post(
+                name: .navigateToDestination,
+                object: nil,
+                userInfo: ["destination": "Speech"]
+            )
+        } label: {
+            HStack(spacing: 4) {
+                Text(L10n.t(en: "Open analytics", ru: "Открыть аналитику"))
+                Image(systemName: "arrow.right")
+            }
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.blue)
+        }
+        .buttonStyle(.plain)
     }
 
     private var emptyState: some View {
@@ -91,7 +108,8 @@ struct SpeechInsightsSection: View {
                 value: String(format: "%.1f", avgFillerRate),
                 unit: L10n.t(en: "/ 100 words", ru: "/ 100 слов"),
                 detail: L10n.t(en: "Target ≤ 2", ru: "Цель ≤ 2"),
-                color: fillerColor
+                color: fillerColor,
+                tip: SpeechMetricTips.fillers
             )
 
             SpeechMetricCard(
@@ -100,7 +118,8 @@ struct SpeechInsightsSection: View {
                 value: String(format: "%.0f", avgSentenceLength),
                 unit: L10n.t(en: "words", ru: "слов"),
                 detail: L10n.t(en: "Target ≤ 18", ru: "Цель ≤ 18"),
-                color: sentenceColor
+                color: sentenceColor,
+                tip: SpeechMetricTips.sentenceLength
             )
 
             SpeechMetricCard(
@@ -109,7 +128,8 @@ struct SpeechInsightsSection: View {
                 value: String(format: "%.1f", avgAnglicismRate),
                 unit: L10n.t(en: "/ 100 words", ru: "/ 100 слов"),
                 detail: L10n.t(en: "Target ≤ 1", ru: "Цель ≤ 1"),
-                color: anglicismColor
+                color: anglicismColor,
+                tip: SpeechMetricTips.anglicisms
             )
 
             SpeechMetricCard(
@@ -118,7 +138,8 @@ struct SpeechInsightsSection: View {
                 value: String(format: "%.0f", avgWPM),
                 unit: "WPM",
                 detail: averageWPMDetail,
-                color: .blue
+                color: .blue,
+                tip: SpeechMetricTips.wpm
             )
 
             SpeechMetricCard(
@@ -127,7 +148,8 @@ struct SpeechInsightsSection: View {
                 value: String(format: "%.0f", avgEnRuRatio * 100),
                 unit: "%",
                 detail: L10n.t(en: "English chars share", ru: "Доля латинских букв"),
-                color: .pink
+                color: .pink,
+                tip: SpeechMetricTips.enRuRatio
             )
         }
     }
@@ -216,6 +238,7 @@ private struct SpeechMetricCard: View {
     let unit: String
     let detail: String
     let color: Color
+    var tip: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -232,6 +255,11 @@ private struct SpeechMetricCard: View {
                 Text(title)
                     .font(.system(size: 12, weight: .semibold))
                     .lineLimit(1)
+
+                if let tip {
+                    Spacer(minLength: 0)
+                    InfoTip(message: tip, iconSize: .small, iconColor: .secondary)
+                }
             }
 
             HStack(alignment: .firstTextBaseline, spacing: 4) {

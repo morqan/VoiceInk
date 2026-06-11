@@ -78,6 +78,29 @@ struct LocalizedText: View {
     }
 }
 
+// MARK: - Plural forms
+
+extension L10n {
+    /// Русские формы множественного числа: 1 сессия / 2 сессии / 5 сессий.
+    static func ruPlural(_ n: Int, one: String, few: String, many: String) -> String {
+        let mod100 = n % 100
+        if (11...14).contains(mod100) { return many }
+        switch n % 10 {
+        case 1:     return one
+        case 2...4: return few
+        default:    return many
+        }
+    }
+
+    /// «N session(s)» / «N сессия/сессии/сессий» с корректным плюралом.
+    static func sessionsCount(_ n: Int) -> String {
+        t(
+            en: "\(n) session\(n == 1 ? "" : "s")",
+            ru: "\(n) \(ruPlural(n, one: "сессия", few: "сессии", many: "сессий"))"
+        )
+    }
+}
+
 // MARK: - Auto translation for full app
 
 extension L10n {
