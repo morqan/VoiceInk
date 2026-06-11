@@ -122,10 +122,12 @@ struct SpeechSessionDetailView: View {
 
     /// Маркеры стиля, реально найденные в этой диктовке (фраза → счёт).
     /// Ключи сканера lowercased — маппим обратно на авторское написание профиля.
+    private var sourceText: String { AutoFillerDetector.sourceText(metric) }
+
     private var foundMarkers: [(phrase: String, count: Int)] {
         guard let phrases = profile?.markerPhrases, !phrases.isEmpty else { return [] }
         let original = Dictionary(phrases.map { ($0.lowercased(), $0) }, uniquingKeysWith: { first, _ in first })
-        return PhraseOccurrenceScanner.counts(of: phrases, in: metric.text)
+        return PhraseOccurrenceScanner.counts(of: phrases, in: sourceText)
             .filter { $0.value > 0 }
             .map { (phrase: original[$0.key] ?? $0.key, count: $0.value) }
             .sorted { $0.count > $1.count }
@@ -143,8 +145,8 @@ struct SpeechSessionDetailView: View {
     }
 
     private var highlightedText: AttributedString {
-        var attr = AttributedString(metric.text)
-        let text = metric.text
+        let text = sourceText
+        var attr = AttributedString(text)
 
         // Порядок важен: маркеры стиля идут первыми (длинные фразы), потом
         // паразиты и англицизмы — пересечения перекрашиваются последними двумя

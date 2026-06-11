@@ -126,6 +126,13 @@ enum SpeechMetricTips {
         )
     }
 
+    static var fillerEvolution: String {
+        L10n.t(
+            en: "Your personal fillers, detected automatically — no manual list. A word is flagged as your filler when it's both frequent AND ubiquitous (appears across many dictations regardless of topic — a topic word isn't ubiquitous). It tracks change over time: new / gone / up / down. A new suspicious word first goes «watching» (not counted) and joins the count only if it persists steadily ≥ 2 weeks — protection against false positives. Note: «эээ/ммм» the speech model doesn't transcribe, so they aren't seen here.",
+            ru: "Твои личные паразиты, обнаруженные автоматически — без ручных списков. Слово помечается твоим паразитом, когда оно одновременно частое И вездесущее (встречается во многих диктовках независимо от темы — тематическое слово вездесущим не бывает). Отслеживается динамика: появился / ушёл / вырос / упал. Новое подозрительное слово сначала идёт «под наблюдением» (не в счёт) и попадает в счёт, только если держится устойчиво ≥ 2 недель — защита от ложных срабатываний. Учти: «эээ/ммм» модель распознавания не пишет, поэтому здесь их не видно."
+        )
+    }
+
     static var topFillers: String {
         L10n.t(
             en: "Most frequent fillers for the period (up to 10) with hit counts; the dictionary is fixed — ~19 Russian words and phrases. This is your work plan: take the top word and suppress it for a week — the fastest way to drop the overall rate.",

@@ -29,7 +29,8 @@ final class SpeechMetricRecalcService {
     )
 
     /// Версия в ключе: при следующем изменении формул достаточно поднять v.
-    private let completionKey = "SpeechMetricRecalc_v2_done"
+    /// v3 — бэкафилл rawText + пересчёт паразитов под авто-детектор.
+    private let completionKey = "SpeechMetricRecalc_v3_done"
     private(set) var isRunning = false
 
     private init() {}
@@ -46,23 +47,35 @@ final class SpeechMetricRecalcService {
             let context = ModelContext(modelContainer)
             do {
                 let metrics = try context.fetch(FetchDescriptor<SpeechMetric>())
+
+                // Шаг A: бэкафилл rawText для старых записей. Настоящий сырой ASR
+                // тогда не сохранялся — лучшее доступное приближение = очищенный text.
+                for metric in metrics where metric.rawText.isEmpty {
+                    metric.rawText = metric.text
+                }
+                try context.save()
+
+                // Шаг B: персональный активный список паразитов по ВСЕЙ истории.
+                // Маркер-фразы стилей исключаем — иначе «слушайте»/«значит» уйдут
+                // и в паразиты, и в тренер (конфликт).
+                let profiles = (try? context.fetch(FetchDescriptor<VoiceProfileTarget>())) ?? []
+                let markerExclude = Set(profiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
+                let activeFillers = AutoFillerDetector.activeFillers(history: metrics, excluding: markerExclude)
+                AutoFillerDetector.refreshCache(history: metrics, excluding: markerExclude)
+
+                // Шаг C: пересчёт по сырому тексту с авто-списком.
                 var updated = 0
-
                 for metric in metrics {
-                    let text = metric.text
-                    guard !text.isEmpty else { continue }
-
-                    let words = SpeechMetricsAnalyzer.extractWords(from: text)
+                    let source = AutoFillerDetector.sourceText(metric)
+                    guard !source.isEmpty else { continue }
+                    let words = SpeechMetricsAnalyzer.extractWords(from: source)
                     guard !words.isEmpty else { continue }
 
-                    // Паразиты — новый подсчёт (мультисловные по границам слов)
-                    let fillers = SpeechMetricsAnalyzer.countFillers(text: text, words: words)
-                    // Сложность — без голого «что», маркеры по границам слов
+                    let fillers = SpeechMetricsAnalyzer.countFillers(text: source, activeFillers: activeFillers)
                     let complexity = SpeechMetricsAnalyzer.calculateComplexity(
-                        text: text,
+                        text: source,
                         sentenceCount: metric.sentenceCount
                     )
-                    // Повторы зависят от множества паразитов — пересчитываем следом
                     let repetitions = SpeechMetricsAnalyzer.countRepetitions(
                         words: words,
                         fillers: Set(fillers.keys),
@@ -78,7 +91,7 @@ final class SpeechMetricRecalcService {
 
                 try context.save()
                 UserDefaults.standard.set(true, forKey: completionKey)
-                logger.info("Speech metric recalc done: \(updated) records updated to honest formulas")
+                logger.info("Speech metric recalc v3 done: \(updated) records (auto-filler + rawText)")
             } catch {
                 logger.error("Speech metric recalc failed: \(error.localizedDescription, privacy: .public)")
                 // Флаг не ставим — попробуем на следующем запуске

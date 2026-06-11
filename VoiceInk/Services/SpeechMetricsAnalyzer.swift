@@ -43,7 +43,18 @@ enum SpeechMetricsAnalyzer {
     /// Анализирует транскрипцию и возвращает заполненный SpeechMetric.
     /// Не сохраняет в базу — это делает caller.
     /// Возвращает nil если транскрипция короче threshold (статистически незначимо).
-    static func analyze(text: String, durationSeconds: Double) -> SpeechMetric? {
+    ///
+    /// - Parameters:
+    ///   - text: текст для анализа (предпочтительно сырой ASR-выход).
+    ///   - rawText: сырьё для сохранения в SpeechMetric.rawText (по умолчанию = text).
+    ///   - activeFillers: персональный активный набор фраз-паразитов от AutoFillerDetector;
+    ///     nil → только встроенное ядро (для ранней истории / fallback).
+    static func analyze(
+        text: String,
+        durationSeconds: Double,
+        rawText: String? = nil,
+        activeFillers: Set<String>? = nil
+    ) -> SpeechMetric? {
         let cleanText = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanText.isEmpty else { return nil }
 
@@ -64,7 +75,7 @@ enum SpeechMetricsAnalyzer {
             ? Double(words.count) / (durationSeconds / 60.0)
             : 0
 
-        let fillersByWord = countFillers(text: cleanText, words: words)
+        let fillersByWord = countFillers(text: cleanText, activeFillers: activeFillers)
         let fillerCount = fillersByWord.values.reduce(0, +)
 
         let anglicismsByWord = countAnglicisms(words: words)
@@ -92,7 +103,8 @@ enum SpeechMetricsAnalyzer {
             anglicismsByWordJSON: encodeJSON(anglicismsByWord),
             enRuRatio: enRuRatio,
             repetitionsByWordJSON: encodeJSON(repetitionsByWord),
-            text: cleanText
+            text: cleanText,
+            rawText: rawText ?? cleanText
         )
 
         logger.info("""
@@ -137,26 +149,18 @@ enum SpeechMetricsAnalyzer {
 
     // MARK: - Fillers
 
-    /// Считает паразитов в тексте.
-    /// Single-word — по точному матчу слова в массиве слов.
-    /// Multi-word — через PhraseOccurrenceScanner: границы слов, чтобы «то есть»
-    /// не матчился внутри «прос[то есть]ь».
-    static func countFillers(text: String, words: [String]) -> [String: Int] {
-        var counts: [String: Int] = [:]
-
-        // Single-word fillers
-        for word in words {
-            if singleWordFillers.contains(word) {
-                counts[word, default: 0] += 1
-            }
+    /// Считает паразитов в тексте по активному набору фраз.
+    /// Всё — через PhraseOccurrenceScanner (границы слов, длинные фразы первыми,
+    /// без двойного счёта пересечений: «ну вот» не даёт ещё и «ну»+«вот»).
+    /// activeFillers nil → встроенное ядро (singleWordFillers ∪ multiWordFillers).
+    static func countFillers(text: String, activeFillers: Set<String>? = nil) -> [String: Int] {
+        let phrases: [String]
+        if let activeFillers {
+            phrases = Array(activeFillers)
+        } else {
+            phrases = Array(singleWordFillers) + multiWordFillers
         }
-
-        // Multi-word fillers
-        for (phrase, count) in PhraseOccurrenceScanner.counts(of: multiWordFillers, in: text) where count > 0 {
-            counts[phrase] = count
-        }
-
-        return counts
+        return PhraseOccurrenceScanner.counts(of: phrases, in: text).filter { $0.value > 0 }
     }
 
     // MARK: - Anglicisms

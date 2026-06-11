@@ -58,6 +58,10 @@ struct SpeechAnalyticsView: View {
     /// Кэш дневной серии Match Score: compute() сканирует тексты всех сессий
     /// периода — пересчитывать на каждый рендер body слишком дорого.
     @State private var cachedMatchSeries: [(date: Date, value: Double)] = []
+    /// Кэш авто-детектора паразитов (тоже сканирует всю историю).
+    @State private var fillerDynamics: AutoFillerDetector.Dynamics?
+    /// Кэш дневных рядов для sparkline активных паразитов (считаем в .task, не в body).
+    @State private var fillerSparklines: [String: [(date: Date, value: Double)]] = [:]
     @AppStorage(UserDefaults.Keys.speechReportFolder) private var reportFolder: String = SpeechVaultExport.defaultFolder
 
     private var activeStyleProfile: VoiceProfileTarget? {
@@ -80,6 +84,7 @@ struct SpeechAnalyticsView: View {
                         trendCharts
                     }
                     topFillers
+                    fillerEvolution
                     topAnglicisms
                     topRepetitions
                     recentSessions
@@ -90,6 +95,21 @@ struct SpeechAnalyticsView: View {
         .background(Color(.windowBackgroundColor))
         .task(id: matchSeriesCacheKey) {
             cachedMatchSeries = computeDailyMatchSeries()
+            // Маркер-фразы всех стилей исключаем из паразитов (конфликт с тренером)
+            let markerExclude = Set(styleProfiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
+            let dyn = AutoFillerDetector.computeDynamics(
+                history: allMetrics,
+                current: filteredMetrics,
+                previous: previousMetrics,
+                excluding: markerExclude
+            )
+            fillerDynamics = dyn
+            fillerSparklines = AutoFillerDetector.dailyRateSeries(
+                phrases: dyn.active.prefix(8).map { $0.phrase },
+                in: filteredMetrics
+            )
+            // Поддерживаем кэш активного списка свежим для пайплайна
+            AutoFillerDetector.refreshCache(history: allMetrics, excluding: markerExclude)
         }
     }
 
@@ -562,6 +582,126 @@ struct SpeechAnalyticsView: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(.thinMaterial)
         )
+    }
+
+    // MARK: - Filler evolution (авто-детектор паразитов)
+
+    @ViewBuilder
+    private var fillerEvolution: some View {
+        // Панель показываем, если хватило истории (active/observing есть);
+        // блок изменений ниже гейтится отдельно по enoughData (два окна).
+        if let dyn = fillerDynamics, dyn.hasHistory, !dyn.active.isEmpty || !dyn.observing.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 2) {
+                    LocalizedText(en: "Filler evolution", ru: "Эволюция паразитов")
+                        .font(.system(size: 16, weight: .heavy, design: .rounded))
+                    LocalizedText(en: "(auto-detected)", ru: "(определяется автоматически)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                    InfoTip(message: SpeechMetricTips.fillerEvolution, iconSize: .small, iconColor: .secondary)
+                }
+
+                // Изменения: появился / ушёл / вырос / упал
+                let changes = fillerChangeRows(dyn)
+                if !changes.isEmpty {
+                    VStack(alignment: .leading, spacing: 5) {
+                        ForEach(changes, id: \.0) { row in
+                            HStack(spacing: 6) {
+                                Image(systemName: row.1)
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(row.2)
+                                    .frame(width: 14)
+                                Text(row.0)
+                                    .font(.system(size: 12))
+                                Spacer()
+                            }
+                        }
+                    }
+                    .padding(.bottom, 2)
+                }
+
+                // Активные паразиты с частотой и спарклайном
+                if !dyn.active.isEmpty {
+                    VStack(spacing: 6) {
+                        ForEach(dyn.active.prefix(8)) { entry in
+                            fillerActiveRow(entry)
+                        }
+                    }
+                }
+
+                // Под наблюдением
+                if !dyn.observing.isEmpty {
+                    VStack(alignment: .leading, spacing: 4) {
+                        LocalizedText(en: "Looks like new fillers — watching (not counted yet)",
+                                      ru: "Похоже на новые паразиты — наблюдаю (пока не в счёт)")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                        Text(dyn.observing.prefix(8).map { "«\($0.phrase)» \(String(format: "%.1f", $0.ratePer100))" }.joined(separator: "   "))
+                            .font(.system(size: 11, design: .monospaced))
+                            .foregroundStyle(.yellow)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, 4)
+                }
+            }
+            .padding(16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(.thinMaterial)
+            )
+        }
+    }
+
+    private func fillerActiveRow(_ entry: AutoFillerDetector.FillerEntry) -> some View {
+        HStack(spacing: 10) {
+            Text(entry.phrase)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .frame(width: 140, alignment: .leading)
+                .lineLimit(1)
+            Text(String(format: "%.1f/100сл", entry.ratePer100))
+                .font(.system(size: 11, design: .monospaced))
+                .foregroundStyle(.orange)
+                .frame(width: 80, alignment: .leading)
+            // Спарклайн по дням периода (из кэша, посчитан в .task)
+            let series = fillerSparklines[entry.phrase] ?? []
+            if series.count >= 2 {
+                Chart {
+                    ForEach(series, id: \.date) { p in
+                        LineMark(x: .value("d", p.date), y: .value("r", p.value))
+                            .foregroundStyle(.orange)
+                            .interpolationMethod(.catmullRom)
+                    }
+                }
+                .chartXAxis(.hidden)
+                .chartYAxis(.hidden)
+                .frame(height: 22)
+            } else {
+                Spacer()
+            }
+            Text("\(entry.occurrences)×")
+                .font(.system(size: 11, weight: .bold))
+                .foregroundStyle(.secondary)
+                .frame(width: 40, alignment: .trailing)
+        }
+    }
+
+    /// Строки изменений: (текст, иконка, цвет).
+    private func fillerChangeRows(_ dyn: AutoFillerDetector.Dynamics) -> [(String, String, Color)] {
+        var rows: [(String, String, Color)] = []
+        for c in dyn.appeared.prefix(3) {
+            rows.append((L10n.t(en: "New: ", ru: "Появился: ") + "«\(c.phrase)» \(String(format: "%.1f", c.rateNow))/100сл", "plus.circle.fill", .red))
+        }
+        for c in dyn.grew.prefix(3) {
+            rows.append((L10n.t(en: "Up: ", ru: "Вырос: ") + "«\(c.phrase)» \(String(format: "%.1f", c.ratePrev))→\(String(format: "%.1f", c.rateNow))", "arrow.up.circle.fill", .orange))
+        }
+        for c in dyn.dropped.prefix(3) {
+            rows.append((L10n.t(en: "Down: ", ru: "Упал: ") + "«\(c.phrase)» \(String(format: "%.1f", c.ratePrev))→\(String(format: "%.1f", c.rateNow))", "arrow.down.circle.fill", .green))
+        }
+        for c in dyn.disappeared.prefix(3) {
+            rows.append((L10n.t(en: "Gone: ", ru: "Избавился: ") + "«\(c.phrase)»", "checkmark.circle.fill", .green))
+        }
+        return rows
     }
 
     // MARK: - Top anglicisms

@@ -61,8 +61,13 @@ final class SpeechMetric {
     /// JSON-сериализация {"проект": 7, "задача": 5, ...}
     var repetitionsByWordJSON: String = "{}"
 
-    /// Полный текст транскрипции (для возможности peek в UI)
+    /// Очищенный текст транскрипции (тот, что ушёл в input/историю).
     var text: String = ""
+
+    /// Самый сырой ASR-выход (до фильтров/замен/чистки) — по нему считаются
+    /// метрики паразитов, чтобы фильтры не занижали счёт. У старых записей пуст
+    /// (сырьё тогда не сохранялось) — тогда анализ падает обратно на text.
+    var rawText: String = ""
 
     init(
         id: UUID = UUID(),
@@ -79,7 +84,8 @@ final class SpeechMetric {
         anglicismsByWordJSON: String = "{}",
         enRuRatio: Double = 0,
         repetitionsByWordJSON: String = "{}",
-        text: String = ""
+        text: String = "",
+        rawText: String = ""
     ) {
         self.id = id
         self.timestamp = timestamp
@@ -96,6 +102,7 @@ final class SpeechMetric {
         self.enRuRatio = enRuRatio
         self.repetitionsByWordJSON = repetitionsByWordJSON
         self.text = text
+        self.rawText = rawText
     }
 
     // MARK: - Computed
