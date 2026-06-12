@@ -28,6 +28,7 @@ struct SpeechSessionDetailView: View {
     @State private var showRewrite = false
     @State private var scoreBefore: Double?
     @State private var scoreAfter: Double?
+    @State private var copied = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -165,17 +166,32 @@ struct SpeechSessionDetailView: View {
                     LocalizedText(en: "Rewriting in style…", ru: "Переписываю в стиле…")
                         .font(.system(size: 12)).foregroundStyle(.secondary)
                 }
-            case .done:
-                Button {
-                    Task { await runRewrite(profile: profile) }
-                } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: "arrow.clockwise")
-                        LocalizedText(en: "Rewrite again", ru: "Переписать заново")
+            case .done(let text):
+                HStack(spacing: 16) {
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(text, forType: .string)
+                        copied = true
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: copied ? "checkmark" : "doc.on.doc")
+                            LocalizedText(en: copied ? "Copied" : "Copy", ru: copied ? "Скопировано" : "Скопировать")
+                        }
+                        .font(.system(size: 11, weight: .medium)).foregroundStyle(.indigo)
                     }
-                    .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                    .buttonStyle(.plain)
+                    Button {
+                        Task { await runRewrite(profile: profile) }
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "arrow.clockwise")
+                            LocalizedText(en: "Rewrite again", ru: "Переписать заново")
+                        }
+                        .font(.system(size: 11, weight: .medium)).foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    Spacer()
                 }
-                .buttonStyle(.plain)
             case .error(let msg):
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.orange).font(.system(size: 11))
@@ -186,8 +202,13 @@ struct SpeechSessionDetailView: View {
     }
 
     private func profileShort(_ p: VoiceProfileTarget) -> String {
-        // Короткое имя без длинных слов для кнопки
-        p.name.replacingOccurrences(of: "Эриксоновский гипнотизёр", with: "Эриксон")
+        switch p.name {
+        case "Эриксоновский гипнотизёр": return "Эриксон"
+        case "Жёсткий переговорщик":      return "Переговорщик"
+        case "Спокойный лидер":           return "Лидер"
+        case "Харизматичный спикер":      return "Спикер"
+        default: return p.name.count > 16 ? String(p.name.prefix(15)) + "…" : p.name
+        }
     }
 
     // MARK: - Rewrite action
@@ -201,6 +222,7 @@ struct SpeechSessionDetailView: View {
             return
         }
         rewriteState = .loading
+        copied = false
         // Совпадение оригинала с этим стилем
         scoreBefore = VoiceProfileMatcher.compute(target: profile, metrics: [metric])?.totalScore
         do {
@@ -217,6 +239,10 @@ struct SpeechSessionDetailView: View {
                 durationSeconds: metric.durationSeconds,
                 activeFillers: AutoFillerDetector.cachedActiveFillers()
             ) {
+                // Переписанный текст вслух не произносился — его WPM был бы выдумкой.
+                // Наследуем реальный темп оригинала, чтобы дельта «до→после» отражала
+                // только лексику стиля (маркеры, длина, сложность, паразиты), а не шум WPM.
+                rewrittenMetric.wpm = metric.wpm
                 scoreAfter = VoiceProfileMatcher.compute(target: profile, metrics: [rewrittenMetric])?.totalScore
             }
             rewriteState = .done(trimmed)
