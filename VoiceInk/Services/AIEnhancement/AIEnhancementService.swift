@@ -218,6 +218,20 @@ class AIEnhancementService: ObservableObject {
             self.lastUserMessageSent = formattedText
         }
 
+        return try await dispatchProviderRequest(formattedText: formattedText, systemMessage: systemMessage)
+    }
+
+    /// Переписать произвольный текст с кастомным системным промптом (без активного
+    /// enhancement-промпта пользователя). Используется фичей «Как сказал бы [стиль]».
+    func rewrite(text: String, systemPrompt: String) async throws -> String {
+        guard isConfigured else { throw EnhancementError.notConfigured }
+        guard !text.isEmpty else { return "" }
+        let formattedText = "\n<TRANSCRIPT>\n\(text)\n</TRANSCRIPT>"
+        return try await dispatchProviderRequest(formattedText: formattedText, systemMessage: systemPrompt)
+    }
+
+    /// Диспетчер по провайдерам (ollama / localCLI / cloud). Общий для makeRequest и rewrite.
+    private func dispatchProviderRequest(formattedText: String, systemMessage: String) async throws -> String {
         if aiService.selectedProvider == .ollama {
             do {
                 let result = try await aiService.enhanceWithOllama(
