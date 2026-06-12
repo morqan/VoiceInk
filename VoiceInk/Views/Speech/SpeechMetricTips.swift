@@ -37,8 +37,8 @@ enum SpeechMetricTips {
 
     static var wpm: String {
         L10n.t(
-            en: "Words per minute: words of recordings with known duration ÷ their total time (pooled — a long dictation rightly weighs more than a short one). Pauses and thinking time are included, so the value is lower than your articulation pace. The card has no target of its own — the active style profile sets it. Conversational range is roughly 80–140.",
-            ru: "Слов в минуту: слова записей с известной длительностью ÷ их суммарное время (взвешенно — длинная диктовка справедливо весит больше короткой). Паузы и раздумья входят в хронометраж, поэтому показатель занижен относительно чистого темпа речи. Своей цели у карточки нет — целевой темп задаёт активный профиль стиля. Разговорный диапазон — примерно 80–140."
+            en: "Words per minute: words ÷ total recording time. KEY POINT — the «pause tax»: pauses and hesitations while you're searching for the next word are counted as time, so this number is your articulation pace MINUS the pauses. A low number usually doesn't mean you talk slowly — it means you stall mid-thought. How to raise it: form the thought before you hit record and dictate without freezing — pure articulation is naturally fast. Target is set by the active style profile (105 for Erickson … 160 for the Speaker); 120–150 is the conversational norm.",
+            ru: "Слов в минуту: слова ÷ полное время записи. ГЛАВНОЕ — «паузный налог»: паузы и зависания, пока ты ищешь следующее слово, считаются как время, поэтому это твой темп артикуляции МИНУС паузы. Низкая цифра обычно значит не «говорю медленно», а «проседаю на полуслове». Как поднять: сформулируй мысль до нажатия записи и диктуй без зависаний — чистая артикуляция сама по себе быстрая. Цель задаёт активный профиль стиля (105 у Эриксона … 160 у Спикера); разговорная норма — 120–150."
         )
     }
 

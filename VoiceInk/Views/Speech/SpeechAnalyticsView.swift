@@ -331,7 +331,7 @@ struct SpeechAnalyticsView: View {
                 title: L10n.t(en: "Speed", ru: "Темп"),
                 value: String(format: "%.0f", aggWPM),
                 unit: "WPM",
-                detail: L10n.t(en: "Avg speaking pace", ru: "Средний темп речи"),
+                detail: wpmDetail,
                 color: .blue,
                 icon: "speedometer",
                 tip: SpeechMetricTips.wpm,
@@ -1112,6 +1112,20 @@ struct SpeechAnalyticsView: View {
         let words = wordCount(of: ms)
         guard words > 0 else { return 0 }
         return ms.reduce(0.0) { $0 + $1.avgSentenceComplexity * Double($1.wordCount) } / Double(words)
+    }
+
+    /// Подпись карточки «Темп»: цель активного стиля + направление, либо «средний темп».
+    private var wpmDetail: String {
+        guard let target = activeStyleProfile?.targetWPM, aggWPM > 0 else {
+            return L10n.t(en: "Avg speaking pace", ru: "Средний темп речи")
+        }
+        let dir = aggWPM < target - 5
+            ? L10n.t(en: "speak faster", ru: "быстрее")
+            : (aggWPM > target + 5 ? L10n.t(en: "slow down", ru: "медленнее") : L10n.t(en: "on target", ru: "в цели"))
+        return L10n.t(
+            en: "Target \(Int(target)) · \(dir)",
+            ru: "Цель \(Int(target)) · \(dir)"
+        )
     }
 
     private var aggWordCount: Int { wordCount(of: filteredMetrics) }
