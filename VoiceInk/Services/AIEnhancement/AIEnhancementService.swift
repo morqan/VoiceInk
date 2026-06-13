@@ -227,17 +227,20 @@ class AIEnhancementService: ObservableObject {
         guard isConfigured else { throw EnhancementError.notConfigured }
         guard !text.isEmpty else { return "" }
         let formattedText = "\n<TRANSCRIPT>\n\(text)\n</TRANSCRIPT>"
-        return try await dispatchProviderRequest(formattedText: formattedText, systemMessage: systemPrompt)
+        // Осознанное действие по кнопке: ждём терпеливо (локальная 32B = холодная загрузка + генерация).
+        return try await dispatchProviderRequest(formattedText: formattedText, systemMessage: systemPrompt, timeout: 180)
     }
 
     /// Диспетчер по провайдерам (ollama / localCLI / cloud). Общий для makeRequest и rewrite.
-    private func dispatchProviderRequest(formattedText: String, systemMessage: String) async throws -> String {
+    /// `timeout == nil` → используется короткий `baseTimeout` диктовки; rewrite передаёт свой длинный.
+    private func dispatchProviderRequest(formattedText: String, systemMessage: String, timeout: TimeInterval? = nil) async throws -> String {
+        let requestTimeout = timeout ?? baseTimeout
         if aiService.selectedProvider == .ollama {
             do {
                 let result = try await aiService.enhanceWithOllama(
                     text: formattedText,
                     systemPrompt: systemMessage,
-                    timeout: baseTimeout
+                    timeout: requestTimeout
                 )
                 return AIEnhancementOutputFilter.filter(result)
             } catch {
@@ -278,7 +281,7 @@ class AIEnhancementService: ObservableObject {
                     model: aiService.currentModel,
                     messages: [.user(formattedText)],
                     systemPrompt: systemMessage,
-                    timeout: baseTimeout
+                    timeout: requestTimeout
                 )
             default:
                 guard let baseURL = URL(string: aiService.selectedProvider.baseURL) else {
@@ -302,7 +305,7 @@ class AIEnhancementService: ObservableObject {
                     temperature: temperature,
                     reasoningEffort: reasoningEffort,
                     extraBody: extraBody,
-                    timeout: baseTimeout
+                    timeout: requestTimeout
                 )
             }
             return AIEnhancementOutputFilter.filter(result.trimmingCharacters(in: .whitespacesAndNewlines))
