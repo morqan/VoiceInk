@@ -126,6 +126,7 @@ struct SpeechSessionDetailView: View {
         HStack(spacing: 14) {
             legendDot(.orange, L10n.t(en: "fillers", ru: "паразиты"))
             legendDot(.pink, L10n.t(en: "anglicisms", ru: "англицизмы"))
+            legendDot(.yellow, L10n.t(en: "self-corrections", ru: "самоиспр."))
             if profile != nil { legendDot(.indigo, L10n.t(en: "style markers", ru: "маркеры стиля")) }
             Spacer()
         }
@@ -311,6 +312,7 @@ struct SpeechSessionDetailView: View {
         }
         apply(color: .orange, phrases: Array(metric.fillersByWord.keys), text: text, to: &attr)
         apply(color: .pink, phrases: Array(metric.anglicismsByWord.keys), text: text, to: &attr)
+        apply(color: .yellow, phrases: Array(metric.selfCorrectionsByWord.keys), text: text, to: &attr)
         return attr
     }
 

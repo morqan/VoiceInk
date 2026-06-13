@@ -328,6 +328,16 @@ struct SpeechAnalyticsView: View {
                 delta: delta(anglicismRate).map { CardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
             )
             statCard(
+                title: L10n.t(en: "Smoothness", ru: "Гладкость"),
+                value: String(format: "%.1f", aggSelfCorrectionRate),
+                unit: L10n.t(en: "/100w", ru: "/100сл"),
+                detail: L10n.t(en: "Self-corrections", ru: "Самоисправления"),
+                color: smoothnessColor(aggSelfCorrectionRate),
+                icon: "pencil.and.scribble",
+                tip: SpeechMetricTips.smoothness,
+                delta: delta(selfCorrectionRate).map { CardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
+            )
+            statCard(
                 title: L10n.t(en: "Speed", ru: "Темп"),
                 value: String(format: "%.0f", aggWPM),
                 unit: "WPM",
@@ -1084,6 +1094,13 @@ struct SpeechAnalyticsView: View {
         return Double(ms.reduce(0) { $0 + $1.anglicismCount }) / Double(words) * 100
     }
 
+    /// Самоисправления на 100 слов (обратная мера гладкости) — pooled по словам.
+    private func selfCorrectionRate(of ms: [SpeechMetric]) -> Double {
+        let words = wordCount(of: ms)
+        guard words > 0 else { return 0 }
+        return Double(ms.reduce(0) { $0 + $1.selfCorrectionCount }) / Double(words) * 100
+    }
+
     private func sentenceLength(of ms: [SpeechMetric]) -> Double {
         let sentences = ms.reduce(0) { $0 + $1.sentenceCount }
         guard sentences > 0 else { return 0 }
@@ -1131,6 +1148,7 @@ struct SpeechAnalyticsView: View {
     private var aggWordCount: Int { wordCount(of: filteredMetrics) }
     private var aggFillerRate: Double { fillerRate(of: filteredMetrics) }
     private var aggAnglicismRate: Double { anglicismRate(of: filteredMetrics) }
+    private var aggSelfCorrectionRate: Double { selfCorrectionRate(of: filteredMetrics) }
     private var aggSentenceLength: Double { sentenceLength(of: filteredMetrics) }
     private var aggWPM: Double { wpm(of: filteredMetrics) }
     private var aggEnRatio: Double { enRatio(of: filteredMetrics) }
@@ -1247,6 +1265,14 @@ struct SpeechAnalyticsView: View {
     }
 
     private func anglicismColor(_ rate: Double) -> Color {
+        if aggWordCount == 0 { return .secondary }
+        if rate <= 1 { return .green }
+        if rate <= 3 { return .orange }
+        return .red
+    }
+
+    /// Гладкость: ≤1 самоисправление/100сл — зелёная, до 3 — оранжевая, выше — красная.
+    private func smoothnessColor(_ rate: Double) -> Color {
         if aggWordCount == 0 { return .secondary }
         if rate <= 1 { return .green }
         if rate <= 3 { return .orange }

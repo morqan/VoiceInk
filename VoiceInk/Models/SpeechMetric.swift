@@ -61,6 +61,15 @@ final class SpeechMetric {
     /// JSON-сериализация {"проект": 7, "задача": 5, ...}
     var repetitionsByWordJSON: String = "{}"
 
+    /// Самоисправления (метрика «гладкость»): ремонт-маркеры + немедленные повторы
+    /// слова подряд. Общий счёт за диктовку. У старых записей 0 до миграции v4.
+    var selfCorrectionCount: Int = 0
+
+    /// JSON-сериализация только ремонт-МАРКЕРОВ {"вернее": 2, "или нет": 1, ...}
+    /// (для подсветки и списка). Повторы подряд сюда не пишутся — иначе подсветило бы
+    /// каждое вхождение частого слова. Сумма маркеров ≤ selfCorrectionCount.
+    var selfCorrectionsByWordJSON: String = "{}"
+
     /// Очищенный текст транскрипции (тот, что ушёл в input/историю).
     var text: String = ""
 
@@ -84,6 +93,8 @@ final class SpeechMetric {
         anglicismsByWordJSON: String = "{}",
         enRuRatio: Double = 0,
         repetitionsByWordJSON: String = "{}",
+        selfCorrectionCount: Int = 0,
+        selfCorrectionsByWordJSON: String = "{}",
         text: String = "",
         rawText: String = ""
     ) {
@@ -101,6 +112,8 @@ final class SpeechMetric {
         self.anglicismsByWordJSON = anglicismsByWordJSON
         self.enRuRatio = enRuRatio
         self.repetitionsByWordJSON = repetitionsByWordJSON
+        self.selfCorrectionCount = selfCorrectionCount
+        self.selfCorrectionsByWordJSON = selfCorrectionsByWordJSON
         self.text = text
         self.rawText = rawText
     }
@@ -117,6 +130,17 @@ final class SpeechMetric {
     var anglicismRatePer100Words: Double {
         guard wordCount > 0 else { return 0 }
         return Double(anglicismCount) / Double(wordCount) * 100
+    }
+
+    /// Самоисправления на 100 слов — обратная мера «гладкости». Чем меньше, тем глаже.
+    var selfCorrectionRatePer100Words: Double {
+        guard wordCount > 0 else { return 0 }
+        return Double(selfCorrectionCount) / Double(wordCount) * 100
+    }
+
+    /// Десериализованный словарь ремонт-маркеров с count (для подсветки/списка).
+    var selfCorrectionsByWord: [String: Int] {
+        decodeJSON(selfCorrectionsByWordJSON)
     }
 
     /// Десериализованный словарь паразитов с count.

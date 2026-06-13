@@ -89,6 +89,8 @@ enum SpeechMetricsAnalyzer {
             anglicisms: Set(anglicismsByWord.keys)
         )
 
+        let selfCorrections = countSelfCorrections(text: cleanText, words: words)
+
         let metric = SpeechMetric(
             timestamp: Date(),
             durationSeconds: durationSeconds,
@@ -103,6 +105,8 @@ enum SpeechMetricsAnalyzer {
             anglicismsByWordJSON: encodeJSON(anglicismsByWord),
             enRuRatio: enRuRatio,
             repetitionsByWordJSON: encodeJSON(repetitionsByWord),
+            selfCorrectionCount: selfCorrections.total,
+            selfCorrectionsByWordJSON: encodeJSON(selfCorrections.byMarker),
             text: cleanText,
             rawText: rawText ?? cleanText
         )
@@ -274,6 +278,39 @@ enum SpeechMetricsAnalyzer {
             totals[word, default: 0] += 1
         }
         return totals.filter { $0.value >= repetitionThreshold }
+    }
+
+    // MARK: - Self-corrections (гладкость)
+
+    /// Минимальная длина слова для учёта немедленного повтора подряд.
+    /// Короткие («и», «а», «по») — шум/служебные, не запинка.
+    static let restartMinWordLength = 3
+
+    /// Считает самоисправления для метрики «гладкость»:
+    /// — ремонт-маркеры (фразы из SelfCorrectionLexicon, сканер с границами слов);
+    /// — немедленные повторы слова подряд («это это», «надо надо») как рестарты.
+    /// Возвращает (byMarker — для подсветки/списка, только фразы; total — маркеры + повторы).
+    static func countSelfCorrections(text: String, words: [String]) -> (byMarker: [String: Int], total: Int) {
+        let byMarker = PhraseOccurrenceScanner.counts(of: SelfCorrectionLexicon.markers, in: text)
+            .filter { $0.value > 0 }
+        let markerTotal = byMarker.values.reduce(0, +)
+        let restarts = countAdjacentRepeats(words: words)
+        return (byMarker, markerTotal + restarts)
+    }
+
+    /// Немедленные повторы одного слова подряд. Эмфатические удвоения
+    /// («так-так», «ну-ну») и слишком короткие слова не считаем.
+    static func countAdjacentRepeats(words: [String]) -> Int {
+        guard words.count > 1 else { return 0 }
+        var count = 0
+        for i in 1..<words.count {
+            let w = words[i]
+            guard w == words[i - 1] else { continue }
+            guard w.count >= restartMinWordLength else { continue }
+            guard !SelfCorrectionLexicon.reduplicationAllowed.contains(w) else { continue }
+            count += 1
+        }
+        return count
     }
 
     // MARK: - JSON helper

@@ -63,6 +63,13 @@ enum SpeechMetricTips {
         )
     }
 
+    static var smoothness: String {
+        L10n.t(
+            en: "Speech fluency: self-corrections per 100 words. Counts two things on the raw transcript — repair markers («вернее», «я хотел сказать», «или нет», «нет, не так»…) and immediate word restarts («это это», «надо надо»). Lower is smoother: ≤ 1 is clean prepared speech, up to 3 is the orange zone. Honesty note — the speech model glues over some restarts, so the real value is a bit higher; some markers are occasionally legitimate. To improve: form the thought before recording and pause to restructure instead of repairing mid-sentence.",
+            ru: "Гладкость речи: самоисправления на 100 слов. Считает по сырому тексту две вещи — ремонт-маркеры («вернее», «я хотел сказать», «или нет», «нет, не так»…) и немедленные повторы слова подряд («это это», «надо надо»). Меньше — глаже: ≤ 1 — чистая подготовленная речь, до 3 — оранжевая зона. Честно — часть рестартов модель распознавания склеивает, так что реальное значение чуть выше; отдельные маркеры иногда легитимны. Как улучшить: формулируй мысль до записи и делай паузу для переустройства фразы вместо правки на лету."
+        )
+    }
+
     // MARK: - Совпадение со стилем
 
     static var matchScore: String {

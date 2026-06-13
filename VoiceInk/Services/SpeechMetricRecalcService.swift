@@ -30,7 +30,8 @@ final class SpeechMetricRecalcService {
 
     /// Версия в ключе: при следующем изменении формул достаточно поднять v.
     /// v3 — бэкафилл rawText + пересчёт паразитов под авто-детектор.
-    private let completionKey = "SpeechMetricRecalc_v3_done"
+    /// v4 — добавлена метрика «гладкость» (самоисправления) для всей истории.
+    private let completionKey = "SpeechMetricRecalc_v4_done"
     private(set) var isRunning = false
 
     private init() {}
@@ -81,17 +82,20 @@ final class SpeechMetricRecalcService {
                         fillers: Set(fillers.keys),
                         anglicisms: Set(metric.anglicismsByWord.keys)
                     )
+                    let selfCorrections = SpeechMetricsAnalyzer.countSelfCorrections(text: source, words: words)
 
                     metric.fillerCount = fillers.values.reduce(0, +)
                     metric.fillersByWordJSON = Self.encodeJSON(fillers)
                     metric.avgSentenceComplexity = complexity
                     metric.repetitionsByWordJSON = Self.encodeJSON(repetitions)
+                    metric.selfCorrectionCount = selfCorrections.total
+                    metric.selfCorrectionsByWordJSON = Self.encodeJSON(selfCorrections.byMarker)
                     updated += 1
                 }
 
                 try context.save()
                 UserDefaults.standard.set(true, forKey: completionKey)
-                logger.info("Speech metric recalc v3 done: \(updated) records (auto-filler + rawText)")
+                logger.info("Speech metric recalc v4 done: \(updated) records (auto-filler + rawText + smoothness)")
             } catch {
                 logger.error("Speech metric recalc failed: \(error.localizedDescription, privacy: .public)")
                 // Флаг не ставим — попробуем на следующем запуске
