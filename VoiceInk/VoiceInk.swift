@@ -20,7 +20,7 @@ struct VoiceInkApp: App {
     @StateObject private var recordingShortcutManager: RecordingShortcutManager
     @StateObject private var updaterViewModel: UpdaterViewModel
     @StateObject private var menuBarManager: MenuBarManager
-    @StateObject private var aiService = AIService()
+    @StateObject private var aiService: AIService
     @StateObject private var enhancementService: AIEnhancementService
     @StateObject private var activeWindowService = ActiveWindowService.shared
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
@@ -100,11 +100,12 @@ struct VoiceInkApp: App {
         // Читает ~/Documents/Obsidian Vault/99 - Claude Context/voiceink-dictionary.md
         // и добавляет новые слова в VocabularyWord. Silent skip если файла нет.
         if !initializationFailed {
-            VoiceProfileSeed.seedIfNeeded(context: resolvedContainer.mainContext)
-            // Vault dictionary sync does a synchronous file read from disk — defer it off
-            // the launch path so a large/slow Vault file can't freeze startup.
+            // Profile seed (a fetch + first-launch save) and Vault dictionary sync (a
+            // synchronous file read) both touch the store/disk — defer them off the launch
+            // path so neither can freeze startup before first paint.
             let containerForSync = resolvedContainer
             Task.detached(priority: .utility) {
+                VoiceProfileSeed.seedIfNeeded(context: ModelContext(containerForSync))
                 VaultDictionarySync.syncFromVault(context: ModelContext(containerForSync))
             }
         }

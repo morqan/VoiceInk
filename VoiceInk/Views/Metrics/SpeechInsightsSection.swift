@@ -15,13 +15,24 @@ import SwiftUI
 import SwiftData
 
 struct SpeechInsightsSection: View {
-    /// Все метрики — фильтруем по сегодня в памяти
-    /// (SwiftData @Predicate macro не умеет Calendar.startOfDay).
-    @Query(sort: \SpeechMetric.timestamp, order: .reverse) private var allMetrics: [SpeechMetric]
+    /// Recent metrics only — the DB fetch is capped to a short window so this
+    /// always-visible Dashboard block never materializes the whole history. "Today"
+    /// is filtered in memory (the @Predicate macro can't call Calendar.startOfDay),
+    /// so it still rolls over correctly at midnight. The window is wider than a day
+    /// so a session left open past midnight keeps showing the new day's data.
+    @Query private var recentMetrics: [SpeechMetric]
+
+    init() {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -2, to: Date()) ?? Date.distantPast
+        _recentMetrics = Query(
+            filter: #Predicate { $0.timestamp >= cutoff },
+            sort: [SortDescriptor(\SpeechMetric.timestamp, order: .reverse)]
+        )
+    }
 
     private var todayMetrics: [SpeechMetric] {
         let startOfDay = Calendar.current.startOfDay(for: Date())
-        return allMetrics.filter { $0.timestamp >= startOfDay }
+        return recentMetrics.filter { $0.timestamp >= startOfDay }
     }
 
     var body: some View {

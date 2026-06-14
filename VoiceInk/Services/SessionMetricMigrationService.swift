@@ -26,9 +26,12 @@ final class SessionMetricMigrationService {
 
             do {
                 // Build a Set of already-migrated IDs in one query instead of
-                // checking per-record — turns N queries into 1.
+                // checking per-record — turns N queries into 1. Fetch only the
+                // transcriptionId column, not whole SessionMetric rows.
+                var existingDescriptor = FetchDescriptor<SessionMetric>()
+                existingDescriptor.propertiesToFetch = [\.transcriptionId]
                 let existingIds = Set(
-                    try backgroundContext.fetch(FetchDescriptor<SessionMetric>())
+                    try backgroundContext.fetch(existingDescriptor)
                         .map { $0.transcriptionId }
                 )
 
