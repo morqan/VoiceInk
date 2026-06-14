@@ -102,6 +102,10 @@ struct SpeechAnalyticsView: View {
     @State private var cachedStreaks: (filler: Int, anglicism: Int, sentence: Int) = (0, 0, 0)
     /// Words tab recompute runs off-main; this drives a spinner so the tab never freezes.
     @State private var wordsLoading = false
+    /// Last data key the Words/Coach tabs were computed for — skip recompute on re-entry
+    /// when nothing changed (re-entering a tab shouldn't re-crunch identical data).
+    @State private var lastWordsKey = ""
+    @State private var lastCoachKey = ""
     @AppStorage(UserDefaults.Keys.speechReportFolder) private var reportFolder: String = SpeechVaultExport.defaultFolder
 
     private var activeStyleProfile: VoiceProfileTarget? {
@@ -130,6 +134,11 @@ struct SpeechAnalyticsView: View {
         // Heavy per-tab scans fire only when that tab is active, once per data/period.
         .task(id: wordsKey) {
             guard tab == .words else { return }
+            // Skip recompute when the data hasn't changed since last time (re-entering the
+            // tab shouldn't re-crunch identical data).
+            let dataKey = "\(period.rawValue)|\(dataStamp)"
+            guard dataKey != lastWordsKey else { return }
+            lastWordsKey = dataKey
             // Heavy: scans full history (computeDynamics + refreshCache) + JSON-decodes
             // every metric. Runs OFF the main thread so the tab never freezes; a spinner
             // shows while it computes.
@@ -177,6 +186,8 @@ struct SpeechAnalyticsView: View {
         }
         .task(id: coachKey) {
             guard tab == .coach else { return }
+            guard dataStamp != lastCoachKey else { return }   // unchanged → keep cache
+            lastCoachKey = dataStamp
             cachedStreaks = computeStreaks()
         }
     }
@@ -227,6 +238,7 @@ struct SpeechAnalyticsView: View {
         }
         .pickerStyle(.segmented)
         .labelsHidden()
+        .pointingHandCursor()
     }
 
     /// Only the active sub-tab's sections are built — keeps each render light and
@@ -424,6 +436,7 @@ struct SpeechAnalyticsView: View {
                         .foregroundColor(period == p ? .white : .primary)
                 }
                 .buttonStyle(.plain)
+                .pointingHandCursor()
             }
             Spacer()
             Text(L10n.sessionsCount(filteredMetrics.count))
@@ -836,6 +849,7 @@ struct SpeechAnalyticsView: View {
                     }
                     .buttonStyle(.plain)
                     .help(L10n.t(en: "Open dictation breakdown", ru: "Открыть разбор диктовки"))
+                    .pointingHandCursor()
                 }
             }
         }

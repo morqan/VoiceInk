@@ -92,6 +92,7 @@ struct VoiceProfileSection: View {
                         .foregroundColor(p.isActive ? .white : .primary)
                     }
                     .buttonStyle(.plain)
+                    .pointingHandCursor()
                 }
             }
         }

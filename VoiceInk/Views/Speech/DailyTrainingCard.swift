@@ -135,6 +135,7 @@ struct DailyTrainingCard: View {
                 }
                 .buttonStyle(.plain)
                 .foregroundStyle(Color.accentColor)
+                .pointingHandCursor()
             }
 
             HStack(spacing: 10) {
