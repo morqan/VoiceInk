@@ -70,6 +70,13 @@ enum SpeechMetricTips {
         )
     }
 
+    static var dailyTraining: String {
+        L10n.t(
+            en: "A daily speaking drill: a topic, a few marker phrases you've been under-using, and your profile's target pace. Dictate on the topic with your normal hotkey — your latest dictation is then scored against these targets (phrases hit, pace, fillers, smoothness, match score). The topic rotates each day. Tap «Analyze in detail» to open the full breakdown, including the style rewrite. Nothing here touches the dictation→insert path — it's all after the fact.",
+            ru: "Ежедневное упражнение на речь: тема, несколько маркер-фраз, которые ты недоиспользуешь, и целевой темп твоего профиля. Продиктуй на тему обычным хоткеем — твоя последняя диктовка оценивается по этим целям (вплетённые фразы, темп, паразиты, гладкость, совпадение со стилем). Тема меняется каждый день. Жми «Разобрать детально», чтобы открыть полный разбор, включая переписывание в стиле. Ничего из этого не вмешивается в путь диктовка→вставка — всё постфактум."
+        )
+    }
+
     // MARK: - Совпадение со стилем
 
     static var matchScore: String {

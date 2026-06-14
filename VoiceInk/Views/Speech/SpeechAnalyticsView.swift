@@ -62,6 +62,9 @@ struct SpeechAnalyticsView: View {
     @State private var fillerDynamics: AutoFillerDetector.Dynamics?
     /// Кэш дневных рядов для sparkline активных паразитов (считаем в .task, не в body).
     @State private var fillerSparklines: [String: [(date: Date, value: Double)]] = [:]
+    /// Cached exercise of the day — built off the render path in `.task` because it
+    /// scans recent dictations for under-used marker phrases.
+    @State private var cachedExercise: DailyExercise?
     @AppStorage(UserDefaults.Keys.speechReportFolder) private var reportFolder: String = SpeechVaultExport.defaultFolder
 
     private var activeStyleProfile: VoiceProfileTarget? {
@@ -73,6 +76,7 @@ struct SpeechAnalyticsView: View {
             VStack(alignment: .leading, spacing: 24) {
                 heroSection
                 periodSelector
+                dailyTraining
 
                 if filteredMetrics.isEmpty {
                     emptyState
@@ -95,6 +99,7 @@ struct SpeechAnalyticsView: View {
         .background(Color(.windowBackgroundColor))
         .task(id: matchSeriesCacheKey) {
             cachedMatchSeries = computeDailyMatchSeries()
+            cachedExercise = DailyExerciseGenerator.forToday(profile: activeStyleProfile, metrics: allMetrics)
             // Маркер-фразы всех стилей исключаем из паразитов (конфликт с тренером)
             let markerExclude = Set(styleProfiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
             let dyn = AutoFillerDetector.computeDynamics(
@@ -110,6 +115,28 @@ struct SpeechAnalyticsView: View {
             )
             // Поддерживаем кэш активного списка свежим для пайплайна
             AutoFillerDetector.refreshCache(history: allMetrics, excluding: markerExclude)
+        }
+    }
+
+    // MARK: - Daily training (exercise of the day)
+
+    /// The latest dictation made TODAY, if any — the attempt for today's exercise.
+    /// `allMetrics` is sorted newest-first, so the first match is the most recent.
+    private var todaysLatestMetric: SpeechMetric? {
+        allMetrics.first { Calendar.current.isDateInToday($0.timestamp) }
+    }
+
+    /// Exercise-of-the-day card. Scores today's dictation against today's targets;
+    /// «Analyze in detail» opens the existing drill-down (where the style rewrite lives).
+    @ViewBuilder
+    private var dailyTraining: some View {
+        if let cachedExercise {
+            DailyTrainingCard(
+                exercise: cachedExercise,
+                latestMetric: todaysLatestMetric,
+                profile: activeStyleProfile,
+                onOpenDetail: { selectedMetric = $0 }
+            )
         }
     }
 
