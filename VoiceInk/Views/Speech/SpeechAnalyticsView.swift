@@ -46,9 +46,28 @@ enum SpeechPeriod: String, CaseIterable, Identifiable {
     }
 }
 
+enum SpeechTab: String, CaseIterable, Identifiable {
+    case overview
+    case words
+    case coach
+    case history
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .overview: return L10n.t(en: "Overview", ru: "Обзор")
+        case .words:    return L10n.t(en: "Words", ru: "Слова")
+        case .coach:    return L10n.t(en: "Coach", ru: "Тренер")
+        case .history:  return L10n.t(en: "History", ru: "История")
+        }
+    }
+}
+
 struct SpeechAnalyticsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var period: SpeechPeriod = .week
+    @State private var tab: SpeechTab = .overview
     @Query(sort: \SpeechMetric.timestamp, order: .reverse) private var allMetrics: [SpeechMetric]
     @Query(sort: \VoiceProfileTarget.name) private var styleProfiles: [VoiceProfileTarget]
     @State private var selectedMetric: SpeechMetric?
@@ -75,47 +94,33 @@ struct SpeechAnalyticsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 heroSection
+                tabPicker
                 periodSelector
-                dailyTraining
-
-                if filteredMetrics.isEmpty {
-                    emptyState
-                } else {
-                    aggregatedMetrics
-                    prosodySection
-                    VoiceProfileSection(metrics: filteredMetrics)
-                    streaksSection
-                    if period != .today {
-                        trendCharts
-                    }
-                    topFillers
-                    fillerEvolution
-                    topAnglicisms
-                    topRepetitions
-                    recentSessions
-                }
+                tabContent
             }
             .padding(28)
         }
         .background(Color(.windowBackgroundColor))
         .task(id: matchSeriesCacheKey) {
-            cachedMatchSeries = computeDailyMatchSeries()
             cachedExercise = DailyExerciseGenerator.forToday(profile: activeStyleProfile, metrics: allMetrics)
-            // Маркер-фразы всех стилей исключаем из паразитов (конфликт с тренером)
-            let markerExclude = Set(styleProfiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
-            let dyn = AutoFillerDetector.computeDynamics(
-                history: allMetrics,
-                current: filteredMetrics,
-                previous: previousMetrics,
-                excluding: markerExclude
-            )
-            fillerDynamics = dyn
-            fillerSparklines = AutoFillerDetector.dailyRateSeries(
-                phrases: dyn.active.prefix(8).map { $0.phrase },
-                in: filteredMetrics
-            )
-            // Поддерживаем кэш активного списка свежим для пайплайна
-            AutoFillerDetector.refreshCache(history: allMetrics, excluding: markerExclude)
+            cachedMatchSeries = computeDailyMatchSeries()
+            // Filler dynamics + active-list refresh scan the full history (heavy) — only
+            // the Words tab needs them, so this no longer runs on the default Overview.
+            if tab == .words {
+                let markerExclude = Set(styleProfiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
+                let dyn = AutoFillerDetector.computeDynamics(
+                    history: allMetrics,
+                    current: filteredMetrics,
+                    previous: previousMetrics,
+                    excluding: markerExclude
+                )
+                fillerDynamics = dyn
+                fillerSparklines = AutoFillerDetector.dailyRateSeries(
+                    phrases: dyn.active.prefix(8).map { $0.phrase },
+                    in: filteredMetrics
+                )
+                AutoFillerDetector.refreshCache(history: allMetrics, excluding: markerExclude)
+            }
         }
     }
 
@@ -141,10 +146,81 @@ struct SpeechAnalyticsView: View {
         }
     }
 
-    /// Ключ инвалидации кэша Match Score серии: период, активный профиль, данные.
+    /// Cache-invalidation key for the heavy `.task`: tab, period, active profile, data.
+    /// Tab is included so switching to Words triggers the filler-dynamics computation.
     private var matchSeriesCacheKey: String {
         let newest = allMetrics.first?.timestamp.timeIntervalSince1970 ?? 0
-        return "\(period.rawValue)|\(activeStyleProfile?.id.uuidString ?? "none")|\(allMetrics.count)|\(newest)"
+        return "\(tab.rawValue)|\(period.rawValue)|\(activeStyleProfile?.id.uuidString ?? "none")|\(allMetrics.count)|\(newest)"
+    }
+
+    // MARK: - Tabs
+
+    private var tabPicker: some View {
+        Picker("", selection: $tab) {
+            ForEach(SpeechTab.allCases) { t in
+                Text(t.displayName).tag(t)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+    }
+
+    /// Only the active sub-tab's sections are built — keeps each render light and
+    /// avoids the endless scroll. Heavy sections (streaks scan, coach, word tables)
+    /// no longer run on the default Overview.
+    @ViewBuilder
+    private var tabContent: some View {
+        switch tab {
+        case .overview: overviewTab
+        case .words:    wordsTab
+        case .coach:    coachTab
+        case .history:  historyTab
+        }
+    }
+
+    @ViewBuilder
+    private var overviewTab: some View {
+        dailyTraining
+        if filteredMetrics.isEmpty {
+            emptyState
+        } else {
+            aggregatedMetrics
+            prosodySection
+        }
+    }
+
+    @ViewBuilder
+    private var wordsTab: some View {
+        if filteredMetrics.isEmpty {
+            emptyState
+        } else {
+            topFillers
+            fillerEvolution
+            topAnglicisms
+            topRepetitions
+        }
+    }
+
+    @ViewBuilder
+    private var coachTab: some View {
+        if filteredMetrics.isEmpty {
+            emptyState
+        } else {
+            VoiceProfileSection(metrics: filteredMetrics)
+            streaksSection
+        }
+    }
+
+    @ViewBuilder
+    private var historyTab: some View {
+        if filteredMetrics.isEmpty {
+            emptyState
+        } else {
+            if period != .today {
+                trendCharts
+            }
+            recentSessions
+        }
     }
 
     // MARK: - Hero
