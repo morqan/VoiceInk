@@ -15,6 +15,15 @@ struct VoiceProfileSection: View {
     /// Метрики за выбранный период (передаём из родителя).
     let metrics: [SpeechMetric]
 
+    /// Cached match result — computed in `.task`, not on every render (the compute
+    /// scans each metric's text and was a sub-tab-switch hotspot).
+    @State private var matchResult: VoiceProfileMatcher.MatchResult?
+
+    private var matchKey: String {
+        let newest = metrics.first?.timestamp.timeIntervalSince1970 ?? 0
+        return "\(activeProfile?.id.uuidString ?? "none")|\(metrics.count)|\(newest)"
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
@@ -22,7 +31,7 @@ struct VoiceProfileSection: View {
 
             if let active = activeProfile {
                 profileSummary(active)
-                if let result = VoiceProfileMatcher.compute(target: active, metrics: metrics) {
+                if let result = matchResult {
                     totalScoreCard(result)
                     breakdown(result, profile: active)
                     Divider().padding(.vertical, 2)
@@ -41,6 +50,9 @@ struct VoiceProfileSection: View {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(.thinMaterial)
         )
+        .task(id: matchKey) {
+            matchResult = activeProfile.flatMap { VoiceProfileMatcher.compute(target: $0, metrics: metrics) }
+        }
     }
 
     // MARK: - Subviews

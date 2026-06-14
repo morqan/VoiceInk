@@ -108,32 +108,37 @@ struct SpeechAnalyticsView: View {
             .padding(28)
         }
         .background(Color(.windowBackgroundColor))
-        .task(id: matchSeriesCacheKey) {
+        // Exercise + match-series depend on data/period, NOT the tab — so switching
+        // sub-tabs no longer re-runs them (that was the main sub-tab-switch lag).
+        .task(id: exerciseKey) {
             cachedExercise = DailyExerciseGenerator.forToday(profile: activeStyleProfile, metrics: allMetrics)
+        }
+        .task(id: chartsKey) {
             cachedMatchSeries = computeDailyMatchSeries()
-            // Filler dynamics + active-list refresh scan the full history (heavy) — only
-            // the Words tab needs them, so this no longer runs on the default Overview.
-            if tab == .words {
-                topFillerList = topWords { $0.fillersByWord }
-                topAnglicismList = topWords { $0.anglicismsByWord }
-                topRepetitionList = topWords { $0.repetitionsByWord }
-                let markerExclude = Set(styleProfiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
-                let dyn = AutoFillerDetector.computeDynamics(
-                    history: allMetrics,
-                    current: filteredMetrics,
-                    previous: previousMetrics,
-                    excluding: markerExclude
-                )
-                fillerDynamics = dyn
-                fillerSparklines = AutoFillerDetector.dailyRateSeries(
-                    phrases: dyn.active.prefix(8).map { $0.phrase },
-                    in: filteredMetrics
-                )
-                AutoFillerDetector.refreshCache(history: allMetrics, excluding: markerExclude)
-            }
-            if tab == .coach {
-                cachedStreaks = computeStreaks()
-            }
+        }
+        // Heavy per-tab scans fire only when that tab is active, once per data/period.
+        .task(id: wordsKey) {
+            guard tab == .words else { return }
+            topFillerList = topWords { $0.fillersByWord }
+            topAnglicismList = topWords { $0.anglicismsByWord }
+            topRepetitionList = topWords { $0.repetitionsByWord }
+            let markerExclude = Set(styleProfiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
+            let dyn = AutoFillerDetector.computeDynamics(
+                history: allMetrics,
+                current: filteredMetrics,
+                previous: previousMetrics,
+                excluding: markerExclude
+            )
+            fillerDynamics = dyn
+            fillerSparklines = AutoFillerDetector.dailyRateSeries(
+                phrases: dyn.active.prefix(8).map { $0.phrase },
+                in: filteredMetrics
+            )
+            AutoFillerDetector.refreshCache(history: allMetrics, excluding: markerExclude)
+        }
+        .task(id: coachKey) {
+            guard tab == .coach else { return }
+            cachedStreaks = computeStreaks()
         }
     }
 
@@ -159,12 +164,19 @@ struct SpeechAnalyticsView: View {
         }
     }
 
-    /// Cache-invalidation key for the heavy `.task`: tab, period, active profile, data.
-    /// Tab is included so switching to Words triggers the filler-dynamics computation.
-    private var matchSeriesCacheKey: String {
+    /// Data fingerprint — changes when metrics are added/changed.
+    private var dataStamp: String {
         let newest = allMetrics.first?.timestamp.timeIntervalSince1970 ?? 0
-        return "\(tab.rawValue)|\(period.rawValue)|\(activeStyleProfile?.id.uuidString ?? "none")|\(allMetrics.count)|\(newest)"
+        return "\(allMetrics.count)|\(newest)"
     }
+    /// Exercise depends on profile + data — NOT period, NOT tab.
+    private var exerciseKey: String { "\(activeStyleProfile?.id.uuidString ?? "none")|\(dataStamp)" }
+    /// Match-score chart depends on period + profile + data — NOT tab, so switching
+    /// sub-tabs no longer recomputes it (this was the main sub-tab-switch lag).
+    private var chartsKey: String { "\(period.rawValue)|\(activeStyleProfile?.id.uuidString ?? "none")|\(dataStamp)" }
+    /// Heavy per-tab work fires only while that tab is active.
+    private var wordsKey: String { tab == .words ? "\(period.rawValue)|\(dataStamp)" : "off" }
+    private var coachKey: String { tab == .coach ? dataStamp : "off" }
 
     // MARK: - Tabs
 
