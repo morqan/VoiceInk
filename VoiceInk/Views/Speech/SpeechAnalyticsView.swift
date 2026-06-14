@@ -82,6 +82,7 @@ struct SpeechAnalyticsView: View {
                     emptyState
                 } else {
                     aggregatedMetrics
+                    prosodySection
                     VoiceProfileSection(metrics: filteredMetrics)
                     streaksSection
                     if period != .today {
@@ -1274,6 +1275,65 @@ struct SpeechAnalyticsView: View {
             .map { (date: $0.0, value: $0.1) }
             .sorted { $0.date < $1.date }
     }
+
+    // MARK: - Prosody (voice)
+
+    /// Period metrics that already have prosody numbers (audio still on disk).
+    private var prosodyMetrics: [SpeechMetric] {
+        filteredMetrics.filter { $0.prosodyAnalyzed }
+    }
+
+    /// Voice/prosody cards — shown only once at least one dictation has been analysed.
+    @ViewBuilder
+    private var prosodySection: some View {
+        if !prosodyMetrics.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    LocalizedText(en: "Voice (prosody)", ru: "Голос (просодика)")
+                        .font(.system(size: 16, weight: .bold))
+                    InfoTip(message: SpeechMetricTips.prosody, iconSize: .small, iconColor: .secondary)
+                    Spacer()
+                }
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
+                    statCard(
+                        title: L10n.t(en: "Expressiveness", ru: "Выразительность"),
+                        value: String(format: "%.1f", avgPitchRange),
+                        unit: L10n.t(en: "st", ru: "пт"),
+                        detail: L10n.t(en: "F0 range", ru: "Разброс тона"),
+                        color: .purple,
+                        icon: "waveform.path",
+                        tip: SpeechMetricTips.expressiveness,
+                        delta: nil
+                    )
+                    statCard(
+                        title: L10n.t(en: "Pauses", ru: "Паузы"),
+                        value: String(format: "%.0f", avgPauseRatio),
+                        unit: "%",
+                        detail: L10n.t(en: "of speaking time", ru: "от времени речи"),
+                        color: .teal,
+                        icon: "pause.circle",
+                        tip: SpeechMetricTips.pauses,
+                        delta: nil
+                    )
+                    statCard(
+                        title: L10n.t(en: "Dynamics", ru: "Динамика"),
+                        value: String(format: "%.0f", avgLoudnessRange),
+                        unit: "dB",
+                        detail: L10n.t(en: "loudness spread", ru: "разброс громкости"),
+                        color: .mint,
+                        icon: "speaker.wave.3",
+                        tip: SpeechMetricTips.dynamics,
+                        delta: nil
+                    )
+                }
+            }
+        }
+    }
+
+    private var avgPitchRange: Double { meanOf(prosodyMetrics.map { $0.pitchRangeSemitones }.filter { $0 > 0 }) }
+    private var avgPauseRatio: Double { meanOf(prosodyMetrics.map { $0.pauseRatioPercent }) }
+    private var avgLoudnessRange: Double { meanOf(prosodyMetrics.map { $0.loudnessRangeDb }.filter { $0 > 0 }) }
+    private func meanOf(_ xs: [Double]) -> Double { xs.isEmpty ? 0 : xs.reduce(0, +) / Double(xs.count) }
 
     // MARK: - Color thresholds
 

@@ -187,6 +187,7 @@ class TranscriptionPipeline {
         }
 
         func saveTranscriptionAndPostCompletion() {
+            var prosodyMetricID: UUID?
             if transcription.transcriptionStatus == TranscriptionStatus.completed.rawValue {
                 do {
                     didInsertSessionMetric = try SessionMetricRecorder.recordRecorderSession(
@@ -208,7 +209,9 @@ class TranscriptionPipeline {
                     rawText: rawForMetrics,
                     activeFillers: AutoFillerDetector.cachedActiveFillers()
                 ) {
+                    speechMetric.audioFileURL = audioURL.absoluteString
                     modelContext.insert(speechMetric)
+                    prosodyMetricID = speechMetric.id
                 }
             }
 
@@ -218,6 +221,15 @@ class TranscriptionPipeline {
                     NotificationCenter.default.post(name: .sessionMetricsDidChange, object: nil)
                 }
                 NotificationCenter.default.post(name: .transcriptionCompleted, object: transcription)
+                // Voice prosody runs in the background AFTER paste + save — off the
+                // dictation→insert path. Fire-and-forget; updates the metric when done.
+                if let prosodyMetricID {
+                    ProsodyAnalysisService.shared.analyzeNew(
+                        metricID: prosodyMetricID,
+                        audioURL: audioURL,
+                        container: modelContext.container
+                    )
+                }
             } catch {
                 logger.error("Failed to save transcription: \(error.localizedDescription, privacy: .public)")
             }

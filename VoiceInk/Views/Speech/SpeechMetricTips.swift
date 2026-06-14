@@ -77,6 +77,36 @@ enum SpeechMetricTips {
         )
     }
 
+    // MARK: - Prosody (voice)
+
+    static var prosody: String {
+        L10n.t(
+            en: "Voice prosody — measured from the audio, not the text. Computed locally in the background after each dictation, so it never slows insertion. Honesty: pitch and pauses depend on your mic and room noise (thresholds adapt but aren't perfect); loudness is relative to the recording (dBFS), shown as DYNAMICS, not absolute volume. Only dictations whose audio is still on disk have these numbers.",
+            ru: "Просодика голоса — считается по аудио, а не по тексту. Локально, в фоне после каждой диктовки, поэтому вставку не замедляет. Честно: высота тона и паузы зависят от микрофона и шума комнаты (пороги адаптивные, но не идеальны); громкость относительна к записи (dBFS), показана как ДИНАМИКА, не абсолютная громкость. Цифры есть только у диктовок, чьё аудио ещё на диске."
+        )
+    }
+
+    static var expressiveness: String {
+        L10n.t(
+            en: "Pitch range: how much your fundamental frequency (F0) moves, in semitones (p90−p10 over voiced frames). Low ≈ monotone, high ≈ melodic/expressive. Not universally good or bad — Erickson-style hypnotic delivery is deliberately flatter, a Speaker is wider. No fixed target yet (arrives with prosodic Match Score). Measured by a YIN pitch detector on 16 kHz audio.",
+            ru: "Разброс тона: насколько гуляет твоя основная частота (F0), в полутонах (p90−p10 по озвонченным кадрам). Мало ≈ монотонно, много ≈ мелодично/выразительно. Само по себе не «хорошо/плохо» — гипнотическая подача Эриксона нарочно ровнее, у Спикера шире. Фиксированной цели пока нет (появится с просодическим Match Score). Считается YIN-детектором высоты по аудио 16 кГц."
+        )
+    }
+
+    static var pauses: String {
+        L10n.t(
+            en: "Pause ratio: the share of your speaking span spent in silence, by energy-based voice-activity detection on the audio. Unlike WPM, this catches real pauses and the «uh» gaps the speech model often deletes from the text. Some pausing is good (emphasis, breathing); a lot signals searching for words. Depends on mic/noise — the threshold adapts to your background level.",
+            ru: "Доля пауз: сколько времени в пределах твоей речи ушло в тишину — по энергетическому детектору голосовой активности на аудио. В отличие от WPM, ловит настоящие паузы и провалы «эээ», которые модель распознавания часто вырезает из текста. Часть пауз — хорошо (акцент, дыхание); много — сигнал поиска слов. Зависит от микрофона/шума — порог подстраивается под твой фон."
+        )
+    }
+
+    static var dynamics: String {
+        L10n.t(
+            en: "Loudness dynamics: the spread of your loudness during speech (p90−p10 of frame level, in dB relative to the recording). Higher = more vocal light-and-shade; very low = flat, one-level delivery. It's relative (dBFS), not calibrated decibels — compare yourself to yourself over time, not to an absolute number.",
+            ru: "Динамика громкости: разброс громкости во время речи (p90−p10 уровня кадров, в дБ относительно записи). Больше = больше голосовой светотени; очень мало = ровная одноуровневая подача. Это относительная величина (dBFS), не калиброванные децибелы — сравнивай себя с собой во времени, не с абсолютом."
+        )
+    }
+
     // MARK: - Совпадение со стилем
 
     static var matchScore: String {

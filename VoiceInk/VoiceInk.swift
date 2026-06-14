@@ -188,6 +188,9 @@ struct VoiceInkApp: App {
         // Одноразовый пересчёт speech-метрик под честные формулы
         // (границы слов, сложность без «что») — иначе тренды смешивают две линейки
         SpeechMetricRecalcService.shared.runIfNeeded(modelContainer: resolvedContainer)
+        // One-time best-effort prosody backfill for recent dictations whose audio
+        // still exists (low priority, off-main — never touches the dictation path).
+        ProsodyAnalysisService.shared.runBackfillIfNeeded(container: resolvedContainer)
         let mainContext = resolvedContainer.mainContext
         Task {
             await migrationTask?.value

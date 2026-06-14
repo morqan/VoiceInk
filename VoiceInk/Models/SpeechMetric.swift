@@ -78,6 +78,26 @@ final class SpeechMetric {
     /// (сырьё тогда не сохранялось) — тогда анализ падает обратно на text.
     var rawText: String = ""
 
+    // MARK: - Prosody (voice) — Phase 1, computed in background from the audio file.
+
+    /// Recording this metric was derived from (for prosody DSP). Empty for old records.
+    var audioFileURL: String = ""
+
+    /// Whether prosody DSP has run for this record (guards backfill + UI gating).
+    var prosodyAnalyzed: Bool = false
+
+    /// Share of the speaking span spent in silence, % (energy VAD).
+    var pauseRatioPercent: Double = 0
+
+    /// Median fundamental frequency, Hz.
+    var pitchMeanHz: Double = 0
+
+    /// F0 spread in semitones — low = monotone, high = expressive.
+    var pitchRangeSemitones: Double = 0
+
+    /// Loudness spread (dBFS) during speech — vocal dynamics.
+    var loudnessRangeDb: Double = 0
+
     init(
         id: UUID = UUID(),
         timestamp: Date = Date(),
@@ -96,7 +116,13 @@ final class SpeechMetric {
         selfCorrectionCount: Int = 0,
         selfCorrectionsByWordJSON: String = "{}",
         text: String = "",
-        rawText: String = ""
+        rawText: String = "",
+        audioFileURL: String = "",
+        prosodyAnalyzed: Bool = false,
+        pauseRatioPercent: Double = 0,
+        pitchMeanHz: Double = 0,
+        pitchRangeSemitones: Double = 0,
+        loudnessRangeDb: Double = 0
     ) {
         self.id = id
         self.timestamp = timestamp
@@ -116,6 +142,12 @@ final class SpeechMetric {
         self.selfCorrectionsByWordJSON = selfCorrectionsByWordJSON
         self.text = text
         self.rawText = rawText
+        self.audioFileURL = audioFileURL
+        self.prosodyAnalyzed = prosodyAnalyzed
+        self.pauseRatioPercent = pauseRatioPercent
+        self.pitchMeanHz = pitchMeanHz
+        self.pitchRangeSemitones = pitchRangeSemitones
+        self.loudnessRangeDb = loudnessRangeDb
     }
 
     // MARK: - Computed
