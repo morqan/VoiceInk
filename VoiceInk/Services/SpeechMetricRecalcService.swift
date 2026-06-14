@@ -10,7 +10,7 @@
 //  на дате деплоя, выдавая смену формулы за изменение речи.
 //
 //  Текст транскрипции хранится в каждой записи — пересчитываем паразитов,
-//  сложность и повторы заново. WPM/предложения/англицизмы не трогаем (их
+//  сложность, повторы и предложения заново. WPM/англицизмы не трогаем (их
 //  алгоритмы не менялись). Паттерн — как SessionMetricMigrationService:
 //  фоновый контекст + UserDefaults-флаг завершения.
 //
@@ -31,7 +31,8 @@ final class SpeechMetricRecalcService {
     /// Версия в ключе: при следующем изменении формул достаточно поднять v.
     /// v3 — бэкафилл rawText + пересчёт паразитов под авто-детектор.
     /// v4 — добавлена метрика «гладкость» (самоисправления) для всей истории.
-    private let completionKey = "SpeechMetricRecalc_v4_done"
+    /// v5 — пересчёт предложений (числа с точкой и «…» больше не дробят их).
+    private let completionKey = "SpeechMetricRecalc_v5_done"
     private(set) var isRunning = false
 
     private init() {}
@@ -72,10 +73,11 @@ final class SpeechMetricRecalcService {
                     let words = SpeechMetricsAnalyzer.extractWords(from: source)
                     guard !words.isEmpty else { continue }
 
+                    let sentenceCount = SpeechMetricsAnalyzer.countSentences(in: source)
                     let fillers = SpeechMetricsAnalyzer.countFillers(text: source, activeFillers: activeFillers)
                     let complexity = SpeechMetricsAnalyzer.calculateComplexity(
                         text: source,
-                        sentenceCount: metric.sentenceCount
+                        sentenceCount: sentenceCount
                     )
                     let repetitions = SpeechMetricsAnalyzer.countRepetitions(
                         words: words,
@@ -86,6 +88,7 @@ final class SpeechMetricRecalcService {
 
                     metric.fillerCount = fillers.values.reduce(0, +)
                     metric.fillersByWordJSON = Self.encodeJSON(fillers)
+                    metric.sentenceCount = sentenceCount
                     metric.avgSentenceComplexity = complexity
                     metric.repetitionsByWordJSON = Self.encodeJSON(repetitions)
                     metric.selfCorrectionCount = selfCorrections.total
@@ -95,7 +98,7 @@ final class SpeechMetricRecalcService {
 
                 try context.save()
                 UserDefaults.standard.set(true, forKey: completionKey)
-                logger.info("Speech metric recalc v4 done: \(updated) records (auto-filler + rawText + smoothness)")
+                logger.info("Speech metric recalc v5 done: \(updated) records (auto-filler + rawText + smoothness + sentences)")
             } catch {
                 logger.error("Speech metric recalc failed: \(error.localizedDescription, privacy: .public)")
                 // Флаг не ставим — попробуем на следующем запуске

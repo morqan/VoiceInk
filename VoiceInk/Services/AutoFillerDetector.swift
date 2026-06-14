@@ -160,15 +160,16 @@ enum AutoFillerDetector {
     /// Считается один раз в .task, не в body.
     static func dailyRateSeries(phrases: [String], in metrics: [SpeechMetric]) -> [String: [(date: Date, value: Double)]] {
         guard !phrases.isEmpty else { return [:] }
+        let ordered = PhraseOccurrenceScanner.normalizedOrdered(phrases)
         let cal = Calendar.current
         var byDay: [Date: (occ: [String: Int], words: Int)] = [:]
         for m in metrics {
             let day = cal.startOfDay(for: m.timestamp)
             let src = sourceText(m)
-            let counts = PhraseOccurrenceScanner.counts(of: phrases, in: src)
+            let counts = PhraseOccurrenceScanner.counts(ofOrdered: ordered, in: src)
             var entry = byDay[day, default: (occ: [:], words: 0)]
             for (p, c) in counts { entry.occ[p, default: 0] += c }
-            entry.words += SpeechMetricsAnalyzer.extractWords(from: src).count
+            entry.words += SpeechMetricsAnalyzer.wordCount(in: src)
             byDay[day] = entry
         }
         var result: [String: [(date: Date, value: Double)]] = [:]
@@ -281,12 +282,13 @@ enum AutoFillerDetector {
     }
 
     private static func occAndWords(_ phrases: [String], in metrics: [SpeechMetric]) -> (occ: [String: Int], words: Int) {
+        let ordered = PhraseOccurrenceScanner.normalizedOrdered(phrases)
         var occ: [String: Int] = [:]
         var words = 0
         for m in metrics {
             let src = sourceText(m)
-            words += SpeechMetricsAnalyzer.extractWords(from: src).count
-            for (p, c) in PhraseOccurrenceScanner.counts(of: phrases, in: src) {
+            words += SpeechMetricsAnalyzer.wordCount(in: src)
+            for (p, c) in PhraseOccurrenceScanner.counts(ofOrdered: ordered, in: src) {
                 occ[p, default: 0] += c
             }
         }

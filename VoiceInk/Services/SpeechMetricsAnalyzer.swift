@@ -126,23 +126,47 @@ enum SpeechMetricsAnalyzer {
 
     /// Разбивает текст на слова. Игнорирует знаки препинания.
     static func extractWords(from text: String) -> [String] {
-        let allowedChars = CharacterSet.letters.union(.init(charactersIn: "-'"))
         return text
-            .components(separatedBy: allowedChars.inverted)
+            .components(separatedBy: wordChars.inverted)
             .filter { !$0.isEmpty }
             .map { $0.lowercased() }
+    }
+
+    private static let wordChars = CharacterSet.letters.union(.init(charactersIn: "-'"))
+
+    /// Counts words the same way `extractWords` splits them (maximal runs of letters
+    /// plus `-`/`'`), but without allocating the token array or lowercasing — for
+    /// callers that only need the count.
+    static func wordCount(in text: String) -> Int {
+        var count = 0
+        var inWord = false
+        for scalar in text.unicodeScalars {
+            if wordChars.contains(scalar) {
+                if !inWord { count += 1; inWord = true }
+            } else {
+                inWord = false
+            }
+        }
+        return count
     }
 
     // MARK: - Sentence counting
 
     /// Считает количество предложений по терминаторам . ? ! и многоточиям.
-    /// Многоточие = одно предложение, не три.
+    /// Многоточие = одно предложение, не три. Числа с точкой («3.14», «1.000.000»)
+    /// и юникод-«…» не дробят предложение.
     static func countSentences(in text: String) -> Int {
-        // Сначала схлопнуть "..." и "?!" и "!?" в один символ — чтобы не считать как несколько
         var normalized = text
-        normalized = normalized.replacingOccurrences(of: "...", with: ".")
-        normalized = normalized.replacingOccurrences(of: "?!", with: "?")
-        normalized = normalized.replacingOccurrences(of: "!?", with: "!")
+        // Юникод-многоточие → один терминатор.
+        normalized = normalized.replacingOccurrences(of: "…", with: ".")
+        // Точка/запятая внутри числа (3.14, 1.000.000) — не конец предложения.
+        normalized = normalized.replacingOccurrences(
+            of: "(?<=\\d)[.,](?=\\d)", with: "", options: .regularExpression
+        )
+        // Любая серия терминаторов («...», «?!», «!!», «....») = один.
+        normalized = normalized.replacingOccurrences(
+            of: "[.?!]{2,}", with: ".", options: .regularExpression
+        )
 
         let terminators: Set<Character> = [".", "?", "!"]
         let count = normalized.filter { terminators.contains($0) }.count

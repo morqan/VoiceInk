@@ -14,18 +14,28 @@ import Foundation
 
 enum PhraseOccurrenceScanner {
 
+    /// Нормализованный порядок фраз для скана: lowercase, дедуп, длинные первыми
+    /// (чтобы вложенная короткая фраза не съела место длинной). Считается один раз —
+    /// вызывай перед циклом по многим текстам и передавай в `*ofOrdered`.
+    static func normalizedOrdered(_ phrases: [String]) -> [String] {
+        var seen = Set<String>()
+        return phrases
+            .map { $0.lowercased() }
+            .filter { seen.insert($0).inserted }
+            .sorted { $0.count > $1.count }
+    }
+
     /// Вхождения каждой фразы в тексте. Ranges — в исходной строке (для подсветки).
     /// Ключ результата — фраза в lowercase.
     static func occurrences(of phrases: [String], in text: String) -> [String: [Range<String.Index>]] {
         guard !phrases.isEmpty, !text.isEmpty else { return [:] }
+        return occurrences(ofOrdered: normalizedOrdered(phrases), in: text)
+    }
 
-        // Дедуп с сохранением исходных фраз, длинные первыми — чтобы вложенная
-        // короткая фраза не съела место длинной.
-        var seen = Set<String>()
-        let ordered = phrases
-            .map { $0.lowercased() }
-            .filter { seen.insert($0).inserted }
-            .sorted { $0.count > $1.count }
+    /// Как `occurrences(of:in:)`, но принимает уже нормализованный список (см.
+    /// `normalizedOrdered`) — чтобы не пересчитывать его на каждый текст в цикле.
+    static func occurrences(ofOrdered ordered: [String], in text: String) -> [String: [Range<String.Index>]] {
+        guard !ordered.isEmpty, !text.isEmpty else { return [:] }
 
         var result: [String: [Range<String.Index>]] = [:]
         var consumed: [Range<String.Index>] = []
@@ -51,6 +61,12 @@ enum PhraseOccurrenceScanner {
     /// Число вхождений каждой фразы (границы слов, без пересечений).
     static func counts(of phrases: [String], in text: String) -> [String: Int] {
         occurrences(of: phrases, in: text).mapValues { $0.count }
+    }
+
+    /// Как `counts(of:in:)`, но для уже нормализованного списка фраз (см.
+    /// `normalizedOrdered`) — для горячих циклов по многим текстам.
+    static func counts(ofOrdered ordered: [String], in text: String) -> [String: Int] {
+        occurrences(ofOrdered: ordered, in: text).mapValues { $0.count }
     }
 
     /// Суммарное число вхождений всех фраз.

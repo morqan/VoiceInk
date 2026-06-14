@@ -11,8 +11,13 @@
 import Foundation
 
 enum JSONCoding {
+    // Reused across calls — these dictionary fields are decoded on every access
+    // (they aren't stored), so allocating a coder each time is pure waste.
+    private static let encoder = JSONEncoder()
+    private static let decoder = JSONDecoder()
+
     static func encode(_ dict: [String: Int]) -> String {
-        guard let data = try? JSONEncoder().encode(dict),
+        guard let data = try? encoder.encode(dict),
               let json = String(data: data, encoding: .utf8) else {
             return "{}"
         }
@@ -21,7 +26,7 @@ enum JSONCoding {
 
     static func decode(_ json: String) -> [String: Int] {
         guard let data = json.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: Int].self, from: data) else {
+              let dict = try? decoder.decode([String: Int].self, from: data) else {
             return [:]
         }
         return dict

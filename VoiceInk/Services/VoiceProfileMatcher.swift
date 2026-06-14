@@ -256,9 +256,10 @@ enum VoiceProfileMatcher {
     /// пересечений («именно поэтому» не даёт ещё и «поэтому»).
     static func countMarkerHitsPerPhrase(in texts: [String], phrases: [String]) -> [String: Int] {
         guard !phrases.isEmpty else { return [:] }
+        let ordered = PhraseOccurrenceScanner.normalizedOrdered(phrases)
         var result: [String: Int] = [:]
         for text in texts {
-            for (phrase, count) in PhraseOccurrenceScanner.counts(of: phrases, in: text) {
+            for (phrase, count) in PhraseOccurrenceScanner.counts(ofOrdered: ordered, in: text) {
                 result[phrase, default: 0] += count
             }
         }
