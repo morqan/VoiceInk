@@ -1126,58 +1126,15 @@ struct SpeechAnalyticsView: View {
     // MARK: - Aggregations
     // Параметризованы по набору метрик: считаются и для текущего, и для прошлого периода.
 
-    private func wordCount(of ms: [SpeechMetric]) -> Int {
-        ms.reduce(0) { $0 + $1.wordCount }
-    }
-
-    private func fillerRate(of ms: [SpeechMetric]) -> Double {
-        let words = wordCount(of: ms)
-        guard words > 0 else { return 0 }
-        return Double(ms.reduce(0) { $0 + $1.fillerCount }) / Double(words) * 100
-    }
-
-    private func anglicismRate(of ms: [SpeechMetric]) -> Double {
-        let words = wordCount(of: ms)
-        guard words > 0 else { return 0 }
-        return Double(ms.reduce(0) { $0 + $1.anglicismCount }) / Double(words) * 100
-    }
-
-    /// Самоисправления на 100 слов (обратная мера гладкости) — pooled по словам.
-    private func selfCorrectionRate(of ms: [SpeechMetric]) -> Double {
-        let words = wordCount(of: ms)
-        guard words > 0 else { return 0 }
-        return Double(ms.reduce(0) { $0 + $1.selfCorrectionCount }) / Double(words) * 100
-    }
-
-    private func sentenceLength(of ms: [SpeechMetric]) -> Double {
-        let sentences = ms.reduce(0) { $0 + $1.sentenceCount }
-        guard sentences > 0 else { return 0 }
-        return Double(wordCount(of: ms)) / Double(sentences)
-    }
-
-    /// WPM — pooled: все слова ÷ суммарное время записей (вместо невзвешенного
-    /// среднего по сессиям, где 16-словная реплика весила как 10-минутная диктовка).
-    private func wpm(of ms: [SpeechMetric]) -> Double {
-        let timed = ms.filter { $0.durationSeconds > 0 && $0.wordCount > 0 }
-        let minutes = timed.reduce(0.0) { $0 + $1.durationSeconds } / 60.0
-        guard minutes > 0 else { return 0 }
-        return Double(timed.reduce(0) { $0 + $1.wordCount }) / minutes
-    }
-
-    /// EN/RU — взвешенно по словам сессий (длинная сессия весит больше короткой).
-    private func enRatio(of ms: [SpeechMetric]) -> Double {
-        let words = wordCount(of: ms)
-        guard words > 0 else { return 0 }
-        return ms.reduce(0.0) { $0 + $1.enRuRatio * Double($1.wordCount) } / Double(words)
-    }
-
-    /// Сложность — взвешенно по словам, включая нулевые сессии
-    /// (исключение нулей смещало среднее вверх).
-    private func complexity(of ms: [SpeechMetric]) -> Double {
-        let words = wordCount(of: ms)
-        guard words > 0 else { return 0 }
-        return ms.reduce(0.0) { $0 + $1.avgSentenceComplexity * Double($1.wordCount) } / Double(words)
-    }
+    // Thin delegates to SpeechAggregates (the aggregation logic lives there now).
+    private func wordCount(of ms: [SpeechMetric]) -> Int { SpeechAggregates.wordCount(ms) }
+    private func fillerRate(of ms: [SpeechMetric]) -> Double { SpeechAggregates.fillerRate(ms) }
+    private func anglicismRate(of ms: [SpeechMetric]) -> Double { SpeechAggregates.anglicismRate(ms) }
+    private func selfCorrectionRate(of ms: [SpeechMetric]) -> Double { SpeechAggregates.selfCorrectionRate(ms) }
+    private func sentenceLength(of ms: [SpeechMetric]) -> Double { SpeechAggregates.sentenceLength(ms) }
+    private func wpm(of ms: [SpeechMetric]) -> Double { SpeechAggregates.wpm(ms) }
+    private func enRatio(of ms: [SpeechMetric]) -> Double { SpeechAggregates.enRatio(ms) }
+    private func complexity(of ms: [SpeechMetric]) -> Double { SpeechAggregates.complexity(ms) }
 
     /// Подпись карточки «Темп»: цель активного стиля + направление, либо «средний темп».
     private var wpmDetail: String {
@@ -1212,14 +1169,7 @@ struct SpeechAnalyticsView: View {
     /// Aggregate a per-metric word→count dictionary across the period, sorted desc.
     /// Each `extract` access JSON-decodes a stored field, so callers cache the result.
     private func topWords(_ extract: (SpeechMetric) -> [String: Int]) -> [(word: String, count: Int)] {
-        var totals: [String: Int] = [:]
-        for metric in filteredMetrics {
-            for (word, count) in extract(metric) {
-                totals[word, default: 0] += count
-            }
-        }
-        return totals.map { (word: $0.key, count: $0.value) }
-            .sorted { $0.count > $1.count }
+        SpeechAggregates.topWords(filteredMetrics, extract)
     }
 
     // MARK: - Daily series for charts
