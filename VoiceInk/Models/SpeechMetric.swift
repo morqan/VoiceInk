@@ -196,10 +196,6 @@ final class SpeechMetric {
     }
 
     private func decodeJSON(_ json: String) -> [String: Int] {
-        guard let data = json.data(using: .utf8),
-              let dict = try? JSONDecoder().decode([String: Int].self, from: data) else {
-            return [:]
-        }
-        return dict
+        JSONCoding.decode(json)
     }
 }

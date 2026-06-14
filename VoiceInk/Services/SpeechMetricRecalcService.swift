@@ -108,10 +108,6 @@ final class SpeechMetricRecalcService {
     }
 
     private nonisolated static func encodeJSON(_ dict: [String: Int]) -> String {
-        guard let data = try? JSONEncoder().encode(dict),
-              let json = String(data: data, encoding: .utf8) else {
-            return "{}"
-        }
-        return json
+        JSONCoding.encode(dict)
     }
 }
