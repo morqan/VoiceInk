@@ -420,7 +420,7 @@ struct SpeechAnalyticsView: View {
 
     private var aggregatedMetrics: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
-            statCard(
+            SpeechStatCard(
                 title: L10n.t(en: "Fillers", ru: "Паразиты"),
                 value: String(format: "%.1f", aggFillerRate),
                 unit: L10n.t(en: "/100w", ru: "/100сл"),
@@ -428,9 +428,9 @@ struct SpeechAnalyticsView: View {
                 color: fillerColor(aggFillerRate),
                 icon: "text.bubble",
                 tip: SpeechMetricTips.fillers,
-                delta: delta(fillerRate).map { CardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
+                delta: delta(fillerRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
             )
-            statCard(
+            SpeechStatCard(
                 title: L10n.t(en: "Avg sentence", ru: "Длина предложения"),
                 value: String(format: "%.0f", aggSentenceLength),
                 unit: L10n.t(en: "words", ru: "слов"),
@@ -443,10 +443,10 @@ struct SpeechAnalyticsView: View {
                     let target = activeStyleProfile?.targetSentenceLength ?? 18
                     let improved = abs(sentenceLength(of: filteredMetrics) - target)
                         < abs(sentenceLength(of: previousMetrics) - target)
-                    return CardDelta(value: d, format: "%.0f", improved: improved)
+                    return SpeechCardDelta(value: d, format: "%.0f", improved: improved)
                 }
             )
-            statCard(
+            SpeechStatCard(
                 title: L10n.t(en: "Anglicisms", ru: "Англицизмы"),
                 value: String(format: "%.1f", aggAnglicismRate),
                 unit: L10n.t(en: "/100w", ru: "/100сл"),
@@ -454,9 +454,9 @@ struct SpeechAnalyticsView: View {
                 color: anglicismColor(aggAnglicismRate),
                 icon: "globe",
                 tip: SpeechMetricTips.anglicisms,
-                delta: delta(anglicismRate).map { CardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
+                delta: delta(anglicismRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
             )
-            statCard(
+            SpeechStatCard(
                 title: L10n.t(en: "Smoothness", ru: "Гладкость"),
                 value: String(format: "%.1f", aggSelfCorrectionRate),
                 unit: L10n.t(en: "/100w", ru: "/100сл"),
@@ -464,9 +464,9 @@ struct SpeechAnalyticsView: View {
                 color: smoothnessColor(aggSelfCorrectionRate),
                 icon: "pencil.and.scribble",
                 tip: SpeechMetricTips.smoothness,
-                delta: delta(selfCorrectionRate).map { CardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
+                delta: delta(selfCorrectionRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
             )
-            statCard(
+            SpeechStatCard(
                 title: L10n.t(en: "Speed", ru: "Темп"),
                 value: String(format: "%.0f", aggWPM),
                 unit: "WPM",
@@ -474,9 +474,9 @@ struct SpeechAnalyticsView: View {
                 color: .blue,
                 icon: "speedometer",
                 tip: SpeechMetricTips.wpm,
-                delta: delta(wpm).map { CardDelta(value: $0, format: "%.0f", improved: nil) }
+                delta: delta(wpm).map { SpeechCardDelta(value: $0, format: "%.0f", improved: nil) }
             )
-            statCard(
+            SpeechStatCard(
                 title: L10n.t(en: "Total words", ru: "Всего слов"),
                 value: "\(aggWordCount)",
                 unit: "",
@@ -484,9 +484,9 @@ struct SpeechAnalyticsView: View {
                 color: .indigo,
                 icon: "text.alignleft",
                 tip: SpeechMetricTips.totalWords,
-                delta: delta({ Double(wordCount(of: $0)) }).map { CardDelta(value: $0, format: "%.0f", improved: nil) }
+                delta: delta({ Double(wordCount(of: $0)) }).map { SpeechCardDelta(value: $0, format: "%.0f", improved: nil) }
             )
-            statCard(
+            SpeechStatCard(
                 title: L10n.t(en: "EN / RU ratio", ru: "EN / RU"),
                 value: String(format: "%.0f%%", aggEnRatio * 100),
                 unit: "",
@@ -494,10 +494,10 @@ struct SpeechAnalyticsView: View {
                 color: .pink,
                 icon: "character.textbox",
                 tip: SpeechMetricTips.enRuRatio,
-                delta: delta({ enRatio(of: $0) * 100 }).map { CardDelta(value: $0, format: "%.0f", improved: nil) }
+                delta: delta({ enRatio(of: $0) * 100 }).map { SpeechCardDelta(value: $0, format: "%.0f", improved: nil) }
             )
 
-            statCard(
+            SpeechStatCard(
                 title: L10n.t(en: "Complexity", ru: "Сложность"),
                 value: String(format: "%.1f", aggComplexity),
                 unit: "",
@@ -505,7 +505,7 @@ struct SpeechAnalyticsView: View {
                 color: .teal,
                 icon: "arrow.triangle.branch",
                 tip: SpeechMetricTips.complexity,
-                delta: delta(complexity).map { CardDelta(value: $0, format: "%.1f", improved: nil) }
+                delta: delta(complexity).map { SpeechCardDelta(value: $0, format: "%.1f", improved: nil) }
             )
         }
     }
@@ -514,87 +514,6 @@ struct SpeechAnalyticsView: View {
     /// improved: true → зелёный, false → красный, nil → нейтральная метрика (серый).
     /// Вычисляется на месте вызова — например, длина предложения «улучшилась»,
     /// если приблизилась к цели активного профиля, а не просто упала.
-    struct CardDelta {
-        let value: Double
-        let format: String
-        let improved: Bool?
-    }
-
-    private func statCard(
-        title: String,
-        value: String,
-        unit: String,
-        detail: String,
-        color: Color,
-        icon: String,
-        tip: String? = nil,
-        delta: CardDelta? = nil
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(color.opacity(0.15))
-                    Image(systemName: icon)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(color)
-                }
-                .frame(width: 26, height: 26)
-                Text(title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .lineLimit(1)
-                if let tip {
-                    Spacer(minLength: 0)
-                    InfoTip(message: tip, iconSize: .small, iconColor: .secondary)
-                }
-            }
-
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundColor(color)
-                if !unit.isEmpty {
-                    Text(unit)
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                if let delta {
-                    deltaBadge(delta)
-                }
-            }
-
-            Text(detail)
-                .font(.system(size: 10))
-                .foregroundColor(.secondary)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.thinMaterial)
-        )
-    }
-
-    @ViewBuilder
-    private func deltaBadge(_ delta: CardDelta) -> some View {
-        let formatted = String(format: delta.format, abs(delta.value))
-        // «↑0» со стрелкой и цветом вводит в заблуждение — нулевую дельту не показываем
-        if (Double(formatted) ?? 0) != 0 {
-            HStack(spacing: 1) {
-                Image(systemName: delta.value >= 0 ? "arrow.up" : "arrow.down")
-                    .font(.system(size: 8, weight: .bold))
-                Text(formatted)
-                    .font(.system(size: 9, weight: .bold, design: .monospaced))
-            }
-            .foregroundColor(delta.improved.map { $0 ? Color.green : .red } ?? .secondary)
-            .help(L10n.t(
-                en: "vs previous period of the same length",
-                ru: "к предыдущему периоду той же длины"
-            ))
-        }
-    }
-
     // MARK: - Charts (Stage 4)
 
     private var trendCharts: some View {
@@ -1376,7 +1295,7 @@ struct SpeechAnalyticsView: View {
                     Spacer()
                 }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
-                    statCard(
+                    SpeechStatCard(
                         title: L10n.t(en: "Expressiveness", ru: "Выразительность"),
                         value: String(format: "%.1f", avgPitchRange),
                         unit: L10n.t(en: "st", ru: "пт"),
@@ -1386,7 +1305,7 @@ struct SpeechAnalyticsView: View {
                         tip: SpeechMetricTips.expressiveness,
                         delta: nil
                     )
-                    statCard(
+                    SpeechStatCard(
                         title: L10n.t(en: "Pauses", ru: "Паузы"),
                         value: String(format: "%.0f", avgPauseRatio),
                         unit: "%",
@@ -1396,7 +1315,7 @@ struct SpeechAnalyticsView: View {
                         tip: SpeechMetricTips.pauses,
                         delta: nil
                     )
-                    statCard(
+                    SpeechStatCard(
                         title: L10n.t(en: "Dynamics", ru: "Динамика"),
                         value: String(format: "%.0f", avgLoudnessRange),
                         unit: "dB",
