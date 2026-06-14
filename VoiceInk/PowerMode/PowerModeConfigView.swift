@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct ConfigurationView: View {
+struct PowerModeConfigView: View {
     @StateObject private var form: PowerModeFormModel
     @EnvironmentObject var enhancementService: AIEnhancementService
     @EnvironmentObject var aiService: AIService

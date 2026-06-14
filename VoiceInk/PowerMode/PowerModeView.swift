@@ -197,7 +197,7 @@ struct PowerModeView: View {
                 set: { if !$0 { closePanel() } }
             ), width: 400) {
                 if let mode = configurationMode {
-                    ConfigurationView(mode: mode, powerModeManager: powerModeManager, onDismiss: closePanel)
+                    PowerModeConfigView(mode: mode, powerModeManager: powerModeManager, onDismiss: closePanel)
                         .id(panelID)
                 }
             }
