@@ -64,6 +64,15 @@ enum SpeechTab: String, CaseIterable, Identifiable {
     }
 }
 
+/// Result of the off-main Words-tab recompute.
+private struct WordsTabData {
+    let fillers: [(word: String, count: Int)]
+    let anglicisms: [(word: String, count: Int)]
+    let repetitions: [(word: String, count: Int)]
+    let dynamics: AutoFillerDetector.Dynamics
+    let sparklines: [String: [(date: Date, value: Double)]]
+}
+
 struct SpeechAnalyticsView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var period: SpeechPeriod = .week
@@ -91,6 +100,8 @@ struct SpeechAnalyticsView: View {
     @State private var topRepetitionList: [(word: String, count: Int)] = []
     /// Cached streaks for the Coach tab — each one scans all history, so compute once.
     @State private var cachedStreaks: (filler: Int, anglicism: Int, sentence: Int) = (0, 0, 0)
+    /// Words tab recompute runs off-main; this drives a spinner so the tab never freezes.
+    @State private var wordsLoading = false
     @AppStorage(UserDefaults.Keys.speechReportFolder) private var reportFolder: String = SpeechVaultExport.defaultFolder
 
     private var activeStyleProfile: VoiceProfileTarget? {
@@ -119,22 +130,50 @@ struct SpeechAnalyticsView: View {
         // Heavy per-tab scans fire only when that tab is active, once per data/period.
         .task(id: wordsKey) {
             guard tab == .words else { return }
-            topFillerList = topWords { $0.fillersByWord }
-            topAnglicismList = topWords { $0.anglicismsByWord }
-            topRepetitionList = topWords { $0.repetitionsByWord }
+            // Heavy: scans full history (computeDynamics + refreshCache) + JSON-decodes
+            // every metric. Runs OFF the main thread so the tab never freezes; a spinner
+            // shows while it computes.
+            wordsLoading = true
+            let container = modelContext.container
+            let start = period.startDate()
+            let prevDays: Int
+            switch period {
+            case .today: prevDays = 1
+            case .week:  prevDays = 7
+            case .month: prevDays = 30
+            case .all:   prevDays = 0
+            }
+            let prevStart = start.flatMap { Calendar.current.date(byAdding: .day, value: -prevDays, to: $0) }
             let markerExclude = Set(styleProfiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
-            let dyn = AutoFillerDetector.computeDynamics(
-                history: allMetrics,
-                current: filteredMetrics,
-                previous: previousMetrics,
-                excluding: markerExclude
-            )
-            fillerDynamics = dyn
-            fillerSparklines = AutoFillerDetector.dailyRateSeries(
-                phrases: dyn.active.prefix(8).map { $0.phrase },
-                in: filteredMetrics
-            )
-            AutoFillerDetector.refreshCache(history: allMetrics, excluding: markerExclude)
+
+            let data = await Task.detached(priority: .userInitiated) { () -> WordsTabData in
+                let ctx = ModelContext(container)
+                let all = (try? ctx.fetch(FetchDescriptor<SpeechMetric>(sortBy: [SortDescriptor(\.timestamp, order: .reverse)]))) ?? []
+                let current = start.map { s in all.filter { $0.timestamp >= s } } ?? all
+                let previous: [SpeechMetric]
+                if let s = start, let ps = prevStart {
+                    previous = all.filter { $0.timestamp >= ps && $0.timestamp < s }
+                } else {
+                    previous = []
+                }
+                let dyn = AutoFillerDetector.computeDynamics(history: all, current: current, previous: previous, excluding: markerExclude)
+                AutoFillerDetector.refreshCache(history: all, excluding: markerExclude)
+                return WordsTabData(
+                    fillers: SpeechAggregates.topWords(current) { $0.fillersByWord },
+                    anglicisms: SpeechAggregates.topWords(current) { $0.anglicismsByWord },
+                    repetitions: SpeechAggregates.topWords(current) { $0.repetitionsByWord },
+                    dynamics: dyn,
+                    sparklines: AutoFillerDetector.dailyRateSeries(phrases: dyn.active.prefix(8).map { $0.phrase }, in: current)
+                )
+            }.value
+
+            guard tab == .words else { wordsLoading = false; return }
+            topFillerList = data.fillers
+            topAnglicismList = data.anglicisms
+            topRepetitionList = data.repetitions
+            fillerDynamics = data.dynamics
+            fillerSparklines = data.sparklines
+            wordsLoading = false
         }
         .task(id: coachKey) {
             guard tab == .coach else { return }
@@ -224,7 +263,8 @@ struct SpeechAnalyticsView: View {
                 anglicisms: topAnglicismList,
                 repetitions: topRepetitionList,
                 dynamics: fillerDynamics,
-                sparklines: fillerSparklines
+                sparklines: fillerSparklines,
+                loading: wordsLoading
             )
         }
     }

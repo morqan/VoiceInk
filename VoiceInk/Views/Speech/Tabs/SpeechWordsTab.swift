@@ -16,9 +16,19 @@ struct SpeechWordsTab: View {
     let repetitions: [(word: String, count: Int)]
     let dynamics: AutoFillerDetector.Dynamics?
     let sparklines: [String: [(date: Date, value: Double)]]
+    var loading: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
+            if loading {
+                HStack(spacing: 8) {
+                    ProgressView().controlSize(.small)
+                    LocalizedText(en: "Crunching your words…", ru: "Считаю слова…")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
             fillersSection
             fillerEvolution
             anglicismsSection
