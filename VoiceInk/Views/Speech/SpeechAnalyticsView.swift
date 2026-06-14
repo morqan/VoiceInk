@@ -918,4 +918,3 @@ struct SpeechAnalyticsView: View {
         return .red
     }
 }
-}
