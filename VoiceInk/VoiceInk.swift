@@ -100,8 +100,13 @@ struct VoiceInkApp: App {
         // Читает ~/Documents/Obsidian Vault/99 - Claude Context/voiceink-dictionary.md
         // и добавляет новые слова в VocabularyWord. Silent skip если файла нет.
         if !initializationFailed {
-            VaultDictionarySync.syncFromVault(context: resolvedContainer.mainContext)
             VoiceProfileSeed.seedIfNeeded(context: resolvedContainer.mainContext)
+            // Vault dictionary sync does a synchronous file read from disk — defer it off
+            // the launch path so a large/slow Vault file can't freeze startup.
+            let containerForSync = resolvedContainer
+            Task.detached(priority: .utility) {
+                VaultDictionarySync.syncFromVault(context: ModelContext(containerForSync))
+            }
         }
 
         // Initialize services with proper sharing of instances

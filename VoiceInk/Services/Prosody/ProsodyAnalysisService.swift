@@ -63,7 +63,10 @@ final class ProsodyAnalysisService {
                 descriptor.fetchLimit = limit
                 let metrics = try context.fetch(descriptor)
                 // Old metrics predate `audioFileURL`; resolve them via Transcription.
-                let transcriptions = (try? context.fetch(FetchDescriptor<Transcription>())) ?? []
+                // Only fetch transcriptions that still have audio — keeps the lookup set small.
+                var txDescriptor = FetchDescriptor<Transcription>(predicate: #Predicate { $0.audioFileURL != nil })
+                txDescriptor.propertiesToFetch = [\.audioFileURL, \.text, \.timestamp]
+                let transcriptions = (try? context.fetch(txDescriptor)) ?? []
 
                 for metric in metrics where !metric.prosodyAnalyzed {
                     guard let url = Self.resolveAudioURL(for: metric, transcriptions: transcriptions),

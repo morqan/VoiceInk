@@ -16,7 +16,13 @@ extension TimeInterval {
 }
 
 class WaveformGenerator {
-    private static let cache = NSCache<NSString, NSArray>()
+    // Bounded cache — waveforms are cheap to regenerate, so cap entries to avoid
+    // unbounded growth across thousands of recordings.
+    private static let cache: NSCache<NSString, NSArray> = {
+        let cache = NSCache<NSString, NSArray>()
+        cache.countLimit = 120
+        return cache
+    }()
 
     static func generateWaveformSamples(from url: URL, sampleCount: Int = 200) async -> [Float] {
         let cacheKey = url.absoluteString as NSString

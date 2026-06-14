@@ -411,13 +411,14 @@ struct TranscriptionHistoryView: View {
     }
 
     private func performDeletion(for transcription: Transcription) {
+        // Delete the audio file off the main thread (fire-and-forget). UI + SwiftData
+        // state changes stay on the main thread below.
         if let urlString = transcription.audioFileURL,
-           let url = URL(string: urlString),
-           FileManager.default.fileExists(atPath: url.path) {
-            do {
-                try FileManager.default.removeItem(at: url)
-            } catch {
-                print("Error deleting audio file: \(error.localizedDescription)")
+           let url = URL(string: urlString) {
+            Task.detached(priority: .utility) {
+                if FileManager.default.fileExists(atPath: url.path) {
+                    try? FileManager.default.removeItem(at: url)
+                }
             }
         }
 
