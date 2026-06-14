@@ -191,6 +191,9 @@ struct VoiceInkApp: App {
         // One-time best-effort prosody backfill for recent dictations whose audio
         // still exists (low priority, off-main — never touches the dictation path).
         ProsodyAnalysisService.shared.runBackfillIfNeeded(container: resolvedContainer)
+        // Reclaim disk space: delete recordings older than the grace period (default
+        // 14 days), keeping the transcription record + metrics. Runs after backfill.
+        AudioRetentionService.shared.sweepIfNeeded(container: resolvedContainer)
         let mainContext = resolvedContainer.mainContext
         Task {
             await migrationTask?.value
