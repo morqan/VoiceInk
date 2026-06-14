@@ -196,40 +196,7 @@ struct ConfigurationView: View {
                                 .foregroundColor(.secondary)
                                 .font(.subheadline)
                         } else {
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 44, maximum: 50), spacing: 10)], spacing: 10) {
-                                ForEach(selectedAppConfigs) { appConfig in
-                                    ZStack(alignment: .topTrailing) {
-                                        if let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: appConfig.bundleIdentifier) {
-                                            Image(nsImage: NSWorkspace.shared.icon(forFile: appURL.path))
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                                .frame(width: 44, height: 44)
-                                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                                        } else {
-                                            Image(systemName: "app.fill")
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fit)
-                                                .frame(width: 26, height: 26)
-                                                .frame(width: 44, height: 44)
-                                                .background(
-                                                    RoundedRectangle(cornerRadius: 10)
-                                                        .fill(Color(NSColor.controlBackgroundColor))
-                                                )
-                                        }
-
-                                        Button {
-                                            selectedAppConfigs.removeAll(where: { $0.id == appConfig.id })
-                                        } label: {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.system(size: 14))
-                                                .foregroundColor(.secondary)
-                                        }
-                                        .buttonStyle(.plain)
-                                        .offset(x: 6, y: -6)
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 2)
+                            PowerModeAppGrid(configs: $selectedAppConfigs)
                         }
                     }
                     .padding(.vertical, 2)
@@ -252,31 +219,7 @@ struct ConfigurationView: View {
                                 .foregroundColor(.secondary)
                                 .font(.subheadline)
                         } else {
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140, maximum: 220), spacing: 10)], spacing: 10) {
-                                ForEach(websiteConfigs) { urlConfig in
-                                    HStack(spacing: 6) {
-                                        Image(systemName: "globe")
-                                            .foregroundColor(.secondary)
-                                        Text(urlConfig.url)
-                                            .lineLimit(1)
-                                        Spacer(minLength: 0)
-                                        Button {
-                                            websiteConfigs.removeAll(where: { $0.id == urlConfig.id })
-                                        } label: {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .foregroundColor(.secondary)
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 6)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(Color(NSColor.controlBackgroundColor))
-                                    )
-                                }
-                            }
-                            .padding(.vertical, 2)
+                            PowerModeWebsiteGrid(configs: $websiteConfigs)
                         }
                     }
                     .padding(.vertical, 2)
@@ -664,58 +607,7 @@ struct ConfigurationView: View {
     }
 
     private func loadInstalledApps() {
-        let userAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .userDomainMask)
-        let localAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .localDomainMask)
-        let systemAppURLs = FileManager.default.urls(for: .applicationDirectory, in: .systemDomainMask)
-        let allAppURLs = userAppURLs + localAppURLs + systemAppURLs
-
-        var allApps: [URL] = []
-
-        func scanDirectory(_ baseURL: URL, depth: Int = 0) {
-            // Prevent infinite recursion from circular symlinks
-            guard depth < 5 else { return }
-            guard let enumerator = FileManager.default.enumerator(
-                at: baseURL,
-                includingPropertiesForKeys: [.isApplicationKey, .isDirectoryKey, .isSymbolicLinkKey],
-                options: [.skipsHiddenFiles]
-            ) else { return }
-
-            for item in enumerator {
-                guard let url = item as? URL else { continue }
-                let resolvedURL = url.resolvingSymlinksInPath()
-
-                if resolvedURL.pathExtension == "app" {
-                    allApps.append(resolvedURL)
-                    enumerator.skipDescendants()
-                    continue
-                }
-
-                // Traverse symlinked directories manually
-                var isDirectory: ObjCBool = false
-                if url != resolvedURL &&
-                   FileManager.default.fileExists(atPath: resolvedURL.path, isDirectory: &isDirectory) &&
-                   isDirectory.boolValue {
-                    enumerator.skipDescendants()
-                    scanDirectory(resolvedURL, depth: depth + 1)
-                }
-            }
-        }
-
-        for baseURL in allAppURLs {
-            scanDirectory(baseURL)
-        }
-
-        installedApps = allApps.compactMap { url in
-            guard let bundle = Bundle(url: url),
-                  let bundleId = bundle.bundleIdentifier,
-                  let name = (bundle.infoDictionary?["CFBundleName"] as? String) ??
-                            (bundle.infoDictionary?["CFBundleDisplayName"] as? String) else {
-                return nil
-            }
-            let icon = NSWorkspace.shared.icon(forFile: url.path)
-            return (url: url, name: name, bundleId: bundleId, icon: icon)
-        }
-        .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        installedApps = PowerModeAppScanner.scan()
     }
 
     private func saveConfiguration() {
