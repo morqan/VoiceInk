@@ -203,20 +203,6 @@ struct SpeechAnalyticsView: View {
         allMetrics.first { Calendar.current.isDateInToday($0.timestamp) }
     }
 
-    /// Exercise-of-the-day card. Scores today's dictation against today's targets;
-    /// «Analyze in detail» opens the existing drill-down (where the style rewrite lives).
-    @ViewBuilder
-    private var dailyTraining: some View {
-        if let cachedExercise {
-            DailyTrainingCard(
-                exercise: cachedExercise,
-                latestMetric: todaysLatestMetric,
-                profile: activeStyleProfile,
-                onOpenDetail: { selectedMetric = $0 }
-            )
-        }
-    }
-
     /// Data fingerprint — changes when metrics are added/changed.
     private var dataStamp: String {
         let newest = allMetrics.first?.timestamp.timeIntervalSince1970 ?? 0
@@ -259,19 +245,20 @@ struct SpeechAnalyticsView: View {
 
     @ViewBuilder
     private var overviewTab: some View {
-        dailyTraining
-        if filteredMetrics.isEmpty {
-            emptyState
-        } else {
-            aggregatedMetrics
-            prosodySection
-        }
+        SpeechOverviewTab(
+            metrics: filteredMetrics,
+            previousMetrics: previousMetrics,
+            exercise: cachedExercise,
+            todaysLatest: todaysLatestMetric,
+            profile: activeStyleProfile,
+            onOpenDetail: { selectedMetric = $0 }
+        )
     }
 
     @ViewBuilder
     private var wordsTab: some View {
         if filteredMetrics.isEmpty {
-            emptyState
+            SpeechEmptyState()
         } else {
             SpeechWordsTab(
                 fillers: topFillerList,
@@ -287,7 +274,7 @@ struct SpeechAnalyticsView: View {
     @ViewBuilder
     private var coachTab: some View {
         if filteredMetrics.isEmpty {
-            emptyState
+            SpeechEmptyState()
         } else {
             SpeechCoachTab(metrics: filteredMetrics, streaks: cachedStreaks)
         }
@@ -296,7 +283,7 @@ struct SpeechAnalyticsView: View {
     @ViewBuilder
     private var historyTab: some View {
         if filteredMetrics.isEmpty {
-            emptyState
+            SpeechEmptyState()
         } else {
             SpeechHistoryTab(
                 metrics: filteredMetrics,
@@ -450,131 +437,6 @@ struct SpeechAnalyticsView: View {
         }
     }
 
-    // MARK: - Empty
-
-    private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "waveform")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-            LocalizedText(
-                en: "No dictations in this period yet",
-                ru: "В этом периоде ещё нет диктовок"
-            )
-                .font(.system(size: 15, weight: .semibold))
-            LocalizedText(
-                en: "Speech metrics are recorded after each dictation ≥ 15 words",
-                ru: "Метрики записываются после каждой диктовки ≥ 15 слов"
-            )
-                .font(.system(size: 12))
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 60)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.thinMaterial)
-        )
-    }
-
-    // MARK: - Aggregated metrics
-
-    private var aggregatedMetrics: some View {
-        LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
-            SpeechStatCard(
-                title: L10n.t(en: "Fillers", ru: "Паразиты"),
-                value: String(format: "%.1f", aggFillerRate),
-                unit: L10n.t(en: "/100w", ru: "/100сл"),
-                detail: L10n.t(en: "Target ≤ 2", ru: "Цель ≤ 2"),
-                color: fillerColor(aggFillerRate),
-                icon: "text.bubble",
-                tip: SpeechMetricTips.fillers,
-                delta: delta(fillerRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
-            )
-            SpeechStatCard(
-                title: L10n.t(en: "Avg sentence", ru: "Длина предложения"),
-                value: String(format: "%.0f", aggSentenceLength),
-                unit: L10n.t(en: "words", ru: "слов"),
-                detail: L10n.t(en: "Target ≤ 18", ru: "Цель ≤ 18"),
-                color: sentenceColor(aggSentenceLength),
-                icon: "text.alignleft",
-                tip: SpeechMetricTips.sentenceLength,
-                delta: delta(sentenceLength).map { d in
-                    // «Лучше» = ближе к цели активного стиля (для Эриксона длиннее — хорошо)
-                    let target = activeStyleProfile?.targetSentenceLength ?? 18
-                    let improved = abs(sentenceLength(of: filteredMetrics) - target)
-                        < abs(sentenceLength(of: previousMetrics) - target)
-                    return SpeechCardDelta(value: d, format: "%.0f", improved: improved)
-                }
-            )
-            SpeechStatCard(
-                title: L10n.t(en: "Anglicisms", ru: "Англицизмы"),
-                value: String(format: "%.1f", aggAnglicismRate),
-                unit: L10n.t(en: "/100w", ru: "/100сл"),
-                detail: L10n.t(en: "Target ≤ 1", ru: "Цель ≤ 1"),
-                color: anglicismColor(aggAnglicismRate),
-                icon: "globe",
-                tip: SpeechMetricTips.anglicisms,
-                delta: delta(anglicismRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
-            )
-            SpeechStatCard(
-                title: L10n.t(en: "Smoothness", ru: "Гладкость"),
-                value: String(format: "%.1f", aggSelfCorrectionRate),
-                unit: L10n.t(en: "/100w", ru: "/100сл"),
-                detail: L10n.t(en: "Self-corrections", ru: "Самоисправления"),
-                color: smoothnessColor(aggSelfCorrectionRate),
-                icon: "pencil.and.scribble",
-                tip: SpeechMetricTips.smoothness,
-                delta: delta(selfCorrectionRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
-            )
-            SpeechStatCard(
-                title: L10n.t(en: "Speed", ru: "Темп"),
-                value: String(format: "%.0f", aggWPM),
-                unit: "WPM",
-                detail: wpmDetail,
-                color: .blue,
-                icon: "speedometer",
-                tip: SpeechMetricTips.wpm,
-                delta: delta(wpm).map { SpeechCardDelta(value: $0, format: "%.0f", improved: nil) }
-            )
-            SpeechStatCard(
-                title: L10n.t(en: "Total words", ru: "Всего слов"),
-                value: "\(aggWordCount)",
-                unit: "",
-                detail: L10n.t(en: "in this period", ru: "за период"),
-                color: .indigo,
-                icon: "text.alignleft",
-                tip: SpeechMetricTips.totalWords,
-                delta: delta({ Double(wordCount(of: $0)) }).map { SpeechCardDelta(value: $0, format: "%.0f", improved: nil) }
-            )
-            SpeechStatCard(
-                title: L10n.t(en: "EN / RU ratio", ru: "EN / RU"),
-                value: String(format: "%.0f%%", aggEnRatio * 100),
-                unit: "",
-                detail: L10n.t(en: "English chars share", ru: "Доля латинских букв"),
-                color: .pink,
-                icon: "character.textbox",
-                tip: SpeechMetricTips.enRuRatio,
-                delta: delta({ enRatio(of: $0) * 100 }).map { SpeechCardDelta(value: $0, format: "%.0f", improved: nil) }
-            )
-
-            SpeechStatCard(
-                title: L10n.t(en: "Complexity", ru: "Сложность"),
-                value: String(format: "%.1f", aggComplexity),
-                unit: "",
-                detail: L10n.t(en: "Subordinations per sentence", ru: "Подчинения в предложении"),
-                color: .teal,
-                icon: "arrow.triangle.branch",
-                tip: SpeechMetricTips.complexity,
-                delta: delta(complexity).map { SpeechCardDelta(value: $0, format: "%.1f", improved: nil) }
-            )
-        }
-    }
-
-    /// Дельта карточки к прошлому периоду.
-    /// improved: true → зелёный, false → красный, nil → нейтральная метрика (серый).
-    /// Вычисляется на месте вызова — например, длина предложения «улучшилась»,
-    /// если приблизилась к цели активного профиля, а не просто упала.
     // MARK: - Streak calculation
 
     /// Группирует ВСЕ metrics (не filtered) по дням, считает streak с сегодня назад.
@@ -657,55 +519,6 @@ struct SpeechAnalyticsView: View {
         return allMetrics.filter { $0.timestamp >= prevStart && $0.timestamp < start }
     }
 
-    // MARK: - Aggregations
-    // Параметризованы по набору метрик: считаются и для текущего, и для прошлого периода.
-
-    // Thin delegates to SpeechAggregates (the aggregation logic lives there now).
-    private func wordCount(of ms: [SpeechMetric]) -> Int { SpeechAggregates.wordCount(ms) }
-    private func fillerRate(of ms: [SpeechMetric]) -> Double { SpeechAggregates.fillerRate(ms) }
-    private func anglicismRate(of ms: [SpeechMetric]) -> Double { SpeechAggregates.anglicismRate(ms) }
-    private func selfCorrectionRate(of ms: [SpeechMetric]) -> Double { SpeechAggregates.selfCorrectionRate(ms) }
-    private func sentenceLength(of ms: [SpeechMetric]) -> Double { SpeechAggregates.sentenceLength(ms) }
-    private func wpm(of ms: [SpeechMetric]) -> Double { SpeechAggregates.wpm(ms) }
-    private func enRatio(of ms: [SpeechMetric]) -> Double { SpeechAggregates.enRatio(ms) }
-    private func complexity(of ms: [SpeechMetric]) -> Double { SpeechAggregates.complexity(ms) }
-
-    /// Подпись карточки «Темп»: цель активного стиля + направление, либо «средний темп».
-    private var wpmDetail: String {
-        guard let target = activeStyleProfile?.targetWPM, aggWPM > 0 else {
-            return L10n.t(en: "Avg speaking pace", ru: "Средний темп речи")
-        }
-        let dir = aggWPM < target - 5
-            ? L10n.t(en: "speak faster", ru: "быстрее")
-            : (aggWPM > target + 5 ? L10n.t(en: "slow down", ru: "медленнее") : L10n.t(en: "on target", ru: "в цели"))
-        return L10n.t(
-            en: "Target \(Int(target)) · \(dir)",
-            ru: "Цель \(Int(target)) · \(dir)"
-        )
-    }
-
-    private var aggWordCount: Int { wordCount(of: filteredMetrics) }
-    private var aggFillerRate: Double { fillerRate(of: filteredMetrics) }
-    private var aggAnglicismRate: Double { anglicismRate(of: filteredMetrics) }
-    private var aggSelfCorrectionRate: Double { selfCorrectionRate(of: filteredMetrics) }
-    private var aggSentenceLength: Double { sentenceLength(of: filteredMetrics) }
-    private var aggWPM: Double { wpm(of: filteredMetrics) }
-    private var aggEnRatio: Double { enRatio(of: filteredMetrics) }
-    private var aggComplexity: Double { complexity(of: filteredMetrics) }
-
-    /// Дельта к прошлому окну, nil если прошлых данных нет.
-    private func delta(_ value: (([SpeechMetric]) -> Double)) -> Double? {
-        let prev = previousMetrics
-        guard !prev.isEmpty else { return nil }
-        return value(filteredMetrics) - value(prev)
-    }
-
-    /// Aggregate a per-metric word→count dictionary across the period, sorted desc.
-    /// Each `extract` access JSON-decodes a stored field, so callers cache the result.
-    private func topWords(_ extract: (SpeechMetric) -> [String: Int]) -> [(word: String, count: Int)] {
-        SpeechAggregates.topWords(filteredMetrics, extract)
-    }
-
     // MARK: - Daily series for charts
 
     /// Дневной Match Score по активному профилю — кривая «дохожу до стиля».
@@ -725,93 +538,4 @@ struct SpeechAnalyticsView: View {
             .sorted { $0.date < $1.date }
     }
 
-    // MARK: - Prosody (voice)
-
-    /// Period metrics that already have prosody numbers (audio still on disk).
-    private var prosodyMetrics: [SpeechMetric] {
-        filteredMetrics.filter { $0.prosodyAnalyzed }
-    }
-
-    /// Voice/prosody cards — shown only once at least one dictation has been analysed.
-    @ViewBuilder
-    private var prosodySection: some View {
-        if !prosodyMetrics.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 8) {
-                    LocalizedText(en: "Voice (prosody)", ru: "Голос (просодика)")
-                        .font(.system(size: 16, weight: .bold))
-                    InfoTip(message: SpeechMetricTips.prosody, iconSize: .small, iconColor: .secondary)
-                    Spacer()
-                }
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
-                    SpeechStatCard(
-                        title: L10n.t(en: "Expressiveness", ru: "Выразительность"),
-                        value: String(format: "%.1f", avgPitchRange),
-                        unit: L10n.t(en: "st", ru: "пт"),
-                        detail: L10n.t(en: "F0 range", ru: "Разброс тона"),
-                        color: .purple,
-                        icon: "waveform.path",
-                        tip: SpeechMetricTips.expressiveness,
-                        delta: nil
-                    )
-                    SpeechStatCard(
-                        title: L10n.t(en: "Pauses", ru: "Паузы"),
-                        value: String(format: "%.0f", avgPauseRatio),
-                        unit: "%",
-                        detail: L10n.t(en: "of speaking time", ru: "от времени речи"),
-                        color: .teal,
-                        icon: "pause.circle",
-                        tip: SpeechMetricTips.pauses,
-                        delta: nil
-                    )
-                    SpeechStatCard(
-                        title: L10n.t(en: "Dynamics", ru: "Динамика"),
-                        value: String(format: "%.0f", avgLoudnessRange),
-                        unit: "dB",
-                        detail: L10n.t(en: "loudness spread", ru: "разброс громкости"),
-                        color: .mint,
-                        icon: "speaker.wave.3",
-                        tip: SpeechMetricTips.dynamics,
-                        delta: nil
-                    )
-                }
-            }
-        }
-    }
-
-    private var avgPitchRange: Double { meanOf(prosodyMetrics.map { $0.pitchRangeSemitones }.filter { $0 > 0 }) }
-    private var avgPauseRatio: Double { meanOf(prosodyMetrics.map { $0.pauseRatioPercent }) }
-    private var avgLoudnessRange: Double { meanOf(prosodyMetrics.map { $0.loudnessRangeDb }.filter { $0 > 0 }) }
-    private func meanOf(_ xs: [Double]) -> Double { xs.isEmpty ? 0 : xs.reduce(0, +) / Double(xs.count) }
-
-    // MARK: - Color thresholds
-
-    private func fillerColor(_ rate: Double) -> Color {
-        if aggWordCount == 0 { return .secondary }
-        if rate <= 2 { return .green }
-        if rate <= 4 { return .orange }
-        return .red
-    }
-
-    private func sentenceColor(_ length: Double) -> Color {
-        if aggWordCount == 0 { return .secondary }
-        if length <= 18 { return .green }
-        if length <= 25 { return .orange }
-        return .red
-    }
-
-    private func anglicismColor(_ rate: Double) -> Color {
-        if aggWordCount == 0 { return .secondary }
-        if rate <= 1 { return .green }
-        if rate <= 3 { return .orange }
-        return .red
-    }
-
-    /// Гладкость: ≤1 самоисправление/100сл — зелёная, до 3 — оранжевая, выше — красная.
-    private func smoothnessColor(_ rate: Double) -> Color {
-        if aggWordCount == 0 { return .secondary }
-        if rate <= 1 { return .green }
-        if rate <= 3 { return .orange }
-        return .red
-    }
 }
