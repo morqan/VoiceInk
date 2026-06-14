@@ -84,6 +84,13 @@ struct SpeechAnalyticsView: View {
     /// Cached exercise of the day — built off the render path in `.task` because it
     /// scans recent dictations for under-used marker phrases.
     @State private var cachedExercise: DailyExercise?
+    /// Cached top-word lists for the Words tab — each one JSON-decodes every metric,
+    /// so they're built in `.task`, not recomputed on every render.
+    @State private var topFillerList: [(word: String, count: Int)] = []
+    @State private var topAnglicismList: [(word: String, count: Int)] = []
+    @State private var topRepetitionList: [(word: String, count: Int)] = []
+    /// Cached streaks for the Coach tab — each one scans all history, so compute once.
+    @State private var cachedStreaks: (filler: Int, anglicism: Int, sentence: Int) = (0, 0, 0)
     @AppStorage(UserDefaults.Keys.speechReportFolder) private var reportFolder: String = SpeechVaultExport.defaultFolder
 
     private var activeStyleProfile: VoiceProfileTarget? {
@@ -107,6 +114,9 @@ struct SpeechAnalyticsView: View {
             // Filler dynamics + active-list refresh scan the full history (heavy) — only
             // the Words tab needs them, so this no longer runs on the default Overview.
             if tab == .words {
+                topFillerList = topWords { $0.fillersByWord }
+                topAnglicismList = topWords { $0.anglicismsByWord }
+                topRepetitionList = topWords { $0.repetitionsByWord }
                 let markerExclude = Set(styleProfiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
                 let dyn = AutoFillerDetector.computeDynamics(
                     history: allMetrics,
@@ -120,6 +130,9 @@ struct SpeechAnalyticsView: View {
                     in: filteredMetrics
                 )
                 AutoFillerDetector.refreshCache(history: allMetrics, excluding: markerExclude)
+            }
+            if tab == .coach {
+                cachedStreaks = computeStreaks()
             }
         }
     }
@@ -1000,26 +1013,26 @@ struct SpeechAnalyticsView: View {
         return L10n.ruPlural(value, one: "день", few: "дня", many: "дней")
     }
 
-    private var fillerStreak: Int {
-        computeStreak { fillers, _, words, _ in
+    private var fillerStreak: Int { cachedStreaks.filler }
+    private var anglicismStreak: Int { cachedStreaks.anglicism }
+    private var sentenceStreak: Int { cachedStreaks.sentence }
+
+    /// Computes all three streaks — called from `.task` (Coach tab), not on render.
+    private func computeStreaks() -> (filler: Int, anglicism: Int, sentence: Int) {
+        let filler = computeStreak { fillers, _, words, _ in
             guard words > 0 else { return false }
             return Double(fillers) / Double(words) * 100 <= 2.0
         }
-    }
-
-    private var anglicismStreak: Int {
-        computeStreak { _, anglicisms, words, _ in
+        let anglicism = computeStreak { _, anglicisms, words, _ in
             guard words > 0 else { return false }
             return Double(anglicisms) / Double(words) * 100 <= 1.0
         }
-    }
-
-    private var sentenceStreak: Int {
-        computeStreak { _, _, words, sentences in
+        let sentence = computeStreak { _, _, words, sentences in
             guard words > 0, sentences > 0 else { return false }
-            // Дневной агрегат: слова дня ÷ предложения дня (взвешенно, как в карточке)
+            // Daily aggregate: day words ÷ day sentences (weighted, as on the card).
             return Double(words) / Double(sentences) <= 18.0
         }
+        return (filler, anglicism, sentence)
     }
 
     // MARK: - Top repetitions
@@ -1265,32 +1278,12 @@ struct SpeechAnalyticsView: View {
         return value(filteredMetrics) - value(prev)
     }
 
-    private var topFillerList: [(word: String, count: Int)] {
+    /// Aggregate a per-metric word→count dictionary across the period, sorted desc.
+    /// Each `extract` access JSON-decodes a stored field, so callers cache the result.
+    private func topWords(_ extract: (SpeechMetric) -> [String: Int]) -> [(word: String, count: Int)] {
         var totals: [String: Int] = [:]
         for metric in filteredMetrics {
-            for (word, count) in metric.fillersByWord {
-                totals[word, default: 0] += count
-            }
-        }
-        return totals.map { (word: $0.key, count: $0.value) }
-            .sorted { $0.count > $1.count }
-    }
-
-    private var topAnglicismList: [(word: String, count: Int)] {
-        var totals: [String: Int] = [:]
-        for metric in filteredMetrics {
-            for (word, count) in metric.anglicismsByWord {
-                totals[word, default: 0] += count
-            }
-        }
-        return totals.map { (word: $0.key, count: $0.value) }
-            .sorted { $0.count > $1.count }
-    }
-
-    private var topRepetitionList: [(word: String, count: Int)] {
-        var totals: [String: Int] = [:]
-        for metric in filteredMetrics {
-            for (word, count) in metric.repetitionsByWord {
+            for (word, count) in extract(metric) {
                 totals[word, default: 0] += count
             }
         }
