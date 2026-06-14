@@ -220,5 +220,6 @@ private struct SidebarItemView: View {
         .contentShape(Rectangle())
         .padding(.vertical, 8)
         .padding(.horizontal, 2)
+        .pointingHandCursor()
     }
 }
