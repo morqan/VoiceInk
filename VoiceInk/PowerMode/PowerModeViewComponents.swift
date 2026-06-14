@@ -22,33 +22,6 @@ struct VoiceInkButton: View {
     }
 }
 
-struct PowerModeEmptyStateView: View {
-    let action: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "bolt.circle.fill")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-            
-            Text(tr("No Power Modes"))
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            Text(tr("Add customized power modes for different contexts"))
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
-            
-            VoiceInkButton(
-                title: "Add New Power Mode",
-                action: action
-            )
-            .frame(maxWidth: 250)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
 struct PowerModeConfigurationsGrid: View {
     @ObservedObject var powerModeManager: PowerModeManager
     let onEditConfig: (PowerModeConfig) -> Void
@@ -359,24 +332,6 @@ struct ConfigurationRow: View {
     
     private var isSelected: Bool {
         return isEditing
-    }
-}
-
-struct PowerModeAppIcon: View {
-    let bundleId: String
-    
-    var body: some View {
-        if let appUrl = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: appUrl.path))
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 20, height: 20)
-        } else {
-            Image(systemName: "app.fill")
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
-                .frame(width: 20, height: 20)
-        }
     }
 }
 
