@@ -132,7 +132,33 @@ struct SpeechAnalyticsView: View {
             cachedExercise = DailyExerciseGenerator.forToday(profile: activeStyleProfile, metrics: allMetrics)
         }
         .task(id: chartsKey) {
-            cachedMatchSeries = computeDailyMatchSeries()
+            // Match-series buckets the period by day and runs VoiceProfileMatcher per
+            // bucket (scans every text) — heavy at large periods, so run it off-main like
+            // the Words tab. Only Sendable values cross the boundary; the @Model profile
+            // is re-fetched by id inside the background context.
+            let container = modelContext.container
+            let profileID = activeStyleProfile?.id
+            let start = period.startDate()
+            cachedMatchSeries = await Task.detached(priority: .userInitiated) { () -> [(date: Date, value: Double)] in
+                guard let profileID else { return [] }
+                let ctx = ModelContext(container)
+                var pd = FetchDescriptor<VoiceProfileTarget>(predicate: #Predicate { $0.id == profileID })
+                pd.fetchLimit = 1
+                guard let target = try? ctx.fetch(pd).first else { return [] }
+                let all = (try? ctx.fetch(FetchDescriptor<SpeechMetric>())) ?? []
+                let metrics = start.map { s in all.filter { $0.timestamp >= s } } ?? all
+                let cal = Calendar.current
+                var buckets: [Date: [SpeechMetric]] = [:]
+                for m in metrics {
+                    buckets[cal.startOfDay(for: m.timestamp), default: []].append(m)
+                }
+                return buckets
+                    .compactMap { day, ms -> (date: Date, value: Double)? in
+                        guard let result = VoiceProfileMatcher.compute(target: target, metrics: ms) else { return nil }
+                        return (date: day, value: result.totalScore)
+                    }
+                    .sorted { $0.date < $1.date }
+            }.value
         }
         // Heavy per-tab scans fire only when that tab is active, once per data/period.
         .task(id: wordsKey) {
@@ -141,8 +167,7 @@ struct SpeechAnalyticsView: View {
             // tab shouldn't re-crunch identical data).
             let dataKey = "\(period.rawValue)|\(dataStamp)"
             guard dataKey != lastWordsKey else { return }
-            lastWordsKey = dataKey
-            // Heavy: scans full history (computeDynamics + refreshCache) + JSON-decodes
+            // Heavy: scans full history (computeDynamics + writeCache) + JSON-decodes
             // every metric. Runs OFF the main thread so the tab never freezes; a spinner
             // shows while it computes.
             wordsLoading = true
@@ -169,7 +194,9 @@ struct SpeechAnalyticsView: View {
                     previous = []
                 }
                 let dyn = AutoFillerDetector.computeDynamics(history: all, current: current, previous: previous, excluding: markerExclude)
-                AutoFillerDetector.refreshCache(history: all, excluding: markerExclude)
+                // Reuse the active list we just computed — refreshCache would re-scan all
+                // history a second time for the same result.
+                AutoFillerDetector.writeCache(active: dyn.active.map { $0.phrase })
                 return WordsTabData(
                     fillers: SpeechAggregates.topWords(current) { $0.fillersByWord },
                     anglicisms: SpeechAggregates.topWords(current) { $0.anglicismsByWord },
@@ -185,13 +212,23 @@ struct SpeechAnalyticsView: View {
             topRepetitionList = data.repetitions
             fillerDynamics = data.dynamics
             fillerSparklines = data.sparklines
+            lastWordsKey = dataKey   // only mark done after a successful load
             wordsLoading = false
         }
         .task(id: coachKey) {
             guard tab == .coach else { return }
             guard dataStamp != lastCoachKey else { return }   // unchanged → keep cache
+            // Streaks bucket ALL history by day three times — run off-main like the Words
+            // tab so entering the Coach tab never hitches.
+            let container = modelContext.container
+            let streaks = await Task.detached(priority: .userInitiated) { () -> (filler: Int, anglicism: Int, sentence: Int) in
+                let ctx = ModelContext(container)
+                let all = (try? ctx.fetch(FetchDescriptor<SpeechMetric>())) ?? []
+                return SpeechStreaks.compute(all)
+            }.value
+            guard tab == .coach else { return }
             lastCoachKey = dataStamp
-            cachedStreaks = computeStreaks()
+            cachedStreaks = streaks
         }
     }
 
@@ -437,66 +474,6 @@ struct SpeechAnalyticsView: View {
         }
     }
 
-    // MARK: - Streak calculation
-
-    /// Группирует ВСЕ metrics (не filtered) по дням, считает streak с сегодня назад.
-    /// Streak ломается на первом дне с данными где criteria failed.
-    /// Дни без данных пропускаются (не ломают streak).
-    private func computeStreak(
-        passedCheck: (Int /* fillers */, Int /* anglicisms */, Int /* words */, Int /* sentences */) -> Bool
-    ) -> Int {
-        let cal = Calendar.current
-        // Группируем все metrics по дням
-        var byDay: [Date: (fillers: Int, anglicisms: Int, words: Int, sentences: Int)] = [:]
-        for m in allMetrics {
-            let day = cal.startOfDay(for: m.timestamp)
-            var d = byDay[day, default: (0, 0, 0, 0)]
-            d.fillers += m.fillerCount
-            d.anglicisms += m.anglicismCount
-            d.words += m.wordCount
-            d.sentences += m.sentenceCount
-            byDay[day] = d
-        }
-
-        guard !byDay.isEmpty else { return 0 }
-
-        // Идём с сегодня назад
-        var streak = 0
-        var cursor = cal.startOfDay(for: Date())
-        let earliest = byDay.keys.min() ?? cursor
-
-        while cursor >= earliest {
-            if let d = byDay[cursor] {
-                if passedCheck(d.fillers, d.anglicisms, d.words, d.sentences) {
-                    streak += 1
-                } else {
-                    break
-                }
-            }
-            // День без данных — пропускаем, не ломаем streak
-            cursor = cal.date(byAdding: .day, value: -1, to: cursor) ?? earliest
-        }
-        return streak
-    }
-
-    /// Computes all three streaks — called from `.task` (Coach tab), not on render.
-    private func computeStreaks() -> (filler: Int, anglicism: Int, sentence: Int) {
-        let filler = computeStreak { fillers, _, words, _ in
-            guard words > 0 else { return false }
-            return Double(fillers) / Double(words) * 100 <= 2.0
-        }
-        let anglicism = computeStreak { _, anglicisms, words, _ in
-            guard words > 0 else { return false }
-            return Double(anglicisms) / Double(words) * 100 <= 1.0
-        }
-        let sentence = computeStreak { _, _, words, sentences in
-            guard words > 0, sentences > 0 else { return false }
-            // Daily aggregate: day words ÷ day sentences (weighted, as on the card).
-            return Double(words) / Double(sentences) <= 18.0
-        }
-        return (filler, anglicism, sentence)
-    }
-
     // MARK: - Filtering
 
     private var filteredMetrics: [SpeechMetric] {
@@ -517,25 +494,6 @@ struct SpeechAnalyticsView: View {
         }
         guard let prevStart = Calendar.current.date(byAdding: .day, value: -days, to: start) else { return [] }
         return allMetrics.filter { $0.timestamp >= prevStart && $0.timestamp < start }
-    }
-
-    // MARK: - Daily series for charts
-
-    /// Дневной Match Score по активному профилю — кривая «дохожу до стиля».
-    /// Вызывается только из .task при смене ключа кэша — не на каждый рендер.
-    private func computeDailyMatchSeries() -> [(date: Date, value: Double)] {
-        guard let active = activeStyleProfile else { return [] }
-        let cal = Calendar.current
-        var buckets: [Date: [SpeechMetric]] = [:]
-        for m in filteredMetrics {
-            buckets[cal.startOfDay(for: m.timestamp), default: []].append(m)
-        }
-        return buckets
-            .compactMap { day, ms -> (date: Date, value: Double)? in
-                guard let result = VoiceProfileMatcher.compute(target: active, metrics: ms) else { return nil }
-                return (date: day, value: result.totalScore)
-            }
-            .sorted { $0.date < $1.date }
     }
 
 }

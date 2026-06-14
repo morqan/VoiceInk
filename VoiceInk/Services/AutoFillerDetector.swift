@@ -101,6 +101,12 @@ enum AutoFillerDetector {
         return coreFillers.union(auto)
     }
 
+    /// Записать активный список в кэш напрямую — когда dynamics уже посчитан,
+    /// чтобы не сканировать историю второй раз (refreshCache делает повторный analyze).
+    static func writeCache(active phrases: [String]) {
+        UserDefaults.standard.set(phrases, forKey: cacheKey)
+    }
+
     /// Полный пересчёт активного списка по истории (для recalc).
     static func activeFillers(history: [SpeechMetric], excluding: Set<String> = [], now: Date = Date()) -> Set<String> {
         let dyn = analyze(history: history, excluding: excluding, now: now)
