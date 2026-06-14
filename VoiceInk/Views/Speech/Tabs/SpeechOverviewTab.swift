@@ -54,7 +54,7 @@ struct SpeechOverviewTab: View {
                 value: String(format: "%.1f", aggFillerRate),
                 unit: L10n.t(en: "/100w", ru: "/100сл"),
                 detail: L10n.t(en: "Target ≤ 2", ru: "Цель ≤ 2"),
-                color: fillerColor(aggFillerRate),
+                color: SpeechMetricThresholds.fillerBand(rate: aggFillerRate, wordCount: aggWordCount),
                 icon: "text.bubble",
                 tip: SpeechMetricTips.fillers,
                 delta: delta(SpeechAggregates.fillerRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
@@ -64,7 +64,7 @@ struct SpeechOverviewTab: View {
                 value: String(format: "%.0f", aggSentenceLength),
                 unit: L10n.t(en: "words", ru: "слов"),
                 detail: L10n.t(en: "Target ≤ 18", ru: "Цель ≤ 18"),
-                color: sentenceColor(aggSentenceLength),
+                color: SpeechMetricThresholds.sentenceBand(length: aggSentenceLength, wordCount: aggWordCount),
                 icon: "text.alignleft",
                 tip: SpeechMetricTips.sentenceLength,
                 delta: delta(SpeechAggregates.sentenceLength).map { d in
@@ -80,7 +80,7 @@ struct SpeechOverviewTab: View {
                 value: String(format: "%.1f", aggAnglicismRate),
                 unit: L10n.t(en: "/100w", ru: "/100сл"),
                 detail: L10n.t(en: "Target ≤ 1", ru: "Цель ≤ 1"),
-                color: anglicismColor(aggAnglicismRate),
+                color: SpeechMetricThresholds.anglicismBand(rate: aggAnglicismRate, wordCount: aggWordCount),
                 icon: "globe",
                 tip: SpeechMetricTips.anglicisms,
                 delta: delta(SpeechAggregates.anglicismRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
@@ -90,7 +90,7 @@ struct SpeechOverviewTab: View {
                 value: String(format: "%.1f", aggSelfCorrectionRate),
                 unit: L10n.t(en: "/100w", ru: "/100сл"),
                 detail: L10n.t(en: "Self-corrections", ru: "Самоисправления"),
-                color: smoothnessColor(aggSelfCorrectionRate),
+                color: SpeechMetricThresholds.smoothnessBand(rate: aggSelfCorrectionRate, wordCount: aggWordCount),
                 icon: "pencil.and.scribble",
                 tip: SpeechMetricTips.smoothness,
                 delta: delta(SpeechAggregates.selfCorrectionRate).map { SpeechCardDelta(value: $0, format: "%.1f", improved: $0 < 0) }
@@ -225,35 +225,4 @@ struct SpeechOverviewTab: View {
     private var avgPauseRatio: Double { meanOf(prosodyMetrics.map { $0.pauseRatioPercent }) }
     private var avgLoudnessRange: Double { meanOf(prosodyMetrics.map { $0.loudnessRangeDb }.filter { $0 > 0 }) }
     private func meanOf(_ xs: [Double]) -> Double { xs.isEmpty ? 0 : xs.reduce(0, +) / Double(xs.count) }
-
-    // MARK: - Color thresholds
-
-    private func fillerColor(_ rate: Double) -> Color {
-        if aggWordCount == 0 { return .secondary }
-        if rate <= 2 { return .green }
-        if rate <= 4 { return .orange }
-        return .red
-    }
-
-    private func sentenceColor(_ length: Double) -> Color {
-        if aggWordCount == 0 { return .secondary }
-        if length <= 18 { return .green }
-        if length <= 25 { return .orange }
-        return .red
-    }
-
-    private func anglicismColor(_ rate: Double) -> Color {
-        if aggWordCount == 0 { return .secondary }
-        if rate <= 1 { return .green }
-        if rate <= 3 { return .orange }
-        return .red
-    }
-
-    /// Гладкость: ≤1 самоисправление/100сл — зелёная, до 3 — оранжевая, выше — красная.
-    private func smoothnessColor(_ rate: Double) -> Color {
-        if aggWordCount == 0 { return .secondary }
-        if rate <= 1 { return .green }
-        if rate <= 3 { return .orange }
-        return .red
-    }
 }

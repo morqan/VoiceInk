@@ -113,53 +113,53 @@ struct SpeechInsightsSection: View {
 
     private var metricsGrid: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 200), spacing: 12)], spacing: 12) {
-            SpeechMetricCard(
-                icon: "text.bubble",
+            SpeechStatCard(
                 title: L10n.t(en: "Fillers", ru: "Паразиты"),
                 value: String(format: "%.1f", avgFillerRate),
                 unit: L10n.t(en: "/ 100 words", ru: "/ 100 слов"),
                 detail: L10n.t(en: "Target ≤ 2", ru: "Цель ≤ 2"),
-                color: fillerColor,
+                color: SpeechMetricThresholds.fillerBand(rate: avgFillerRate, wordCount: totalWords),
+                icon: "text.bubble",
                 tip: SpeechMetricTips.fillers
             )
 
-            SpeechMetricCard(
-                icon: "text.alignleft",
+            SpeechStatCard(
                 title: L10n.t(en: "Avg sentence", ru: "Длина предл."),
                 value: String(format: "%.0f", avgSentenceLength),
                 unit: L10n.t(en: "words", ru: "слов"),
                 detail: L10n.t(en: "Target ≤ 18", ru: "Цель ≤ 18"),
-                color: sentenceColor,
+                color: SpeechMetricThresholds.sentenceBand(length: avgSentenceLength, wordCount: totalWords),
+                icon: "text.alignleft",
                 tip: SpeechMetricTips.sentenceLength
             )
 
-            SpeechMetricCard(
-                icon: "globe",
+            SpeechStatCard(
                 title: L10n.t(en: "Anglicisms", ru: "Англицизмы"),
                 value: String(format: "%.1f", avgAnglicismRate),
                 unit: L10n.t(en: "/ 100 words", ru: "/ 100 слов"),
                 detail: L10n.t(en: "Target ≤ 1", ru: "Цель ≤ 1"),
-                color: anglicismColor,
+                color: SpeechMetricThresholds.anglicismBand(rate: avgAnglicismRate, wordCount: totalWords),
+                icon: "globe",
                 tip: SpeechMetricTips.anglicisms
             )
 
-            SpeechMetricCard(
-                icon: "speedometer",
+            SpeechStatCard(
                 title: L10n.t(en: "Speed", ru: "Темп"),
                 value: String(format: "%.0f", avgWPM),
                 unit: "WPM",
                 detail: averageWPMDetail,
                 color: .blue,
+                icon: "speedometer",
                 tip: SpeechMetricTips.wpm
             )
 
-            SpeechMetricCard(
-                icon: "character.textbox",
+            SpeechStatCard(
                 title: L10n.t(en: "EN / RU ratio", ru: "EN / RU"),
                 value: String(format: "%.0f", avgEnRuRatio * 100),
                 unit: "%",
                 detail: L10n.t(en: "English chars share", ru: "Доля латинских букв"),
                 color: .pink,
+                icon: "character.textbox",
                 tip: SpeechMetricTips.enRuRatio
             )
         }
@@ -219,81 +219,5 @@ struct SpeechInsightsSection: View {
         return L10n.t(en: "Fast pace", ru: "Быстрый темп")
     }
 
-    // MARK: - Color thresholds
-
-    private var fillerColor: Color {
-        if totalWords == 0 { return .secondary }
-        if avgFillerRate <= 2 { return .green }
-        if avgFillerRate <= 4 { return .orange }
-        return .red
-    }
-
-    private var sentenceColor: Color {
-        if totalWords == 0 { return .secondary }
-        if avgSentenceLength <= 18 { return .green }
-        if avgSentenceLength <= 25 { return .orange }
-        return .red
-    }
-
-    private var anglicismColor: Color {
-        if totalWords == 0 { return .secondary }
-        if avgAnglicismRate <= 1 { return .green }
-        if avgAnglicismRate <= 3 { return .orange }
-        return .red
-    }
 }
 
-/// Карточка одной метрики речи. Похожа на MetricCard, но с unit и более компактная.
-private struct SpeechMetricCard: View {
-    let icon: String
-    let title: String
-    let value: String
-    let unit: String
-    let detail: String
-    let color: Color
-    var tip: String? = nil
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8, style: .continuous)
-                        .fill(color.opacity(0.15))
-                    Image(systemName: icon)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(color)
-                }
-                .frame(width: 26, height: 26)
-
-                Text(title)
-                    .font(.system(size: 12, weight: .semibold))
-                    .lineLimit(1)
-
-                if let tip {
-                    Spacer(minLength: 0)
-                    InfoTip(message: tip, iconSize: .small, iconColor: .secondary)
-                }
-            }
-
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(value)
-                    .font(.system(size: 22, weight: .black, design: .rounded))
-                    .foregroundColor(color)
-                Text(unit)
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.secondary)
-            }
-
-            Text(detail)
-                .font(.system(size: 10))
-                .foregroundColor(.secondary)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .topLeading)
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.thinMaterial)
-        )
-    }
-}
