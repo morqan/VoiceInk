@@ -123,6 +123,9 @@ struct SpeechAnalyticsView: View {
             .padding(28)
         }
         .background(Color(.windowBackgroundColor))
+        .sheet(item: $selectedMetric) { metric in
+            SpeechSessionDetailView(metric: metric, profile: activeStyleProfile)
+        }
         // Exercise + match-series depend on data/period, NOT the tab — so switching
         // sub-tabs no longer re-runs them (that was the main sub-tab-switch lag).
         .task(id: exerciseKey) {
@@ -296,10 +299,13 @@ struct SpeechAnalyticsView: View {
         if filteredMetrics.isEmpty {
             emptyState
         } else {
-            if period != .today {
-                trendCharts
-            }
-            recentSessions
+            SpeechHistoryTab(
+                metrics: filteredMetrics,
+                matchSeries: cachedMatchSeries,
+                showMatchChart: activeStyleProfile != nil,
+                showTrends: period != .today,
+                onSelect: { selectedMetric = $0 }
+            )
         }
     }
 
@@ -570,103 +576,6 @@ struct SpeechAnalyticsView: View {
     /// improved: true → зелёный, false → красный, nil → нейтральная метрика (серый).
     /// Вычисляется на месте вызова — например, длина предложения «улучшилась»,
     /// если приблизилась к цели активного профиля, а не просто упала.
-    // MARK: - Charts (Stage 4)
-
-    private var trendCharts: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 2) {
-                LocalizedText(en: "Trends", ru: "Тренды")
-                    .font(.system(size: 16, weight: .heavy, design: .rounded))
-                InfoTip(message: SpeechMetricTips.trends, iconSize: .small, iconColor: .secondary)
-            }
-
-            HStack(alignment: .top, spacing: 12) {
-                chartCard(
-                    title: "WPM",
-                    series: dailyWPMSeries,
-                    color: .blue,
-                    yAxisLabel: "WPM"
-                )
-                chartCard(
-                    title: L10n.t(en: "Fillers / 100 words", ru: "Паразиты / 100 слов"),
-                    series: dailyFillerRateSeries,
-                    color: .orange,
-                    yAxisLabel: "rate",
-                    targetLine: 2
-                )
-            }
-
-            // Динамика совпадения с активным стилем — главный мотиватор тренера
-            if activeStyleProfile != nil {
-                chartCard(
-                    title: L10n.t(en: "Match Score (style)", ru: "Match Score (стиль)"),
-                    series: cachedMatchSeries,
-                    color: .indigo,
-                    yAxisLabel: "score",
-                    yDomain: 0...100
-                )
-            }
-        }
-    }
-
-    private func chartCard(
-        title: String,
-        series: [(date: Date, value: Double)],
-        color: Color,
-        yAxisLabel: String,
-        targetLine: Double? = nil,
-        yDomain: ClosedRange<Double>? = nil
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-
-            if series.isEmpty {
-                LocalizedText(en: "Not enough data", ru: "Недостаточно данных")
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-                    .frame(height: 120)
-                    .frame(maxWidth: .infinity)
-            } else {
-                Chart {
-                    if let targetLine {
-                        RuleMark(y: .value("Target", targetLine))
-                            .foregroundStyle(.green.opacity(0.6))
-                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                    }
-                    ForEach(series, id: \.date) { point in
-                        LineMark(
-                            x: .value("Date", point.date),
-                            y: .value(yAxisLabel, point.value)
-                        )
-                        .foregroundStyle(color)
-                        .interpolationMethod(.catmullRom)
-
-                        PointMark(
-                            x: .value("Date", point.date),
-                            y: .value(yAxisLabel, point.value)
-                        )
-                        .foregroundStyle(color)
-                    }
-                }
-                .frame(height: 120)
-                .modifier(OptionalYDomain(domain: yDomain))
-                .chartXAxis {
-                    AxisMarks(values: .stride(by: .day, count: max(1, series.count / 5))) { value in
-                        AxisGridLine()
-                        AxisValueLabel(format: .dateTime.month(.abbreviated).day())
-                    }
-                }
-            }
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.thinMaterial)
-        )
-    }
-
     // MARK: - Streaks
 
     private var streaksSection: some View {
@@ -829,105 +738,6 @@ struct SpeechAnalyticsView: View {
         return (filler, anglicism, sentence)
     }
 
-    // MARK: - Recent sessions
-
-    private var recentSessions: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 2) {
-                LocalizedText(en: "Recent sessions", ru: "Недавние сессии")
-                    .font(.system(size: 16, weight: .heavy, design: .rounded))
-                InfoTip(message: SpeechMetricTips.recentSessions, iconSize: .small, iconColor: .secondary)
-            }
-
-            VStack(spacing: 6) {
-                ForEach(filteredMetrics.prefix(15)) { metric in
-                    Button {
-                        selectedMetric = metric
-                    } label: {
-                        sessionRow(metric)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .help(L10n.t(en: "Open dictation breakdown", ru: "Открыть разбор диктовки"))
-                    .pointingHandCursor()
-                }
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(.thinMaterial)
-        )
-        .sheet(item: $selectedMetric) { metric in
-            SpeechSessionDetailView(metric: metric, profile: activeStyleProfile)
-        }
-    }
-
-    private func sessionRow(_ metric: SpeechMetric) -> some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(metric.text.prefix(80) + (metric.text.count > 80 ? "…" : ""))
-                    .font(.system(size: 12))
-                    .lineLimit(1)
-                Text(metric.timestamp, format: .dateTime.day().month().hour().minute())
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            HStack(spacing: 10) {
-                metricBadge(
-                    "\(metric.wordCount)w",
-                    color: .secondary,
-                    help: L10n.t(en: "Words in this dictation", ru: "Слов в диктовке")
-                )
-                metricBadge(
-                    String(format: "%.0f wpm", metric.wpm),
-                    color: .blue,
-                    help: L10n.t(en: "Pace, words per minute", ru: "Темп, слов в минуту")
-                )
-                if metric.fillerCount > 0 {
-                    metricBadge(
-                        "\(metric.fillerCount)f",
-                        color: .orange,
-                        help: L10n.t(en: "Filler words found", ru: "Найдено слов-паразитов")
-                    )
-                }
-                if metric.anglicismCount > 0 {
-                    metricBadge(
-                        "\(metric.anglicismCount)en",
-                        color: .pink,
-                        help: L10n.t(en: "Anglicisms found", ru: "Найдено англицизмов")
-                    )
-                }
-                if metric.repetitionCount > 0 {
-                    metricBadge(
-                        "\(metric.repetitionCount)rep",
-                        color: .purple,
-                        help: L10n.t(en: "Words repeated ≥ 5 times", ru: "Слов с повторами ≥ 5 раз")
-                    )
-                }
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func metricBadge(_ text: String, color: Color, help: String) -> some View {
-        Text(text)
-            .font(.system(size: 10, weight: .semibold, design: .monospaced))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(
-                Capsule()
-                    .fill(color.opacity(0.15))
-            )
-            .foregroundColor(color)
-            .help(help)
-    }
-
     // MARK: - Filtering
 
     private var filteredMetrics: [SpeechMetric] {
@@ -1001,23 +811,6 @@ struct SpeechAnalyticsView: View {
 
     // MARK: - Daily series for charts
 
-    /// Дневной WPM — pooled: слова дня ÷ время записей дня.
-    private var dailyWPMSeries: [(date: Date, value: Double)] {
-        let cal = Calendar.current
-        var buckets: [Date: (words: Int, seconds: Double)] = [:]
-        for m in filteredMetrics where m.durationSeconds > 0 && m.wordCount > 0 {
-            let day = cal.startOfDay(for: m.timestamp)
-            let prev = buckets[day, default: (0, 0)]
-            buckets[day] = (prev.words + m.wordCount, prev.seconds + m.durationSeconds)
-        }
-        return buckets
-            .compactMap { day, t -> (date: Date, value: Double)? in
-                guard t.seconds > 0 else { return nil }
-                return (date: day, value: Double(t.words) / (t.seconds / 60.0))
-            }
-            .sorted { $0.date < $1.date }
-    }
-
     /// Дневной Match Score по активному профилю — кривая «дохожу до стиля».
     /// Вызывается только из .task при смене ключа кэша — не на каждый рендер.
     private func computeDailyMatchSeries() -> [(date: Date, value: Double)] {
@@ -1032,24 +825,6 @@ struct SpeechAnalyticsView: View {
                 guard let result = VoiceProfileMatcher.compute(target: active, metrics: ms) else { return nil }
                 return (date: day, value: result.totalScore)
             }
-            .sorted { $0.date < $1.date }
-    }
-
-    /// Daily filler rate (per 100 words) с weighted average.
-    private var dailyFillerRateSeries: [(date: Date, value: Double)] {
-        let cal = Calendar.current
-        var buckets: [Date: (fillers: Int, words: Int)] = [:]
-        for m in filteredMetrics {
-            let day = cal.startOfDay(for: m.timestamp)
-            let prev = buckets[day, default: (0, 0)]
-            buckets[day] = (prev.fillers + m.fillerCount, prev.words + m.wordCount)
-        }
-        return buckets
-            .map { day, t -> (Date, Double) in
-                let rate = t.words > 0 ? Double(t.fillers) / Double(t.words) * 100 : 0
-                return (day, rate)
-            }
-            .map { (date: $0.0, value: $0.1) }
             .sorted { $0.date < $1.date }
     }
 
@@ -1143,16 +918,4 @@ struct SpeechAnalyticsView: View {
         return .red
     }
 }
-
-/// Опциональный фиксированный домен оси Y (для Match Score 0–100).
-private struct OptionalYDomain: ViewModifier {
-    let domain: ClosedRange<Double>?
-
-    func body(content: Content) -> some View {
-        if let domain {
-            content.chartYScale(domain: domain)
-        } else {
-            content
-        }
-    }
 }
