@@ -1,78 +1,50 @@
 # Contributing to VoiceInk
 
-First off, thank you for considering contributing to VoiceInk! It's people like you that make VoiceInk such a great tool.
+This is a personal fork of VoiceInk, maintained primarily for my own use. It is shared openly
+under the GPL-v3 license so others can read, build, and learn from it.
 
-## ⚠️ Pull Requests Not Accepted
+## How you can use and contribute
 
-**As of now, this project is not accepting pull requests.** While VoiceInk is open source and you're welcome to fork and modify it for your own use.
+- 🍴 **Fork it** — you're welcome to fork this repository and adapt it for your own needs.
+- 🐛 **Report bugs** — open an issue with steps to reproduce and details about your environment.
+- 💡 **Suggest ideas** — open an issue describing the feature and why it would help.
+- 📖 **Improve docs** — corrections and clarifications to the documentation are welcome.
 
-**You can still contribute by:**
-- 🐛 **Reporting bugs** - Open an issue with detailed information
-- 💡 **Suggesting features** - Share your ideas via issues or discussions
-- 🍴 **Forking the project** - Feel free to create your own version
-- 📖 **Improving documentation** - Suggest clarifications or corrections via issues
-
-Thank you for understanding!
+Pull requests are considered case by case; for anything non-trivial, please open an issue to
+discuss it first.
 
 ## Code of Conduct
 
 By participating in this project, you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
-## How Can I Contribute?
+## Development Setup
 
-### Reporting Bugs
-
-- Before submitting a bug report, please check if the issue has already been reported
-- Use the bug report template when creating an issue
-- Include as much relevant information as possible
-- Include steps to reproduce the issue
-
-### Suggesting Enhancements
-
-- Open an issue using the feature request template
-- Clearly describe the feature and its benefits
-- Discuss potential implementation approaches
-- Consider the feature's impact on existing functionality
-
-### Development Process
-
-1. Ensure you have all the requirements installed:
+1. Requirements:
    - macOS 14.4 or later
    - Latest version of Xcode
    - Latest version of Swift
-   - whisper.cpp properly set up
+   - whisper.cpp / `whisper.xcframework` set up (see [BUILDING.md](BUILDING.md))
 
-2. Follow our coding standards:
-   - Use Swift style guidelines
-   - Write meaningful commit messages
-   - Include comments where necessary
-   - Add tests for new features
+2. Build and run:
+   - Follow [BUILDING.md](BUILDING.md). `make dev` builds and runs; `make local` builds a
+     self-signed local app with no Apple Developer account.
 
-3. Testing:
-   - Run existing tests
-   - Add new tests for new functionality
-   - Ensure all tests pass before submitting PR
+3. Before submitting changes:
+   - Run the test suite (`xcodebuild test -scheme VoiceInk -destination 'platform=macOS'`)
+   - Make sure existing tests pass and add tests for new behavior where it makes sense
 
 ## Style Guidelines
 
-- Follow Swift style guidelines
+- Follow standard Swift style
 - Use meaningful variable and function names
-- Keep functions focused and concise
-- Comment complex logic
-- Write self-documenting code where possible
+- Keep functions focused and concise; one primary type per file, named after it
+- Keep view files focused — split a screen into sections/subviews rather than growing one large `body`
+- Comment non-obvious logic; prefer self-documenting code
 
-## Community
+## Architecture
 
-- Join our discussions
-- Help other contributors
-- Share your ideas
-- Be respectful and constructive
+For a map of the codebase and the critical dictation path, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Questions?
 
-If you have any questions or need clarification, feel free to:
-1. Open an issue
-2. Start a discussion
-3. Reach out to the maintainers
-
-Thank you for contributing to VoiceInk! 🎉 
+Open an issue or start a discussion. Thanks for your interest in VoiceInk! 🎉

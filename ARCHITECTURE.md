@@ -61,12 +61,13 @@ Top level under `VoiceInk/`:
 | `Notifications/`, `Paste/`, `AppIntents/`, `Extensions/` | Smaller cross-cutting helpers |
 
 `Services/` subfolders: `Audio/`, `Transcription/`, `SpeechCoaching/` (speech metrics,
-fillers, voice-profile matching, daily exercise), `AIEnhancement/`, `Prosody/`,
-`Licensing/`, `Backup/`, `Metrics/`, `Dictionary/`, `Infrastructure/`.
+fillers, voice-profile matching, daily exercise), `AIEnhancement/`, `Prosody/` (on-device
+pitch / pause / loudness analysis), `Licensing/`, `Backup/`, `Metrics/`, `Dictionary/`,
+`Utilities/`, `Infrastructure/`.
 
 `Views/` subfolders include `Speech/` (+ `Tabs/`, `Coach/`, `Components/`), `History/`,
-`Metrics/`, `AI Models/`, `Settings/`, `AudioPlayer/`, `Onboarding/`, `Common/`,
-`Components/`.
+`Metrics/`, `AI Models/`, `Settings/`, `AudioPlayer/`, `Recorder/` (mini / notch recorder),
+`Dictionary/` (dictionary + Vault Sync), `Onboarding/`, `Common/`, `Components/`.
 
 ## Where do I find…
 
@@ -75,11 +76,11 @@ fillers, voice-profile matching, daily exercise), `AIEnhancement/`, `Prosody/`,
 | What happens when you finish dictating | `Transcription/Engine/TranscriptionPipeline.swift`, `VoiceInkEngine.swift` |
 | Mic recording / device handling | `AudioCapture/CoreAudioRecorder.swift`, `Services/Audio/AudioDeviceManager.swift` |
 | AI text enhancement / providers | `Services/AIEnhancement/` (`AIEnhancementService`, `EnhancementProviderDispatcher`) |
-| Speech metrics + analytics | `Services/SpeechCoaching/`, `Views/Speech/` |
+| Speech metrics + analytics | `Services/SpeechCoaching/`, `Views/Speech/SpeechAnalyticsView.swift` (the Speech sidebar screen) |
 | Power Mode config screen | `PowerMode/` (`PowerModeConfigView` + `PowerModeFormModel` + sections) |
 | The sidebar / main window | `Views/ContentView.swift` |
 | Global hotkeys | `Shortcuts/` |
-| Persisted data shape | `Models/` (`Transcription`, `SpeechMetric`, `VoiceProfileTarget`, …) |
+| Persisted data shape | `Models/` grouped by domain (`Transcription`, `SpeechMetric`; `SpeechCoaching/VoiceProfileTarget` defines the target speaking-style profiles scored by Match Score) |
 
 ## Conventions
 

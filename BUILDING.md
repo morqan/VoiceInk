@@ -18,7 +18,7 @@ The easiest way to build VoiceInk is using the included Makefile, which automate
 
 ```bash
 # Clone the repository
-git clone https://github.com/Beingpax/VoiceInk.git
+git clone https://github.com/morqan/VoiceInk.git
 cd VoiceInk
 
 # Build everything (recommended for first-time setup)
@@ -35,6 +35,7 @@ make dev
 - `make setup` - Prepare the whisper framework for linking
 - `make build` - Build the VoiceInk Xcode project
 - `make local` - Build for local use (no Apple Developer certificate needed)
+- `make install` - Build locally, then install to `/Applications` and launch
 - `make run` - Launch the built VoiceInk app
 - `make dev` - Build and run (ideal for development workflow)
 - `make all` - Complete build process (default)
@@ -59,7 +60,7 @@ This approach ensures consistent builds across different machines and eliminates
 If you don't have an Apple Developer certificate, use `make local`:
 
 ```bash
-git clone https://github.com/Beingpax/VoiceInk.git
+git clone https://github.com/morqan/VoiceInk.git
 cd VoiceInk
 make local
 open ~/Downloads/VoiceInk.app
@@ -73,6 +74,13 @@ The `make local` command uses:
 - `LocalBuild.xcconfig` to override signing and entitlements settings
 - `VoiceInk.local.entitlements` (stripped-down, no CloudKit/keychain groups)
 - `LOCAL_BUILD` Swift compilation flag for conditional code paths
+
+When the `LOCAL_BUILD` flag is set, the app adapts so it runs without the paid
+infrastructure:
+- the license gate is bypassed — the app treats itself as licensed (no trial countdown)
+- the Sparkle auto-updater is not started and the "Check for Updates" menu item is hidden,
+  so the upstream appcast can never replace your fork
+- the Keychain uses a local fallback instead of a shared keychain access group
 
 Your normal `make all` / `make build` commands are completely unaffected.
 
@@ -96,7 +104,7 @@ This will create the XCFramework at `build-apple/whisper.xcframework`.
 
 1. Clone the VoiceInk repository:
 ```bash
-git clone https://github.com/Beingpax/VoiceInk.git
+git clone https://github.com/morqan/VoiceInk.git
 cd VoiceInk
 ```
 
@@ -116,6 +124,8 @@ cd VoiceInk
 
 2. **Dependencies**
    - The project uses [whisper.cpp](https://github.com/ggerganov/whisper.cpp) for transcription
+   - `whisper.xcframework` is **not** checked into this repo — it is built from whisper.cpp
+     (automatically by `make whisper`, or manually as shown above) and then linked
    - Ensure the whisper.xcframework is properly linked in your Xcode project
    - Test the whisper.cpp installation independently before proceeding
 
@@ -124,7 +134,9 @@ cd VoiceInk
    - Enable relevant debugging options in Xcode
 
 4. **Testing**
-   - Run the test suite before making changes
+   - The repo has `VoiceInkTests/` and `VoiceInkUITests/` targets
+   - Run the suite with: `xcodebuild test -scheme VoiceInk -destination 'platform=macOS'`
+     (the whisper framework must already be set up — run `make setup` first)
    - Ensure all tests pass after your modifications
 
 ## Troubleshooting
@@ -136,4 +148,4 @@ If you encounter any build issues:
 4. Verify all dependencies are properly installed
 5. Make sure whisper.xcframework is properly built and linked
 
-For more help, please check the [issues](https://github.com/Beingpax/VoiceInk/issues) section or create a new issue. 
+For more help, please check the [issues](https://github.com/morqan/VoiceInk/issues) section or create a new issue.
