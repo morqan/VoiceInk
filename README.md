@@ -19,6 +19,10 @@ fillers, pace, prosody, and how closely you match a target speaking style.
 > analysis, local-first AI enhancement, and more. Engineers should start with
 > [ARCHITECTURE.md](ARCHITECTURE.md); users can skim the features below.
 
+<div align="center">
+  <img src="docs/dashboard.png" alt="VoiceInk dashboard — hours saved, dictation stats, and today's speech metrics" width="760" />
+</div>
+
 ## Features
 
 ### Transcription
