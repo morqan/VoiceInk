@@ -19,7 +19,7 @@ class LicenseViewModel: ObservableObject {
 
     private let trialPeriodDays = 7
     private let polarService = PolarService()
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "LicenseViewModel")
+    private let logger = Logger(subsystem: "com.morqan.voiceink", category: "LicenseViewModel")
     private let userDefaults = UserDefaults.standard
     private let licenseManager = LicenseManager.shared
 
@@ -88,7 +88,7 @@ class LicenseViewModel: ObservableObject {
     }
     
     func openPurchaseLink() {
-        if let url = URL(string: "https://tryvoiceink.com/buy") {
+        if let url = URL(string: "https://github.com/morqan/VoiceInk") {
             NSWorkspace.shared.open(url)
         }
     }
@@ -180,7 +180,7 @@ class LicenseViewModel: ObservableObject {
         } catch {
             validationSuccess = false
             logger.error("🔑 Unexpected license error: \(error, privacy: .public)")
-            validationMessage = "An unexpected error occurred. Please try again or contact support at support@tryvoiceink.com"
+            validationMessage = "An unexpected error occurred. Please try again or open an issue at https://github.com/morqan/VoiceInk/issues"
         }
         
         isValidating = false

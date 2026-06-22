@@ -24,7 +24,7 @@ final class SpeechMetricRecalcService {
     static let shared = SpeechMetricRecalcService()
 
     private let logger = Logger(
-        subsystem: "com.prakashjoshipax.voiceink",
+        subsystem: "com.morqan.voiceink",
         category: "SpeechMetricRecalcService"
     )
 

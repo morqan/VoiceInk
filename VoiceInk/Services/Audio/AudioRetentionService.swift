@@ -20,7 +20,7 @@ import OSLog
 final class AudioRetentionService {
     static let shared = AudioRetentionService()
 
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "AudioRetentionService")
+    private let logger = Logger(subsystem: "com.morqan.voiceink", category: "AudioRetentionService")
     private let retentionDaysKey = "AudioRetentionDays"
     private let defaultRetentionDays = 14
     private var isSweeping = false

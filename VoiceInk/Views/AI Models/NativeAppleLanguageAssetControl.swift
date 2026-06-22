@@ -16,7 +16,7 @@ private enum NativeAppleSpeechAssetState: Equatable {
 }
 
 struct NativeAppleLanguageAssetControl: View {
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "NativeAppleLanguageAssetControl")
+    private let logger = Logger(subsystem: "com.morqan.voiceink", category: "NativeAppleLanguageAssetControl")
 
     let localeIdentifier: String
     let isVisible: Bool

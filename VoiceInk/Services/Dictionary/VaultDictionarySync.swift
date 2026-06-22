@@ -17,7 +17,7 @@ import OSLog
 enum VaultDictionarySync {
 
     private static let logger = Logger(
-        subsystem: "com.prakashjoshipax.voiceink",
+        subsystem: "com.morqan.voiceink",
         category: "VaultDictionarySync"
     )
 

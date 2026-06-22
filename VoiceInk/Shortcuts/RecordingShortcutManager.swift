@@ -115,7 +115,7 @@ class RecordingShortcutManager: ObservableObject {
         self.isMiddleClickToggleEnabled = UserDefaults.standard.bool(forKey: "isMiddleClickToggleEnabled")
         self.middleClickActivationDelay = UserDefaults.standard.integer(forKey: "middleClickActivationDelay")
 
-        let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "RecordingShortcutManager")
+        let logger = Logger(subsystem: "com.morqan.voiceink", category: "RecordingShortcutManager")
         let shortcutModeHandler = RecordingShortcutModeHandler(
             logger: logger,
             canHandleShortcutAction: {

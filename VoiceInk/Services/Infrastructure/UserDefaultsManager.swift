@@ -5,13 +5,12 @@ extension UserDefaults {
         static let audioInputMode = "audioInputMode"
         static let selectedAudioDeviceUID = "selectedAudioDeviceUID"
         static let prioritizedDevices = "prioritizedDevices"
-        static let affiliatePromotionDismissed = "VoiceInkAffiliatePromotionDismissed"
 
         // Vault Sync
         static let vaultSyncEnabled = "VoiceInkVaultSyncEnabled"
         static let vaultDictionaryPath = "VoiceInkVaultDictionaryPath"
 
-        // Speech weekly report export (папка в Obsidian Vault)
+        // Speech weekly report export (folder in the Obsidian vault)
         static let speechReportFolder = "VoiceInkSpeechReportFolder"
     }
 
@@ -31,11 +30,5 @@ extension UserDefaults {
     var prioritizedDevicesData: Data? {
         get { data(forKey: Keys.prioritizedDevices) }
         set { setValue(newValue, forKey: Keys.prioritizedDevices) }
-    }
-
-    // MARK: - Affiliate Promotion Dismissal
-    var affiliatePromotionDismissed: Bool {
-        get { bool(forKey: Keys.affiliatePromotionDismissed) }
-        set { setValue(newValue, forKey: Keys.affiliatePromotionDismissed) }
     }
 }

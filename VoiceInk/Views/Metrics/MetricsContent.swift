@@ -69,7 +69,7 @@ private enum DashboardMetricsLoader {
 }
 
 struct MetricsContent: View {
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "MetricsContent")
+    private let logger = Logger(subsystem: "com.morqan.voiceink", category: "MetricsContent")
     let modelContext: ModelContext
     let licenseState: LicenseViewModel.LicenseState
 
@@ -108,10 +108,7 @@ struct MetricsContent: View {
                             metricsSection
                             // today's speech analytics
                             SpeechInsightsSection()
-                            HStack(alignment: .top, spacing: 18) {
-                                HelpAndResourcesSection()
-                                DashboardPromotionsSection(licenseState: licenseState)
-                            }
+                            HelpAndResourcesSection()
 
                             Spacer(minLength: 20)
 

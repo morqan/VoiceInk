@@ -453,7 +453,7 @@ struct PowerModeSection: View {
                 isEnabled: toggleBinding,
                 label: "Power Mode",
                 infoMessage: "Apply custom settings based on active app or website.",
-                infoURL: "https://tryvoiceink.com/docs/power-mode"
+                infoURL: "https://github.com/morqan/VoiceInk"
             ) {
                 Toggle(isOn: $powerModePersistSettings) {
                     HStack(spacing: 4) {

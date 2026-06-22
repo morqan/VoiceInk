@@ -13,7 +13,7 @@ import OSLog
 enum VoiceProfileSeed {
 
     private static let logger = Logger(
-        subsystem: "com.prakashjoshipax.voiceink",
+        subsystem: "com.morqan.voiceink",
         category: "VoiceProfileSeed"
     )
 

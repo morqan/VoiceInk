@@ -18,7 +18,7 @@ import OSLog
 final class ProsodyAnalysisService {
     static let shared = ProsodyAnalysisService()
 
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "ProsodyAnalysisService")
+    private let logger = Logger(subsystem: "com.morqan.voiceink", category: "ProsodyAnalysisService")
     private let backfillKey = "ProsodyBackfill_v1_done"
     private var isBackfilling = false
 

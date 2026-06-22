@@ -10,7 +10,7 @@ class TranscriptionPipeline {
     private let serviceRegistry: TranscriptionServiceRegistry
     private let enhancementService: AIEnhancementService?
     private let promptDetectionService = PromptDetectionService()
-    private let logger = Logger(subsystem: "com.prakashjoshipax.voiceink", category: "TranscriptionPipeline")
+    private let logger = Logger(subsystem: "com.morqan.voiceink", category: "TranscriptionPipeline")
 
     var licenseViewModel: LicenseViewModel
 
@@ -244,7 +244,7 @@ class TranscriptionPipeline {
            transcription.transcriptionStatus == TranscriptionStatus.completed.rawValue {
             if case .trialExpired = licenseViewModel.licenseState {
                 textToPaste = """
-                    Your trial has expired. Upgrade to VoiceInk Pro at tryvoiceink.com/buy
+                    Your trial has expired.
                     \n\(textToPaste)
                     """
             }

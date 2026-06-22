@@ -19,7 +19,7 @@ import OSLog
 enum VoiceProfileMatcher {
 
     private static let logger = Logger(
-        subsystem: "com.prakashjoshipax.voiceink",
+        subsystem: "com.morqan.voiceink",
         category: "VoiceProfileMatcher"
     )
 

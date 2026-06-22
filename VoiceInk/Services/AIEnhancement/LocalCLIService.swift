@@ -36,7 +36,7 @@ final class LocalCLIService {
     static let selectedTemplateKey = "localCLISelectedTemplate"
     static let timeoutSecondsKey = "localCLITimeoutSeconds"
     static let defaultTimeoutSeconds: Double = 45
-    private static let shellPathQueue = DispatchQueue(label: "com.prakashjoshipax.voiceink.localcli.path")
+    private static let shellPathQueue = DispatchQueue(label: "com.morqan.voiceink.localcli.path")
     private static var cachedInteractiveLoginPATH: String?
 
     var commandTemplate: String {

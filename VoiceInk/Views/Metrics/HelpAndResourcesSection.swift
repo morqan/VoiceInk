@@ -11,19 +11,13 @@ struct HelpAndResourcesSection: View {
                 resourceLink(
                     icon: "sparkles",
                     title: "Recommended Models",
-                    url: "https://tryvoiceink.com/recommended-models"
-                )
-
-                resourceLink(
-                    icon: "video.fill",
-                    title: "YouTube Videos & Guides",
-                    url: "https://www.youtube.com/@tryvoiceink/videos"
+                    url: "https://github.com/morqan/VoiceInk"
                 )
 
                 resourceLink(
                     icon: "book.fill",
                     title: "Documentation",
-                    url: "https://tryvoiceink.com/docs"
+                    url: "https://github.com/morqan/VoiceInk"
                 )
                 
                 resourceLink(
