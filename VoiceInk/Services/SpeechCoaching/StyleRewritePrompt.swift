@@ -2,17 +2,17 @@
 //  StyleRewritePrompt.swift
 //  VoiceInk
 //
-//  Строит системный промпт для фичи «Как сказал бы [стиль]»: модель переписывает
-//  диктовку пользователя в целевом стиле, сохраняя смысл, чтобы он учился на
-//  собственном тексте. Промпт собирается из профиля (цели + маркер-фразы) и
-//  именованных приёмов из VoiceStyleCoaching.
+//  Builds the system prompt for the "How [style] would say it" feature: the model
+//  rewrites the user's dictation in the target style while preserving meaning, so the
+//  user can learn from their own text. The prompt is assembled from the profile
+//  (targets + marker phrases) and named techniques from VoiceStyleCoaching.
 //
 
 import Foundation
 
 enum StyleRewritePrompt {
 
-    /// Системный промпт для переписывания транскрипта в стиле профиля.
+    /// System prompt for rewriting the transcript in the profile's style.
     static func systemPrompt(for profile: VoiceProfileTarget) -> String {
         let name = profile.name
         let markers = profile.markerPhrases.prefix(12).map { "«\($0)»" }.joined(separator: ", ")
@@ -32,7 +32,7 @@ enum StyleRewritePrompt {
         default:      complexity = "длинные многоэтажные предложения с придаточными («который», «когда», «если», «пока», «по мере того как»)"
         }
 
-        // Приёмы стиля из базы тренера (если это пресет)
+        // Style techniques from the coaching database (when this is a preset)
         var techniques = ""
         if let key = VoiceStyleKey.from(profile: profile) {
             let names = VoiceStyleCoaching.patterns(for: key, axis: .markers)

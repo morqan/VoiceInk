@@ -2,42 +2,43 @@
 //  FillerLexicon.swift
 //  VoiceInk
 //
-//  Пул КАНДИДАТОВ в паразиты — широкий словарь того, что в русском В ПРИНЦИПЕ
-//  бывает словом-заполнителем / дискурсивным маркером / хеджем. Это НЕ активный
-//  список: какие из кандидатов реально паразиты ИМЕННО этого пользователя,
-//  решает AutoFillerDetector по частоте и вездесущности в его речи.
+//  Pool of CANDIDATE filler words — a broad lexicon of what CAN, in principle,
+//  act as a filler word / discourse marker / hedge in Russian. This is NOT the
+//  active list: which of these candidates are actually fillers for THIS specific
+//  user is decided by AutoFillerDetector based on frequency and ubiquity in
+//  their speech.
 //
-//  Высокорисковые контекстные слова («так», «это», «вот», «да», «как») сюда НЕ
-//  включены: без анализа позиции в клаузе они дают слишком много ложных
-//  срабатываний (служебная лексика). Они — в neverCount.
+//  High-risk context words ("так", "это", "вот", "да", "как") are NOT included
+//  here: without analyzing their position in the clause they produce too many
+//  false positives (function-word lexicon). Those live in neverCount.
 //
 
 import Foundation
 
 enum FillerLexicon {
 
-    /// Однословные кандидаты (lowercase). Средний/низкий контекст-риск.
+    /// Single-word candidates (lowercase). Medium/low context risk.
     static let singleWordCandidates: Set<String> = [
-        // встроенное ядро (было в анализаторе)
+        // built-in core (used to live in the analyzer)
         "короче", "типа", "ну", "блин", "значит", "собственно", "понимаешь",
         "допустим", "окей", "ок", "эээ", "эм", "ммм",
-        // дискурсивные маркеры
+        // discourse markers
         "слушай", "слушайте", "смотри", "смотрите", "слышь", "кстати", "итак",
         "ладно", "короч", "знаешь", "знаете", "понимаете", "видишь", "видите",
-        // хеджи
+        // hedges
         "реально", "прям", "прямо", "походу", "видимо", "наверное", "наверно",
         "наверняка", "вроде", "небось", "кажется", "кажись", "скажем", "грубо",
         "условно", "якобы", "дескать", "мол", "получается", "практически",
         "фактически", "чисто", "буквально", "банально", "конкретно", "точнее",
         "скорее", "безусловно", "естественно", "разумеется",
-        // разговорные
+        // colloquial
         "ваще", "вообще-то", "щас", "счас", "прикинь", "чё", "че", "чёт",
         "угу", "ага", "опа", "однако", "причём", "причем", "относительно",
-        // вокализованные паузы (Whisper их обычно глотает — почти всегда 0)
+        // vocalized pauses (Whisper usually swallows them — almost always 0)
         "ээ", "эээм", "хм", "хмм"
     ]
 
-    /// Многословные кандидаты — матчатся через PhraseOccurrenceScanner (границы слов).
+    /// Multi-word candidates — matched via PhraseOccurrenceScanner (word boundaries).
     static let multiWordCandidates: [String] = [
         "как бы", "то есть", "в общем", "в общем-то", "так сказать", "это самое",
         "на самом деле", "в принципе", "по сути", "по сути дела", "скажем так",
@@ -60,8 +61,8 @@ enum FillerLexicon {
         "если я не ошибаюсь", "если так подумать", "что характерно"
     ]
 
-    /// Грамматические/служебные слова, которые НИКОГДА не паразиты как одиночные.
-    /// Детектор обязан их игнорировать, иначе они все «активируются» (ubiquity ≈ 1).
+    /// Grammatical/function words that are NEVER fillers on their own.
+    /// The detector must ignore them, otherwise they all "activate" (ubiquity ≈ 1).
     static let neverCount: Set<String> = [
         "а", "без", "будет", "будут", "бы", "был", "была", "были", "было", "быть",
         "в", "вам", "вас", "ваш", "весь", "во", "вон", "все", "всегда", "вся",

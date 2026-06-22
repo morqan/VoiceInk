@@ -48,7 +48,7 @@ class TranscriptionPipeline {
         var finalPastedText: String?
         var promptDetectionResult: PromptDetectionService.PromptDetectionResult?
         var didInsertSessionMetric = false
-        var rawASRTextForMetrics = ""   // сырой ASR-текст для анализа паразитов
+        var rawASRTextForMetrics = ""   // raw ASR text for filler-word analysis
 
         func restorePromptDetectionSettingsIfNeeded() async {
             if let result = promptDetectionResult,
@@ -101,7 +101,7 @@ class TranscriptionPipeline {
             } else {
                 text = try await serviceRegistry.transcribe(audioURL: audioURL, model: model)
             }
-            rawASRTextForMetrics = text.trimmingCharacters(in: .whitespacesAndNewlines)   // сырьё для анализа паразитов (до фильтров)
+            rawASRTextForMetrics = text.trimmingCharacters(in: .whitespacesAndNewlines)   // raw text for filler-word analysis (before filters)
             text = TranscriptionOutputFilter.filter(text)
             let transcriptionDuration = Date().timeIntervalSince(transcriptionStart)
 
@@ -199,9 +199,9 @@ class TranscriptionPipeline {
                     logger.error("Failed to record session metric: \(error.localizedDescription, privacy: .public)")
                 }
 
-                // speech analytics — анализ по сырому ASR-тексту (фильтры не занижают
-                // паразитов). Активный список — из кэша (без скана истории на главном
-                // потоке); кэш обновляет UI/recalc.
+                // speech analytics — analyze the raw ASR text (filters don't undercount
+                // filler words). Active list comes from the cache (no history scan on the
+                // main thread); the cache is refreshed by UI/recalc.
                 let rawForMetrics = rawASRTextForMetrics.isEmpty ? transcription.text : rawASRTextForMetrics
                 if let speechMetric = SpeechMetricsAnalyzer.analyze(
                     text: rawForMetrics,

@@ -2,10 +2,10 @@
 //  SpeechMetric.swift
 //  VoiceInk
 //
-//  метрики речи на каждую транскрипцию.
-//  Записывается после каждой завершённой диктовки в saveTranscriptionAndPostCompletion.
+//  Speech metrics for each transcription.
+//  Written after every completed dictation in saveTranscriptionAndPostCompletion.
 //
-//  Считает: filler words (паразиты), англицизмы, среднюю длину предложения, WPM, EN/RU ratio.
+//  Computes: filler words, anglicisms, average sentence length, WPM, EN/RU ratio.
 //
 
 import Foundation
@@ -13,69 +13,69 @@ import SwiftData
 
 @Model
 final class SpeechMetric {
-    /// Уникальный ID записи
+    /// Unique record ID
     var id: UUID = UUID()
 
-    /// Когда диктовка была завершена
+    /// When the dictation was completed
     var timestamp: Date = Date()
 
-    /// Длительность аудио в секундах
+    /// Audio duration in seconds
     var durationSeconds: Double = 0
 
-    /// Общий счётчик слов в тексте
+    /// Total word count in the text
     var wordCount: Int = 0
 
-    /// Количество предложений (разбито по .?!)
+    /// Number of sentences (split on .?!)
     var sentenceCount: Int = 0
 
-    /// Средняя длина предложения в словах
+    /// Average sentence length in words
     var avgSentenceLength: Double = 0
 
-    /// Средняя сложность предложения. Считается по маркерам подчинения
-    /// («который», «потому что», «если», «когда», «пока», «чтобы» и т.д.)
-    /// плюс по запятым (как proxy для сложных конструкций).
-    /// 0 = чистая простая речь. 5+ = подчинительные конструкции каждый раз.
+    /// Average sentence complexity. Computed from subordination marker phrases
+    /// («который», «потому что», «если», «когда», «пока», «чтобы», etc.)
+    /// plus commas (as a proxy for complex constructions).
+    /// 0 = plain, simple speech. 5+ = subordinate constructions every time.
     var avgSentenceComplexity: Double = 0
 
     /// WPM = wordCount / (durationSeconds / 60)
     var wpm: Double = 0
 
-    /// Общее число слов-паразитов в этой диктовке
+    /// Total number of filler words in this dictation
     var fillerCount: Int = 0
 
-    /// JSON-сериализация {"короче": 3, "типа": 1, ...}
-    /// SwiftData плохо дружит с [String: Int], поэтому через JSON.
+    /// JSON serialization {"короче": 3, "типа": 1, ...}
+    /// SwiftData doesn't play well with [String: Int], so we store it as JSON.
     var fillersByWordJSON: String = "{}"
 
-    /// Общее число англицизмов
+    /// Total number of anglicisms
     var anglicismCount: Int = 0
 
-    /// JSON-сериализация {"deadline": 2, "meeting": 1, ...}
+    /// JSON serialization {"deadline": 2, "meeting": 1, ...}
     var anglicismsByWordJSON: String = "{}"
 
-    /// Отношение латинских символов к общему числу букв (0..1)
-    /// 0 = чистый русский, 1 = чистый английский
+    /// Ratio of Latin characters to the total letter count (0..1)
+    /// 0 = pure Russian, 1 = pure English
     var enRuRatio: Double = 0
 
-    /// Повторы — слова которые встретились ≥ 5 раз в одной диктовке (исключая паразитов/англицизмов).
-    /// JSON-сериализация {"проект": 7, "задача": 5, ...}
+    /// Repetitions — words that occurred ≥ 5 times in a single dictation (excluding fillers/anglicisms).
+    /// JSON serialization {"проект": 7, "задача": 5, ...}
     var repetitionsByWordJSON: String = "{}"
 
-    /// Самоисправления (метрика «гладкость»): ремонт-маркеры + немедленные повторы
-    /// слова подряд. Общий счёт за диктовку. У старых записей 0 до миграции v4.
+    /// Self-corrections (the "smoothness" metric): repair markers + immediate
+    /// back-to-back word repeats. Total count per dictation. Old records are 0 until the v4 migration.
     var selfCorrectionCount: Int = 0
 
-    /// JSON-сериализация только ремонт-МАРКЕРОВ {"вернее": 2, "или нет": 1, ...}
-    /// (для подсветки и списка). Повторы подряд сюда не пишутся — иначе подсветило бы
-    /// каждое вхождение частого слова. Сумма маркеров ≤ selfCorrectionCount.
+    /// JSON serialization of repair MARKERS only {"вернее": 2, "или нет": 1, ...}
+    /// (for highlighting and the list). Back-to-back repeats are not written here — otherwise it would
+    /// highlight every occurrence of a frequent word. The marker sum ≤ selfCorrectionCount.
     var selfCorrectionsByWordJSON: String = "{}"
 
-    /// Очищенный текст транскрипции (тот, что ушёл в input/историю).
+    /// Cleaned transcription text (the one that went to input/history).
     var text: String = ""
 
-    /// Самый сырой ASR-выход (до фильтров/замен/чистки) — по нему считаются
-    /// метрики паразитов, чтобы фильтры не занижали счёт. У старых записей пуст
-    /// (сырьё тогда не сохранялось) — тогда анализ падает обратно на text.
+    /// The rawest ASR output (before filters/replacements/cleanup) — filler
+    /// metrics are computed from it so filters don't undercount. Empty for old records
+    /// (raw text wasn't saved back then) — in that case analysis falls back to text.
     var rawText: String = ""
 
     // MARK: - Prosody (voice) — Phase 1, computed in background from the audio file.
@@ -152,7 +152,7 @@ final class SpeechMetric {
 
     // MARK: - Computed
 
-    /// Filler rate per 100 words. Цель Моргана: ≤ 2.
+    /// Filler rate per 100 words. Target: ≤ 2.
     var fillerRatePer100Words: Double {
         guard wordCount > 0 else { return 0 }
         return Double(fillerCount) / Double(wordCount) * 100
@@ -164,33 +164,33 @@ final class SpeechMetric {
         return Double(anglicismCount) / Double(wordCount) * 100
     }
 
-    /// Самоисправления на 100 слов — обратная мера «гладкости». Чем меньше, тем глаже.
+    /// Self-corrections per 100 words — an inverse measure of "smoothness". Lower is smoother.
     var selfCorrectionRatePer100Words: Double {
         guard wordCount > 0 else { return 0 }
         return Double(selfCorrectionCount) / Double(wordCount) * 100
     }
 
-    /// Десериализованный словарь ремонт-маркеров с count (для подсветки/списка).
+    /// Deserialized dictionary of repair markers with counts (for highlighting/list).
     var selfCorrectionsByWord: [String: Int] {
         decodeJSON(selfCorrectionsByWordJSON)
     }
 
-    /// Десериализованный словарь паразитов с count.
+    /// Deserialized dictionary of filler words with counts.
     var fillersByWord: [String: Int] {
         decodeJSON(fillersByWordJSON)
     }
 
-    /// Десериализованный словарь англицизмов с count.
+    /// Deserialized dictionary of anglicisms with counts.
     var anglicismsByWord: [String: Int] {
         decodeJSON(anglicismsByWordJSON)
     }
 
-    /// Десериализованный словарь повторов с count.
+    /// Deserialized dictionary of repetitions with counts.
     var repetitionsByWord: [String: Int] {
         decodeJSON(repetitionsByWordJSON)
     }
 
-    /// Общее число повторяющихся уникальных слов (≥5 раз) в этой диктовке.
+    /// Total number of repeated unique words (≥5 times) in this dictation.
     var repetitionCount: Int {
         repetitionsByWord.count
     }

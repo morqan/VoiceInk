@@ -2,15 +2,15 @@
 //  Translations.swift
 //  VoiceInk
 //
-//  Таблица переводов EN → RU для всего интерфейса.
-//  Использование через L10n.auto(_:) или global tr(_:) helper.
+//  EN → RU translation table for the entire interface.
+//  Use it via L10n.auto(_:) or the global tr(_:) helper.
 //
 
 import Foundation
 
 extension L10n {
-    /// Полная таблица переводов интерфейса VoiceInk.
-    /// Если строки нет — возвращается оригинал (английский).
+    /// Complete translation table for the VoiceInk interface.
+    /// If a string is missing, the original (English) is returned.
     static let ruTranslations: [String: String] = [
         // MARK: - Generic actions
         "OK": "ОК",

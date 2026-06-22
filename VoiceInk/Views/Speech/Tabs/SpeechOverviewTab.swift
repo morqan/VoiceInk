@@ -68,7 +68,7 @@ struct SpeechOverviewTab: View {
                 icon: "text.alignleft",
                 tip: SpeechMetricTips.sentenceLength,
                 delta: delta(SpeechAggregates.sentenceLength).map { d in
-                    // «Лучше» = ближе к цели активного стиля (для Эриксона длиннее — хорошо)
+                    // "Better" = closer to the active style's target (for Erickson, longer is good)
                     let target = profile?.targetSentenceLength ?? 18
                     let improved = abs(SpeechAggregates.sentenceLength(metrics) - target)
                         < abs(SpeechAggregates.sentenceLength(previousMetrics) - target)
@@ -147,13 +147,13 @@ struct SpeechOverviewTab: View {
     private var aggEnRatio: Double { SpeechAggregates.enRatio(metrics) }
     private var aggComplexity: Double { SpeechAggregates.complexity(metrics) }
 
-    /// Дельта к прошлому окну, nil если прошлых данных нет.
+    /// Delta versus the previous window; nil when there is no prior data.
     private func delta(_ value: ([SpeechMetric]) -> Double) -> Double? {
         guard !previousMetrics.isEmpty else { return nil }
         return value(metrics) - value(previousMetrics)
     }
 
-    /// Подпись карточки «Темп»: цель активного стиля + направление, либо «средний темп».
+    /// Subtitle for the "Speed" card: the active style's target plus direction, or "average pace".
     private var wpmDetail: String {
         guard let target = profile?.targetWPM, aggWPM > 0 else {
             return L10n.t(en: "Avg speaking pace", ru: "Средний темп речи")

@@ -2,8 +2,8 @@
 //  VoiceProfileSeed.swift
 //  VoiceInk
 //
-//  Заводит 4 преднастроенных профиля при первом запуске.
-//  Не дублирует, если уже есть — silent skip.
+//  Seeds 4 preset profiles on first launch.
+//  Does not duplicate if they already exist — silent skip.
 //
 
 import Foundation
@@ -17,8 +17,8 @@ enum VoiceProfileSeed {
         category: "VoiceProfileSeed"
     )
 
-    /// Сидит preset профили если их ещё нет в базе.
-    /// Дефолтно активирует Эриксоновский (как самый интересный для NLP-тренировки).
+    /// Seeds preset profiles if they don't yet exist in the database.
+    /// Activates the Ericksonian profile by default (the most interesting one for NLP training).
     static func seedIfNeeded(context: ModelContext) {
         let existing = (try? context.fetch(FetchDescriptor<VoiceProfileTarget>())) ?? []
         guard existing.isEmpty else {
@@ -50,7 +50,7 @@ enum VoiceProfileSeed {
         ]
     }
 
-    /// 🔮 Эриксоновский гипнотизёр — длинные обволакивающие предложения, медленный темп
+    /// 🔮 Ericksonian hypnotist — long, enveloping sentences, slow pace
     private static var ericksonianHypnotist: VoiceProfileTarget {
         let markers = [
             "и пока", "и сейчас", "возможно",
@@ -73,7 +73,7 @@ enum VoiceProfileSeed {
         )
     }
 
-    /// ⚔️ Жёсткий переговорщик — короткие предложения, прямота, рамочные конструкции
+    /// ⚔️ Tactical negotiator — short sentences, directness, framing constructions
     private static var tacticalNegotiator: VoiceProfileTarget {
         let markers = [
             "цель", "результат", "вопрос",
@@ -96,7 +96,7 @@ enum VoiceProfileSeed {
         )
     }
 
-    /// 🧘 Спокойный лидер — средняя длина, структурно, мало паразитов
+    /// 🧘 Calm leader — medium sentence length, structured, few filler words
     private static var calmLeader: VoiceProfileTarget {
         let markers = [
             "план", "цель", "приоритет",
@@ -119,7 +119,7 @@ enum VoiceProfileSeed {
         )
     }
 
-    /// 🎤 Харизматичный спикер — разнообразный темп, эмоциональные слова
+    /// 🎤 Charismatic speaker — varied pace, emotional words
     private static var charismaticSpeaker: VoiceProfileTarget {
         let markers = [
             "слушайте", "давайте", "представьте",

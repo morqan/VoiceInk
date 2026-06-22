@@ -2,14 +2,15 @@
 //  SpeechSessionDetailView.swift
 //  VoiceInk
 //
-//  Drill-down одной диктовки: полный текст с подсветкой всего, что засчитала
-//  аналитика — паразиты (оранжевый), англицизмы (розовый), маркер-фразы
-//  активного стиля (индиго). Отвечает на вопрос «откуда цифры».
+//  Drill-down for a single dictation: the full text with everything the
+//  analytics counted highlighted — filler words (orange), anglicisms (pink),
+//  marker phrases of the active style (indigo). Answers the question "where do
+//  the numbers come from".
 //
-//  Плюс «Как сказал бы [стиль]»: AI переписывает твою диктовку в целевом стиле
-//  (переиспользует enhancement-пайплайн), показывает side-by-side через
-//  переключатель Оригинал/Переписано и Match Score до→после — учишься на своём
-//  тексте.
+//  Plus "How [style] would say it": the AI rewrites your dictation in the target
+//  style (reusing the enhancement pipeline), shows it side-by-side via an
+//  Original/Rewritten toggle, and the Match Score before→after — so you learn
+//  from your own text.
 //
 
 import SwiftUI
@@ -98,7 +99,7 @@ struct SpeechSessionDetailView: View {
         .background(Capsule().fill(color.opacity(0.1)))
     }
 
-    // MARK: - Оригинал / Переписано
+    // MARK: - Original / Rewritten
 
     private var viewToggle: some View {
         HStack(spacing: 10) {
@@ -139,7 +140,7 @@ struct SpeechSessionDetailView: View {
         }
     }
 
-    // MARK: - Footer: кнопка переписывания
+    // MARK: - Footer: rewrite button
 
     @ViewBuilder
     private var rewriteFooter: some View {
@@ -224,7 +225,7 @@ struct SpeechSessionDetailView: View {
         }
         rewriteState = .loading
         copied = false
-        // Совпадение оригинала с этим стилем
+        // How well the original matches this style
         scoreBefore = VoiceProfileMatcher.compute(target: profile, metrics: [metric])?.totalScore
         do {
             let prompt = StyleRewritePrompt.systemPrompt(for: profile)
@@ -234,15 +235,15 @@ struct SpeechSessionDetailView: View {
                 rewriteState = .error(L10n.t(en: "Model returned empty text", ru: "Модель вернула пустой текст"))
                 return
             }
-            // Совпадение переписанного варианта (по тем же осям, темп унаследован)
+            // How well the rewritten variant matches (same axes, pace inherited)
             if let rewrittenMetric = SpeechMetricsAnalyzer.analyze(
                 text: trimmed,
                 durationSeconds: metric.durationSeconds,
                 activeFillers: AutoFillerDetector.cachedActiveFillers()
             ) {
-                // Переписанный текст вслух не произносился — его WPM был бы выдумкой.
-                // Наследуем реальный темп оригинала, чтобы дельта «до→после» отражала
-                // только лексику стиля (маркеры, длина, сложность, паразиты), а не шум WPM.
+                // The rewritten text was never spoken aloud — its WPM would be fabricated.
+                // Inherit the original's real pace so the before→after delta reflects only
+                // the style's lexicon (markers, length, complexity, fillers), not WPM noise.
                 rewrittenMetric.wpm = metric.wpm
                 scoreAfter = VoiceProfileMatcher.compute(target: profile, metrics: [rewrittenMetric])?.totalScore
             }

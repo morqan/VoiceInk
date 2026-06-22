@@ -2,21 +2,21 @@
 //  PhraseOccurrenceScanner.swift
 //  VoiceInk
 //
-//  Общий поиск вхождений фраз в тексте: регистронезависимо, по границам слов,
-//  длинные фразы первыми, без двойного счёта пересечений (одно место текста
-//  засчитывается один раз — «именно поэтому» не даёт ещё и «поэтому»).
+//  Shared scanning of phrase occurrences in text: case-insensitive, on word
+//  boundaries, longest phrases first, with no double-counting of overlaps (a single
+//  spot in the text is counted once — «именно поэтому» does not also yield «поэтому»).
 //
-//  Используется: VoiceProfileMatcher (маркер-фразы стилей), SpeechMetricsAnalyzer
-//  (мультисловные паразиты, маркеры подчинения), drill-down подсветка сессии.
+//  Used by: VoiceProfileMatcher (style marker phrases), SpeechMetricsAnalyzer
+//  (multi-word filler words, subordination markers), session drill-down highlighting.
 //
 
 import Foundation
 
 enum PhraseOccurrenceScanner {
 
-    /// Нормализованный порядок фраз для скана: lowercase, дедуп, длинные первыми
-    /// (чтобы вложенная короткая фраза не съела место длинной). Считается один раз —
-    /// вызывай перед циклом по многим текстам и передавай в `*ofOrdered`.
+    /// Normalized phrase order for scanning: lowercase, deduplicated, longest first
+    /// (so a nested short phrase does not take the spot of a longer one). Compute it once —
+    /// call before looping over many texts and pass it into `*ofOrdered`.
     static func normalizedOrdered(_ phrases: [String]) -> [String] {
         var seen = Set<String>()
         return phrases
@@ -25,15 +25,15 @@ enum PhraseOccurrenceScanner {
             .sorted { $0.count > $1.count }
     }
 
-    /// Вхождения каждой фразы в тексте. Ranges — в исходной строке (для подсветки).
-    /// Ключ результата — фраза в lowercase.
+    /// Occurrences of each phrase in the text. Ranges are in the original string (for highlighting).
+    /// The result key is the phrase in lowercase.
     static func occurrences(of phrases: [String], in text: String) -> [String: [Range<String.Index>]] {
         guard !phrases.isEmpty, !text.isEmpty else { return [:] }
         return occurrences(ofOrdered: normalizedOrdered(phrases), in: text)
     }
 
-    /// Как `occurrences(of:in:)`, но принимает уже нормализованный список (см.
-    /// `normalizedOrdered`) — чтобы не пересчитывать его на каждый текст в цикле.
+    /// Like `occurrences(of:in:)`, but takes an already-normalized list (see
+    /// `normalizedOrdered`) — to avoid recomputing it for every text in a loop.
     static func occurrences(ofOrdered ordered: [String], in text: String) -> [String: [Range<String.Index>]] {
         guard !ordered.isEmpty, !text.isEmpty else { return [:] }
 
@@ -44,8 +44,8 @@ enum PhraseOccurrenceScanner {
             var searchStart = text.startIndex
             while searchStart < text.endIndex,
                   let range = text.range(of: phrase, options: [.caseInsensitive], range: searchStart..<text.endIndex) {
-                // Продвигаемся на один символ, а не на upperBound: отказ по границе
-                // слова не должен прятать валидное вхождение чуть правее.
+                // Advance by one character, not to upperBound: a rejection on a word
+                // boundary must not hide a valid occurrence just to the right.
                 searchStart = text.index(after: range.lowerBound)
 
                 guard isWordBounded(range, in: text) else { continue }
@@ -58,26 +58,26 @@ enum PhraseOccurrenceScanner {
         return result
     }
 
-    /// Число вхождений каждой фразы (границы слов, без пересечений).
+    /// Number of occurrences of each phrase (word boundaries, no overlaps).
     static func counts(of phrases: [String], in text: String) -> [String: Int] {
         occurrences(of: phrases, in: text).mapValues { $0.count }
     }
 
-    /// Как `counts(of:in:)`, но для уже нормализованного списка фраз (см.
-    /// `normalizedOrdered`) — для горячих циклов по многим текстам.
+    /// Like `counts(of:in:)`, but for an already-normalized list of phrases (see
+    /// `normalizedOrdered`) — for hot loops over many texts.
     static func counts(ofOrdered ordered: [String], in text: String) -> [String: Int] {
         occurrences(ofOrdered: ordered, in: text).mapValues { $0.count }
     }
 
-    /// Суммарное число вхождений всех фраз.
+    /// Total number of occurrences of all phrases.
     static func totalCount(of phrases: [String], in text: String) -> Int {
         counts(of: phrases, in: text).values.reduce(0, +)
     }
 
-    /// Вхождение валидно, только если слева и справа не «словесный» символ.
-    /// «возможно» не матчится внутри «невозможно», «цель» — внутри «прицельный».
-    /// Дефис и апостроф считаются частью слова — как в SpeechMetricsAnalyzer.extractWords:
-    /// «ну» внутри «ну-ка» не подсвечивается и не засчитывается.
+    /// An occurrence is valid only if neither the character to its left nor right is a "word" character.
+    /// «возможно» does not match inside «невозможно», nor «цель» inside «прицельный».
+    /// Hyphen and apostrophe count as part of a word — as in SpeechMetricsAnalyzer.extractWords:
+    /// «ну» inside «ну-ка» is neither highlighted nor counted.
     private static func isWordBounded(_ range: Range<String.Index>, in text: String) -> Bool {
         let startOK = range.lowerBound == text.startIndex
             || !isWordChar(text[text.index(before: range.lowerBound)])

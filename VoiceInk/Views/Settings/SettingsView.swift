@@ -276,7 +276,7 @@ struct SettingsView: View {
                 Text(tr("Control how VoiceInk handles your transcription data and audio recordings."))
             }
 
-            // MARK: - Language / Язык
+            // MARK: - Language
             Section {
                 LanguagePickerRow()
             } header: {

@@ -61,7 +61,7 @@ struct DictionarySettingsView: View {
         VStack(spacing: 40) {
             sectionSelector
             selectedSectionContent
-            // блок настройки авто-синхронизации словаря с Vault
+            // settings block for auto-syncing the dictionary with the Obsidian vault
             VaultSyncSection()
         }
         .padding(.horizontal, 32)

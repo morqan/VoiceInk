@@ -2,15 +2,15 @@
 //  SpeechAnalyticsView.swift
 //  VoiceInk
 //
-//  полная аналитика речи.
+//  Full speech analytics.
 //
-//  Включает:
+//  Includes:
 //   - Period selector (Today / Week / Month)
-//   - 4 агрегированные метрики (filler / sentence / anglicism / WPM)
-//   - Графики тренда за 30 дней (WPM, filler rate)
-//   - Top fillers — таблица
-//   - Top anglicisms — таблица
-//   - Recent sessions — последние диктовки
+//   - 4 aggregated metrics (filler / sentence / anglicism / WPM)
+//   - 30-day trend charts (WPM, filler rate)
+//   - Top fillers — table
+//   - Top anglicisms — table
+//   - Recent sessions — latest dictations
 //
 
 import SwiftUI
@@ -34,7 +34,7 @@ enum SpeechPeriod: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Начало периода. Возвращает nil для .all (без фильтра).
+    /// Start of the period. Returns nil for .all (no filter).
     func startDate(now: Date = Date()) -> Date? {
         let cal = Calendar.current
         switch self {
@@ -83,12 +83,12 @@ struct SpeechAnalyticsView: View {
     @State private var exportFeedback: String?
     @State private var exportFeedbackTask: DispatchWorkItem?
     @State private var showExportSettings = false
-    /// Кэш дневной серии Match Score: compute() сканирует тексты всех сессий
-    /// периода — пересчитывать на каждый рендер body слишком дорого.
+    /// Cache of the daily Match Score series: compute() scans the texts of every
+    /// session in the period — recomputing on every body render is too expensive.
     @State private var cachedMatchSeries: [(date: Date, value: Double)] = []
-    /// Кэш авто-детектора паразитов (тоже сканирует всю историю).
+    /// Cache of the auto filler-word detector (also scans the entire history).
     @State private var fillerDynamics: AutoFillerDetector.Dynamics?
-    /// Кэш дневных рядов для sparkline активных паразитов (считаем в .task, не в body).
+    /// Cache of daily series for the active filler-word sparklines (computed in .task, not in body).
     @State private var fillerSparklines: [String: [(date: Date, value: Double)]] = [:]
     /// Cached exercise of the day — built off the render path in `.task` because it
     /// scans recent dictations for under-used marker phrases.
@@ -369,7 +369,7 @@ struct SpeechAnalyticsView: View {
         )
     }
 
-    /// Экспорт недельного отчёта в Obsidian Vault + настройка папки.
+    /// Export the weekly report to the Obsidian vault + folder setting.
     private var exportButton: some View {
         VStack(alignment: .trailing, spacing: 5) {
             HStack(spacing: 6) {
@@ -438,8 +438,8 @@ struct SpeechAnalyticsView: View {
         } else {
             exportFeedback = result.error
         }
-        // Отменяем предыдущий таймер: два экспорта подряд не должны
-        // стирать фидбек второго раньше времени
+        // Cancel the previous timer: two exports in a row must not
+        // clear the second one's feedback ahead of time.
         exportFeedbackTask?.cancel()
         let task = DispatchWorkItem { exportFeedback = nil }
         exportFeedbackTask = task
@@ -481,8 +481,8 @@ struct SpeechAnalyticsView: View {
         return allMetrics.filter { $0.timestamp >= start }
     }
 
-    /// Метрики предыдущего окна той же длины — для дельт на карточках.
-    /// Для «Всё» прошлого окна нет.
+    /// Metrics from the previous window of the same length — used for the deltas on the cards.
+    /// There is no previous window for "All".
     private var previousMetrics: [SpeechMetric] {
         guard let start = period.startDate() else { return [] }
         let days: Int

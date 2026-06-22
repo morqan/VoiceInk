@@ -2,17 +2,17 @@
 //  SpeechMetricTips.swift
 //  VoiceInk
 //
-//  Тексты info-попапов для Speech Analytics и дашборд-блока «Речь сегодня».
-//  Каждый текст: что это → как реально считается → цель → как улучшить.
-//  Формулы описаны честно, по фактической реализации в SpeechMetricsAnalyzer
-//  и VoiceProfileMatcher — включая известные ограничения измерений.
+//  Info-popup texts for Speech Analytics and the "Speech today" dashboard block.
+//  Each text: what it is → how it's actually computed → target → how to improve.
+//  Formulas are described honestly, matching the real implementation in SpeechMetricsAnalyzer
+//  and VoiceProfileMatcher — including the known measurement limitations.
 //
 
 import Foundation
 
 enum SpeechMetricTips {
 
-    // MARK: - Stat-карточки
+    // MARK: - Stat cards
 
     static var fillers: String {
         L10n.t(
@@ -107,7 +107,7 @@ enum SpeechMetricTips {
         )
     }
 
-    // MARK: - Совпадение со стилем
+    // MARK: - Style match
 
     static var matchScore: String {
         L10n.t(
@@ -154,7 +154,7 @@ enum SpeechMetricTips {
         )
     }
 
-    // MARK: - Секции
+    // MARK: - Sections
 
     static var streaks: String {
         L10n.t(

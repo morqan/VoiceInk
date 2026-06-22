@@ -2,14 +2,14 @@
 //  SpeechMetricsAnalyzer.swift
 //  VoiceInk
 //
-//  анализирует текст транскрипции и считает:
-//  - filler words (паразиты)
-//  - англицизмы
-//  - среднюю длину предложения
+//  Analyzes transcription text and computes:
+//  - filler words
+//  - anglicisms
+//  - average sentence length
 //  - WPM
 //  - EN/RU ratio
 //
-//  Список паразитов взят из speech-tracker.md (99 - Claude Context/).
+//  The filler-word list comes from speech-tracker.md (99 - Claude Context/).
 //
 
 import Foundation
@@ -22,9 +22,9 @@ enum SpeechMetricsAnalyzer {
         category: "SpeechMetricsAnalyzer"
     )
 
-    /// Список слов-паразитов Моргана из speech-tracker.md.
-    /// Хранится в lowercase для регистронезависимого матчинга.
-    /// Многословные ("как бы", "это самое", "в общем") — через PhraseOccurrenceScanner (границы слов).
+    /// The user's filler-word list from speech-tracker.md.
+    /// Stored in lowercase for case-insensitive matching.
+    /// Multi-word ones ("как бы", "это самое", "в общем") go through PhraseOccurrenceScanner (word boundaries).
     static let singleWordFillers: Set<String> = [
         "короче", "типа", "ну", "вот",
         "блин", "значит", "собственно", "понимаешь",
@@ -36,19 +36,19 @@ enum SpeechMetricsAnalyzer {
         "то есть", "так сказать"
     ]
 
-    /// Минимальная длина транскрипции (в словах) для записи метрики.
-    /// Меньше — статистически незначимо (см. speech-tracker.md правило ≥15 слов).
+    /// Minimum transcription length (in words) required to record a metric.
+    /// Anything shorter is statistically insignificant (see speech-tracker.md rule: >=15 words).
     static let minWordsThreshold = 15
 
-    /// Анализирует транскрипцию и возвращает заполненный SpeechMetric.
-    /// Не сохраняет в базу — это делает caller.
-    /// Возвращает nil если транскрипция короче threshold (статистически незначимо).
+    /// Analyzes a transcription and returns a populated SpeechMetric.
+    /// Does not persist to the database — the caller does that.
+    /// Returns nil if the transcription is shorter than the threshold (statistically insignificant).
     ///
     /// - Parameters:
-    ///   - text: текст для анализа (предпочтительно сырой ASR-выход).
-    ///   - rawText: сырьё для сохранения в SpeechMetric.rawText (по умолчанию = text).
-    ///   - activeFillers: персональный активный набор фраз-паразитов от AutoFillerDetector;
-    ///     nil → только встроенное ядро (для ранней истории / fallback).
+    ///   - text: text to analyze (preferably the raw ASR output).
+    ///   - rawText: raw text to store in SpeechMetric.rawText (defaults to text).
+    ///   - activeFillers: the user's active set of filler phrases from AutoFillerDetector;
+    ///     nil → built-in core only (for early history / fallback).
     static func analyze(
         text: String,
         durationSeconds: Double,
@@ -124,7 +124,7 @@ enum SpeechMetricsAnalyzer {
 
     // MARK: - Word extraction
 
-    /// Разбивает текст на слова. Игнорирует знаки препинания.
+    /// Splits text into words. Ignores punctuation.
     static func extractWords(from text: String) -> [String] {
         return text
             .components(separatedBy: wordChars.inverted)
@@ -152,18 +152,18 @@ enum SpeechMetricsAnalyzer {
 
     // MARK: - Sentence counting
 
-    /// Считает количество предложений по терминаторам . ? ! и многоточиям.
-    /// Многоточие = одно предложение, не три. Числа с точкой («3.14», «1.000.000»)
-    /// и юникод-«…» не дробят предложение.
+    /// Counts the number of sentences by the terminators . ? ! and ellipses.
+    /// An ellipsis = one sentence, not three. Numbers with a dot ("3.14", "1.000.000")
+    /// and the Unicode "…" do not split a sentence.
     static func countSentences(in text: String) -> Int {
         var normalized = text
-        // Юникод-многоточие → один терминатор.
+        // Unicode ellipsis → a single terminator.
         normalized = normalized.replacingOccurrences(of: "…", with: ".")
-        // Точка/запятая внутри числа (3.14, 1.000.000) — не конец предложения.
+        // A dot/comma inside a number (3.14, 1.000.000) is not the end of a sentence.
         normalized = normalized.replacingOccurrences(
             of: "(?<=\\d)[.,](?=\\d)", with: "", options: .regularExpression
         )
-        // Любая серия терминаторов («...», «?!», «!!», «....») = один.
+        // Any run of terminators ("...", "?!", "!!", "....") = one.
         normalized = normalized.replacingOccurrences(
             of: "[.?!]{2,}", with: ".", options: .regularExpression
         )
@@ -171,16 +171,16 @@ enum SpeechMetricsAnalyzer {
         let terminators: Set<Character> = [".", "?", "!"]
         let count = normalized.filter { terminators.contains($0) }.count
 
-        // Если нет терминаторов — считаем как 1 предложение (если текст не пустой)
+        // If there are no terminators, count it as 1 sentence (if the text is not empty).
         return max(count, 1)
     }
 
     // MARK: - Fillers
 
-    /// Считает паразитов в тексте по активному набору фраз.
-    /// Всё — через PhraseOccurrenceScanner (границы слов, длинные фразы первыми,
-    /// без двойного счёта пересечений: «ну вот» не даёт ещё и «ну»+«вот»).
-    /// activeFillers nil → встроенное ядро (singleWordFillers ∪ multiWordFillers).
+    /// Counts filler words in the text against the active set of phrases.
+    /// Everything goes through PhraseOccurrenceScanner (word boundaries, longest phrases first,
+    /// no double-counting of overlaps: "ну вот" doesn't also yield "ну"+"вот").
+    /// activeFillers nil → built-in core (singleWordFillers ∪ multiWordFillers).
     static func countFillers(text: String, activeFillers: Set<String>? = nil) -> [String: Int] {
         let phrases: [String]
         if let activeFillers {
@@ -193,25 +193,25 @@ enum SpeechMetricsAnalyzer {
 
     // MARK: - Anglicisms
 
-    /// Считает англицизмы — слова содержащие латинские буквы в основном русском тексте.
-    /// Слова из 1-2 латинских букв игнорируются (могут быть аббревиатурами в кириллическом контексте).
-    /// Если общая доля латинских букв > 50% — текст считается английским, англицизмы не маркируются.
+    /// Counts anglicisms — words containing Latin letters within predominantly Russian text.
+    /// Words of 1-2 Latin letters are ignored (they may be abbreviations in a Cyrillic context).
+    /// If the overall share of Latin letters > 50%, the text is treated as English and anglicisms are not flagged.
     static func countAnglicisms(words: [String]) -> [String: Int] {
         let latinChars = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz")
 
-        // Подсчитываем сколько слов чисто-латинских
+        // Count how many words are purely Latin.
         var counts: [String: Int] = [:]
 
-        // Прежде чем считать — оценим общий контекст. Если >50% слов латинские — это английский текст
+        // Before counting, assess the overall context. If >50% of words are Latin, this is English text.
         let latinWords = words.filter { isAllLatin($0, allowedSet: latinChars) }
         let latinRatio = words.isEmpty ? 0 : Double(latinWords.count) / Double(words.count)
 
-        // Если текст преимущественно английский — англицизмы не считаем (это сам по себе английский)
+        // If the text is predominantly English, don't count anglicisms (it's English itself).
         guard latinRatio < 0.5 else {
             return [:]
         }
 
-        // Иначе — каждое латинское слово ≥ 3 символов считается англицизмом
+        // Otherwise, every Latin word of >= 3 characters counts as an anglicism.
         for word in words {
             if word.count >= 3 && isAllLatin(word, allowedSet: latinChars) {
                 counts[word, default: 0] += 1
@@ -229,7 +229,7 @@ enum SpeechMetricsAnalyzer {
 
     // MARK: - EN/RU ratio
 
-    /// Считает долю латинских букв среди всех букв (0..1).
+    /// Computes the share of Latin letters among all letters (0..1).
     static func calculateEnRuRatio(text: String) -> Double {
         var latinCount = 0
         var totalLetters = 0
@@ -249,10 +249,10 @@ enum SpeechMetricsAnalyzer {
 
     // MARK: - Sentence complexity
 
-    /// Маркеры подчинения для русского — союзы и относительные местоимения.
-    /// Каждое вхождение в текст = +1 к сложности (per sentence average).
-    /// Стоявшее здесь голое «что» убрано: это сверхчастотное слово («что делать?»,
-    /// «а что по срокам») давало львиную долю балла без всякого подчинения.
+    /// Subordination markers for Russian — conjunctions and relative pronouns.
+    /// Each occurrence in the text = +1 to complexity (per sentence average).
+    /// The bare "что" that used to be here was removed: this ultra-frequent word ("что делать?",
+    /// "а что по срокам") contributed the lion's share of the score without any subordination.
     static let subordinationMarkers: [String] = [
         "который", "которая", "которое", "которые", "которых", "которым", "которой",
         "чтобы",
@@ -262,12 +262,12 @@ enum SpeechMetricsAnalyzer {
         "будто", "словно", "как будто"
     ]
 
-    /// Считает среднюю сложность предложения. Чем выше — тем больше подчинённых
-    /// конструкций (длинные обволакивающие предложения, как у Эриксона).
+    /// Computes the average sentence complexity. The higher it is, the more subordinate
+    /// constructions there are (long enveloping sentences, like Erickson's).
     ///
-    /// Формула: (маркеры_подчинения + 0.3 × запятые) / sentenceCount
-    /// Маркеры — через PhraseOccurrenceScanner: границы слов + без двойного счёта
-    /// вложений («как будто» больше не даёт ещё и «будто»).
+    /// Formula: (subordination_markers + 0.3 × commas) / sentenceCount
+    /// Markers go through PhraseOccurrenceScanner: word boundaries + no double-counting
+    /// of nesting ("как будто" no longer also yields "будто").
     static func calculateComplexity(text: String, sentenceCount: Int) -> Double {
         guard sentenceCount > 0 else { return 0 }
 
@@ -279,16 +279,16 @@ enum SpeechMetricsAnalyzer {
 
     // MARK: - Repetitions
 
-    /// Минимальная частота для маркировки слова как «повтор».
-    /// 5 — баланс между «нормально повторил» и «зациклился».
+    /// Minimum frequency for flagging a word as a "repetition".
+    /// 5 is the balance between "repeated normally" and "got stuck in a loop".
     static let repetitionThreshold = 5
 
-    /// Минимальная длина слова для учёта в повторах.
-    /// Короткие («что», «как», «но», «то») — высокочастотные служебные, не маркер.
+    /// Minimum word length to be considered for repetitions.
+    /// Short ones ("что", "как", "но", "то") are high-frequency function words, not a marker.
     static let repetitionMinWordLength = 4
 
-    /// Считает слова которые повторены ≥ 5 раз в одной диктовке.
-    /// Исключает: паразитов (они в counts отдельно), англицизмы, короткие слова.
+    /// Counts words that are repeated >= 5 times within a single dictation.
+    /// Excludes: filler words (counted separately), anglicisms, short words.
     static func countRepetitions(
         words: [String],
         fillers: Set<String>,
@@ -304,16 +304,16 @@ enum SpeechMetricsAnalyzer {
         return totals.filter { $0.value >= repetitionThreshold }
     }
 
-    // MARK: - Self-corrections (гладкость)
+    // MARK: - Self-corrections (smoothness)
 
-    /// Минимальная длина слова для учёта немедленного повтора подряд.
-    /// Короткие («и», «а», «по») — шум/служебные, не запинка.
+    /// Minimum word length to be considered for an immediate consecutive repeat.
+    /// Short ones ("и", "а", "по") are noise/function words, not a stumble.
     static let restartMinWordLength = 3
 
-    /// Считает самоисправления для метрики «гладкость»:
-    /// — ремонт-маркеры (фразы из SelfCorrectionLexicon, сканер с границами слов);
-    /// — немедленные повторы слова подряд («это это», «надо надо») как рестарты.
-    /// Возвращает (byMarker — для подсветки/списка, только фразы; total — маркеры + повторы).
+    /// Counts self-corrections for the "smoothness" metric:
+    /// — repair markers (phrases from SelfCorrectionLexicon, scanner with word boundaries);
+    /// — immediate consecutive word repeats ("это это", "надо надо") as restarts.
+    /// Returns (byMarker — for highlighting/listing, phrases only; total — markers + repeats).
     static func countSelfCorrections(text: String, words: [String]) -> (byMarker: [String: Int], total: Int) {
         let byMarker = PhraseOccurrenceScanner.counts(of: SelfCorrectionLexicon.markers, in: text)
             .filter { $0.value > 0 }
@@ -322,8 +322,8 @@ enum SpeechMetricsAnalyzer {
         return (byMarker, markerTotal + restarts)
     }
 
-    /// Немедленные повторы одного слова подряд. Эмфатические удвоения
-    /// («так-так», «ну-ну») и слишком короткие слова не считаем.
+    /// Immediate consecutive repeats of the same word. Emphatic doublings
+    /// ("так-так", "ну-ну") and overly short words are not counted.
     static func countAdjacentRepeats(words: [String]) -> Int {
         guard words.count > 1 else { return 0 }
         var count = 0

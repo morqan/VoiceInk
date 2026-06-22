@@ -2,13 +2,13 @@
 //  VaultSyncSection.swift
 //  VoiceInk
 //
-//  UI для управления синхронизацией Vocabulary
-//  с markdown-файлом (обычно из Obsidian Vault).
+//  UI for managing Vocabulary synchronization
+//  with a markdown file (usually from an Obsidian vault).
 //
-//  Отображается внизу Dictionary Settings. Позволяет:
-//   - Включить/выключить sync
-//   - Изменить путь к файлу (вручную или через Browse...)
-//   - Запустить sync вручную (Sync Now) без перезапуска приложения
+//  Shown at the bottom of Dictionary Settings. It lets you:
+//   - Enable/disable sync
+//   - Change the file path (manually or via Browse...)
+//   - Run sync manually (Sync Now) without restarting the app
 //
 
 import SwiftUI
@@ -134,7 +134,7 @@ struct VaultSyncSection: View {
         panel.allowedFileTypes = ["md", "markdown", "txt"]
 
         if panel.runModal() == .OK, let url = panel.url {
-            // Сохраняем абсолютный путь — UserDefaults любит plain strings
+            // Store the absolute path — UserDefaults likes plain strings
             path = url.path
         }
     }

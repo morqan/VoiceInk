@@ -211,13 +211,13 @@ class AIEnhancementService: ObservableObject {
         return try await dispatcher.dispatch(formattedText: formattedText, systemMessage: systemMessage, timeout: baseTimeout)
     }
 
-    /// Переписать произвольный текст с кастомным системным промптом (без активного
-    /// enhancement-промпта пользователя). Используется фичей «Как сказал бы [стиль]».
+    /// Rewrite arbitrary text with a custom system prompt (without the user's active
+    /// enhancement prompt). Used by the "How [style] would say it" feature.
     func rewrite(text: String, systemPrompt: String) async throws -> String {
         guard isConfigured else { throw EnhancementError.notConfigured }
         guard !text.isEmpty else { return "" }
         let formattedText = "\n<TRANSCRIPT>\n\(text)\n</TRANSCRIPT>"
-        // Осознанное действие по кнопке: ждём терпеливо (локальная 32B = холодная загрузка + генерация).
+        // Deliberate button-triggered action: wait patiently (local 32B = cold load + generation).
         return try await dispatcher.dispatch(formattedText: formattedText, systemMessage: systemPrompt, timeout: 180)
     }
 

@@ -2,13 +2,13 @@
 //  SpeechVaultExport.swift
 //  VoiceInk
 //
-//  Экспорт недельного отчёта речевой аналитики в Obsidian Vault.
-//  Markdown с frontmatter: метрики недели vs прошлая, Match Score с разбором осей,
-//  топ паразитов/англицизмов/повторов и рекомендация тренера.
+//  Exports a weekly speech-analytics report to the Obsidian vault.
+//  Markdown with frontmatter: this week's metrics vs last week, Match Score with a per-axis breakdown,
+//  top filler words/anglicisms/repetitions, and a coaching recommendation.
 //
-//  Путь — UserDefaults (Keys.speechReportFolder), по умолчанию
-//  «10 - Reviews/Speech» в Vault Моргана. Пишем напрямую (sandbox выключен),
-//  как и VaultDictionarySync.
+//  Path comes from UserDefaults (Keys.speechReportFolder), defaulting to
+//  "10 - Reviews/Speech" in the Obsidian vault. We write directly (sandbox disabled),
+//  just like VaultDictionarySync.
 //
 
 import Foundation
@@ -23,7 +23,7 @@ enum SpeechVaultExport {
 
     static let defaultFolder = "~/Documents/Obsidian Vault/10 - Reviews/Speech"
 
-    /// Папка для отчётов с развёрнутой тильдой.
+    /// Report folder with the tilde expanded.
     static var reportFolder: String {
         let raw = UserDefaults.standard.string(forKey: UserDefaults.Keys.speechReportFolder) ?? defaultFolder
         return NSString(string: raw.isEmpty ? defaultFolder : raw).expandingTildeInPath
@@ -35,7 +35,7 @@ enum SpeechVaultExport {
         var succeeded: Bool { path != nil && error == nil }
     }
 
-    /// Собирает отчёт за последние 7 дней (со сравнением с предыдущими 7) и пишет в Vault.
+    /// Builds a report for the last 7 days (compared against the previous 7) and writes it to the vault.
     static func exportWeek(allMetrics: [SpeechMetric], profile: VoiceProfileTarget?, now: Date = Date()) -> ExportResult {
         let cal = Calendar.current
         let todayStart = cal.startOfDay(for: now)
@@ -56,8 +56,8 @@ enum SpeechVaultExport {
 
         let markdown = buildMarkdown(week: week, prevWeek: prevWeek, profile: profile, now: now)
 
-        // Имя файла по дате конца окна — отчёт покрывает скользящие 7 дней,
-        // а не календарную ISO-неделю, и имя не должно врать о содержимом.
+        // File name uses the end date of the window — the report covers a rolling 7 days,
+        // not a calendar ISO week, and the name shouldn't misrepresent the contents.
         let df = DateFormatter()
         df.dateFormat = "yyyy-MM-dd"
         let fileName = "Speech Week — \(df.string(from: now)).md"
@@ -118,7 +118,7 @@ enum SpeechVaultExport {
 
         """
 
-        // Совпадение со стилем
+        // Style match
         if let profile, let result = VoiceProfileMatcher.compute(target: profile, metrics: week) {
             let prevResult = prevWeek.isEmpty ? nil : VoiceProfileMatcher.compute(target: profile, metrics: prevWeek)
             let deltaStr = prevResult.map { String(format: " (прошлая неделя: %.0f)", $0.totalScore) } ?? ""
@@ -141,7 +141,7 @@ enum SpeechVaultExport {
 
             """
 
-            // Рекомендация тренера: ось с максимальным приростом + дрилл стиля
+            // Coaching recommendation: the axis with the largest potential gain + a style drill
             let weak = result.weakestMetric
             if weak.gain >= 1 {
                 let axisName = axisDisplayName(weak.axis)
@@ -150,7 +150,7 @@ enum SpeechVaultExport {
                 if let drill = VoiceStyleCoaching.axisDrill(for: key, axis: weak.axis) {
                     md += "\n> [!tip] Тренер\n> \(drill.ru)\n"
                 }
-                // Неиспользованные маркер-фразы — конкретный план
+                // Unused marker phrases — a concrete plan
                 if weak.axis == .markers {
                     let unused = result.markerUsage.filter { !$0.isUsed }.map { "«\($0.phrase)»" }
                     if !unused.isEmpty {
@@ -162,7 +162,7 @@ enum SpeechVaultExport {
             }
         }
 
-        // Топы
+        // Top lists
         md += topSection("Топ паразитов", topWords(week, \.fillersByWord))
         md += topSection("Топ англицизмов", topWords(week, \.anglicismsByWord))
         md += topSection("Топ повторов", topWords(week, \.repetitionsByWord))
@@ -178,7 +178,7 @@ enum SpeechVaultExport {
         return md
     }
 
-    // MARK: - Helpers (агрегации — те же формулы, что на дашборде)
+    // MARK: - Helpers (aggregations — the same formulas as on the dashboard)
 
     private static func words(_ ms: [SpeechMetric]) -> Int {
         ms.reduce(0) { $0 + $1.wordCount }
@@ -221,7 +221,7 @@ enum SpeechVaultExport {
         let prev = String(format: fmt, previous)
         let diff = current - previous
         let diffStr = String(format: fmt, abs(diff))
-        // Сравниваем после форматирования: «▲ 0.0» со стрелкой вводит в заблуждение
+        // Compare after formatting: "▲ 0.0" with an arrow is misleading
         if (Double(diffStr) ?? 0) == 0 {
             return "| \(name) | \(cur) | \(prev) | = |"
         }

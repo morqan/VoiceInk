@@ -115,12 +115,12 @@ struct VoiceProfileBreakdownView: View {
             Text(String(format: format, actual))
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
                 .frame(width: 44, alignment: .trailing)
-            // Цель профиля по этой оси — чтобы было видно, в какую сторону тянуть
+            // The profile's target for this axis — shows which direction to aim for
             Text(target)
                 .font(.system(size: 10, design: .monospaced))
                 .foregroundStyle(.secondary)
                 .frame(width: 54, alignment: .leading)
-            // Прогресс-бар
+            // Progress bar
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3)

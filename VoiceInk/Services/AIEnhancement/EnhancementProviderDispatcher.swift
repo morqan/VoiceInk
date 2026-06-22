@@ -21,8 +21,8 @@ final class EnhancementProviderDispatcher {
         self.aiService = aiService
     }
 
-    /// Диспетчер по провайдерам (ollama / localCLI / cloud). Общий для makeRequest и rewrite.
-    /// `timeout` — уже разрешённый таймаут (диктовка передаёт короткий baseTimeout, rewrite — длинный).
+    /// Dispatches to the right provider (ollama / localCLI / cloud). Shared by makeRequest and rewrite.
+    /// `timeout` is the already-resolved timeout (dictation passes a short baseTimeout, rewrite a long one).
     func dispatch(formattedText: String, systemMessage: String, timeout: TimeInterval) async throws -> String {
         let requestTimeout = timeout
         if aiService.selectedProvider == .ollama {

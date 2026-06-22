@@ -21,7 +21,7 @@ struct VoiceProfileStyleCoachView: View {
         let totalWords = metrics.reduce(0) { $0 + $1.wordCount }
         let unlocked = result.sampleSize >= Self.minSessionsForCoach && totalWords >= Self.minWordsForCoach
         let key = VoiceStyleKey.from(profile: profile)
-        // Оси у цели (.onTarget) исключаем: тянуть нечего, а направление-глагол был бы ложным.
+        // Exclude on-target axes (.onTarget): there's nothing to pull, and a directional verb would be misleading.
         let cards = Array(result.axesByGain
             .filter { $0.weightedGain >= 1 && $0.direction != .onTarget }
             .prefix(3))
@@ -50,8 +50,8 @@ struct VoiceProfileStyleCoachView: View {
             } else if cards.isEmpty {
                 suggestion
             } else {
-                // .id(profile.id) — при смене профиля карточки пересоздаются,
-                // чтобы expanded переинициализировался под новый стиль (а не залипал).
+                // .id(profile.id) — on profile change the cards are recreated,
+                // so `expanded` reinitializes for the new style (instead of getting stuck).
                 VStack(alignment: .leading, spacing: 10) {
                     ForEach(cards) { bd in
                         CoachCard(
@@ -74,7 +74,7 @@ struct VoiceProfileStyleCoachView: View {
             Image(systemName: weak.gain >= 1 ? "lightbulb.fill" : "checkmark.seal.fill")
                 .foregroundStyle(weak.gain >= 1 ? .yellow : .green)
                 .font(.system(size: 12))
-            // При gain < 1 все оси у цели — совет «подтягивай» был бы абсурдным
+            // When gain < 1 all axes are on target — a "pull up" suggestion would be absurd
             Text(weak.gain >= 1
                 ? L10n.t(
                     en: "Pull up first: \(axisName(weak.axis)) (\(Int(weak.score))%) — up to +\(Int(weak.gain.rounded())) to the total score",
@@ -91,7 +91,7 @@ struct VoiceProfileStyleCoachView: View {
         .padding(.top, 4)
     }
 
-    /// Топ-3 личных паразита за период (для карточки оси fillers).
+    /// Top 3 personal filler words for the period (for the fillers axis card).
     private func topPersonalFillers() -> [(word: String, count: Int)] {
         var totals: [String: Int] = [:]
         for m in metrics {

@@ -2,10 +2,10 @@
 //  VoiceProfileTarget.swift
 //  VoiceInk
 //
-//  Целевой стиль речи — пресет или кастомный.
-//  Состоит из целевых значений метрик + списка фраз-маркеров характерных для стиля.
-//  Анализатор VoiceProfileMatcher сравнивает реальную речь с этим эталоном
-//  и выдаёт Match Score 0..100.
+//  Target speech style — a preset or a custom one.
+//  Consists of target metric values plus a list of marker phrases characteristic of the style.
+//  The VoiceProfileMatcher analyzer compares real speech against this reference
+//  and produces a Match Score 0..100.
 //
 
 import Foundation
@@ -15,41 +15,41 @@ import SwiftData
 final class VoiceProfileTarget {
     var id: UUID = UUID()
 
-    /// Название стиля: "Эриксоновский гипнотизёр" / "Tactical Negotiator" / etc.
+    /// Style name: "Ericksonian Hypnotist" / "Tactical Negotiator" / etc.
     var name: String = ""
 
-    /// Описание стиля — что характерно
+    /// Style description — what is characteristic
     var summary: String = ""
 
-    /// Иконка SF Symbols
+    /// SF Symbols icon
     var iconName: String = "person.fill"
 
     // MARK: - Target metric values
 
-    /// Целевая скорость WPM
+    /// Target speed in WPM
     var targetWPM: Double = 130
 
-    /// Целевая средняя длина предложения (слова)
+    /// Target average sentence length (words)
     var targetSentenceLength: Double = 15
 
-    /// Целевая сложность предложения
+    /// Target sentence complexity
     var targetComplexity: Double = 2
 
-    /// Максимально допустимый filler rate per 100 words
+    /// Maximum allowed filler rate per 100 words
     var maxFillerRate: Double = 2
 
-    /// Желаемое количество marker phrases на 100 слов
+    /// Desired number of marker phrases per 100 words
     var targetMarkerRatePer100Words: Double = 3
 
-    /// JSON-массив фраз-маркеров стиля: ["и пока ты", "возможно", ...]
+    /// JSON array of the style's marker phrases: ["и пока ты", "возможно", ...]
     var markerPhrasesJSON: String = "[]"
 
     // MARK: - State
 
-    /// Является ли preset (из коробки) — нельзя удалить
+    /// Whether this is a preset (built-in) — cannot be deleted
     var isPreset: Bool = false
 
-    /// Активен сейчас как цель сравнения (только один из всех может быть активным)
+    /// Currently active as the comparison target (only one of all can be active)
     var isActive: Bool = false
 
     init(
@@ -80,7 +80,7 @@ final class VoiceProfileTarget {
         self.isActive = isActive
     }
 
-    /// Декодированный список маркеров.
+    /// Decoded list of marker phrases.
     var markerPhrases: [String] {
         guard let data = markerPhrasesJSON.data(using: .utf8),
               let arr = try? JSONDecoder().decode([String].self, from: data) else {

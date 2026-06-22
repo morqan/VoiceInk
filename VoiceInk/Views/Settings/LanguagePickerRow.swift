@@ -2,9 +2,9 @@
 //  LanguagePickerRow.swift
 //  VoiceInk
 //
-//  Drop-down для выбора языка интерфейса (Auto / English / Русский).
-//  При смене показывает alert «Restart required» — без перезапуска часть UI
-//  не перерисуется (Text(tr("X")) кэшируется на жизнь view).
+//  Drop-down for choosing the interface language (Auto / English / Русский).
+//  On change it shows a "Restart required" alert — without a restart part of the UI
+//  won't redraw (Text(tr("X")) is cached for the lifetime of the view).
 //
 
 import SwiftUI

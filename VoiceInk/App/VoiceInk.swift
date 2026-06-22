@@ -96,9 +96,9 @@ struct VoiceInkApp: App {
         container = resolvedContainer
         containerInitializationFailed = initializationFailed
 
-        // автоматическая синхронизация словаря с Obsidian Vault.
-        // Читает ~/Documents/Obsidian Vault/99 - Claude Context/voiceink-dictionary.md
-        // и добавляет новые слова в VocabularyWord. Silent skip если файла нет.
+        // Automatic dictionary sync with the Obsidian vault.
+        // Reads ~/Documents/Obsidian Vault/99 - Claude Context/voiceink-dictionary.md
+        // and adds new words to VocabularyWord. Silently skips if the file is missing.
         if !initializationFailed {
             // Profile seed (a fetch + first-launch save) and Vault dictionary sync (a
             // synchronous file read) both touch the store/disk — defer them off the launch
@@ -191,8 +191,8 @@ struct VoiceInkApp: App {
         AppShortcuts.updateAppShortcutParameters()
 
         let migrationTask = SessionMetricMigrationService.shared.runIfNeeded(modelContainer: resolvedContainer)
-        // Одноразовый пересчёт speech-метрик под честные формулы
-        // (границы слов, сложность без «что») — иначе тренды смешивают две линейки
+        // One-time recompute of speech metrics under the honest formulas
+        // (word boundaries, sentence complexity excluding «что») — otherwise trends mix two scales
         SpeechMetricRecalcService.shared.runIfNeeded(modelContainer: resolvedContainer)
         // One-time best-effort prosody backfill for recent dictations whose audio
         // still exists (low priority, off-main — never touches the dictation path).
@@ -255,7 +255,7 @@ struct VoiceInkApp: App {
                 cloudKitDatabase: .none
             )
 
-            // Speech analytics store (метрики речи + voice profile targets)
+            // Speech analytics store (speech metrics + voice profile targets)
             let speechStoreURL = appSupportURL.appendingPathComponent("speech.store")
             let speechSchema = Schema([SpeechMetric.self, VoiceProfileTarget.self])
             let speechConfig = ModelConfiguration(

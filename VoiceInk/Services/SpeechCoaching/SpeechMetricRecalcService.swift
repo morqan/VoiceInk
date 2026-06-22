@@ -2,17 +2,17 @@
 //  SpeechMetricRecalcService.swift
 //  VoiceInk
 //
-//  Одноразовая миграция: пересчёт исторических SpeechMetric под честные формулы
-//  (PhraseOccurrenceScanner с границами слов, сложность без голого «что»).
+//  One-time migration: recompute historical SpeechMetric records under the honest formulas
+//  (PhraseOccurrenceScanner with word boundaries, complexity without bare "что").
 //
-//  Без пересчёта тренды/дельты/Match Score смешивали бы две линейки: старые записи
-//  считались substring-матчем и завышенной сложностью — график делал бы «ступеньку»
-//  на дате деплоя, выдавая смену формулы за изменение речи.
+//  Without recomputing, the trends/deltas/Match Score would mix two scales: old records
+//  were scored by substring match and inflated complexity — the chart would show a "step"
+//  on the deploy date, passing off a formula change as a change in speech.
 //
-//  Текст транскрипции хранится в каждой записи — пересчитываем паразитов,
-//  сложность, повторы и предложения заново. WPM/англицизмы не трогаем (их
-//  алгоритмы не менялись). Паттерн — как SessionMetricMigrationService:
-//  фоновый контекст + UserDefaults-флаг завершения.
+//  The transcription text is stored in each record — so we recompute filler words,
+//  complexity, repetitions and sentences from scratch. We leave WPM/anglicisms alone (their
+//  algorithms haven't changed). The pattern mirrors SessionMetricMigrationService:
+//  a background context + a UserDefaults completion flag.
 //
 
 import Foundation
@@ -28,10 +28,10 @@ final class SpeechMetricRecalcService {
         category: "SpeechMetricRecalcService"
     )
 
-    /// Версия в ключе: при следующем изменении формул достаточно поднять v.
-    /// v3 — бэкафилл rawText + пересчёт паразитов под авто-детектор.
-    /// v4 — добавлена метрика «гладкость» (самоисправления) для всей истории.
-    /// v5 — пересчёт предложений (числа с точкой и «…» больше не дробят их).
+    /// Version in the key: on the next formula change it's enough to bump v.
+    /// v3 — backfill rawText + recompute filler words with the auto-detector.
+    /// v4 — added the "smoothness" metric (self-corrections) across all history.
+    /// v5 — recompute sentences (numbers with a period and "…" no longer split them).
     private let completionKey = "SpeechMetricRecalc_v5_done"
     private(set) var isRunning = false
 
@@ -50,22 +50,22 @@ final class SpeechMetricRecalcService {
             do {
                 let metrics = try context.fetch(FetchDescriptor<SpeechMetric>())
 
-                // Шаг A: бэкафилл rawText для старых записей. Настоящий сырой ASR
-                // тогда не сохранялся — лучшее доступное приближение = очищенный text.
+                // Step A: backfill rawText for old records. The real raw ASR text
+                // wasn't saved back then — the best available approximation is the cleaned text.
                 for metric in metrics where metric.rawText.isEmpty {
                     metric.rawText = metric.text
                 }
                 try context.save()
 
-                // Шаг B: персональный активный список паразитов по ВСЕЙ истории.
-                // Маркер-фразы стилей исключаем — иначе «слушайте»/«значит» уйдут
-                // и в паразиты, и в тренер (конфликт).
+                // Step B: a personal active list of filler words across ALL history.
+                // We exclude style marker phrases — otherwise "слушайте"/"значит" would land
+                // both in filler words and in the trainer (a conflict).
                 let profiles = (try? context.fetch(FetchDescriptor<VoiceProfileTarget>())) ?? []
                 let markerExclude = Set(profiles.flatMap { $0.markerPhrases }.map { $0.lowercased() })
                 let activeFillers = AutoFillerDetector.activeFillers(history: metrics, excluding: markerExclude)
                 AutoFillerDetector.refreshCache(history: metrics, excluding: markerExclude)
 
-                // Шаг C: пересчёт по сырому тексту с авто-списком.
+                // Step C: recompute from the raw text using the auto-list.
                 var updated = 0
                 for metric in metrics {
                     let source = AutoFillerDetector.sourceText(metric)
@@ -101,7 +101,7 @@ final class SpeechMetricRecalcService {
                 logger.info("Speech metric recalc v5 done: \(updated) records (auto-filler + rawText + smoothness + sentences)")
             } catch {
                 logger.error("Speech metric recalc failed: \(error.localizedDescription, privacy: .public)")
-                // Флаг не ставим — попробуем на следующем запуске
+                // Don't set the flag — we'll retry on the next launch
             }
 
             await MainActor.run {

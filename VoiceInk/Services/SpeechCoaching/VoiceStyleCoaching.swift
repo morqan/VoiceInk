@@ -2,18 +2,18 @@
 //  VoiceStyleCoaching.swift
 //  VoiceInk
 //
-//  База знаний обучающего тренера «Как дойти до стиля».
-//  Для каждого пресет-стиля — именованные риторические приёмы (что это → формула →
-//  примеры) и краткие подсказки по каждой оси. Для кастомных профилей (без stable key)
-//  показываются только generic-дриллы по направлению дельты.
+//  Knowledge base for the "How to reach the style" coaching trainer.
+//  For each preset style — named rhetorical techniques (what it is → formula →
+//  examples) and brief tips per axis. For custom profiles (without a stable key)
+//  only generic drills along the delta direction are shown.
 //
-//  Содержание — четыре школы: Милтон Эриксон (НЛП), переговоры по Воссу,
-//  пирамида Минто (лидерство), классическая ораторика (спикер).
+//  Content draws on four schools: Milton Erickson (NLP), Voss-style negotiation,
+//  the Minto pyramid (leadership), and classic oratory (the speaker).
 //
 
 import Foundation
 
-/// Локализованная пара строк. Резолвится через общий L10n проекта.
+/// A localized pair of strings. Resolved via the project's shared L10n.
 struct LocStr {
     let ru: String
     let en: String
@@ -25,28 +25,28 @@ struct LocStr {
     }
 }
 
-/// Один обучающий приём для конкретной оси конкретного стиля.
+/// A single coaching technique for a specific axis of a specific style.
 struct CoachingPattern: Identifiable {
     let id = UUID()
     let name: LocStr
     let what: LocStr
     let formula: LocStr
-    /// Готовые примеры-фразы. Контент русский (тренируется русская речь), язык-агностично.
+    /// Ready-made example phrases. Content is Russian (Russian speech is being trained), language-agnostic.
     let examples: [String]
     let axis: VoiceProfileMatcher.Axis
-    /// Фразы профиля, которые реализует этот приём — показываются в теле карточки,
-    /// чтобы пользователь видел, какие именно слова добавить ради него.
+    /// Profile phrases that this technique implements — shown in the card body
+    /// so the user can see exactly which words to add for it.
     let relatedMarkers: [String]
 }
 
-/// Generic-дрилл по (ось, направление) — для кастомных профилей без stable key.
+/// A generic drill by (axis, direction) — for custom profiles without a stable key.
 struct StyleDrill {
     let title: LocStr
     let how: LocStr
 }
 
-/// Стабильный ключ пресет-стиля. Имена в БД редактируемые, поэтому маппинг
-/// держим в одном месте и только для isPreset профилей.
+/// Stable key for a preset style. Names in the DB are editable, so we keep the
+/// mapping in one place and only for isPreset profiles.
 enum VoiceStyleKey: String {
     case erickson, negotiator, leader, speaker
 
@@ -66,25 +66,25 @@ enum VoiceStyleCoaching {
 
     // MARK: - Public lookup
 
-    /// Приёмы стиля для конкретной оси (обычно 1, для markers бывает несколько).
+    /// Style techniques for a specific axis (usually 1, sometimes several for markers).
     static func patterns(for key: VoiceStyleKey?, axis: VoiceProfileMatcher.Axis) -> [CoachingPattern] {
         guard let key else { return [] }
         return allPatterns[key]?.filter { $0.axis == axis } ?? []
     }
 
-    /// Краткая стиле-специфичная подсказка по оси (для пресетов).
+    /// A brief style-specific tip for an axis (for presets).
     static func axisDrill(for key: VoiceStyleKey?, axis: VoiceProfileMatcher.Axis) -> LocStr? {
         guard let key else { return nil }
         return axisDrills[key]?[axis]
     }
 
-    /// Generic-дрилл по направлению (для кастомных профилей / fallback).
+    /// A generic drill by direction (for custom profiles / fallback).
     static func genericDrill(axis: VoiceProfileMatcher.Axis,
                              direction: VoiceProfileMatcher.AxisDirection) -> StyleDrill? {
         genericDrills[axis]?[direction]
     }
 
-    // MARK: - Именованные приёмы по стилям
+    // MARK: - Named techniques by style
 
     private static let allPatterns: [VoiceStyleKey: [CoachingPattern]] = [
         .erickson: ericksonPatterns,
@@ -417,7 +417,7 @@ enum VoiceStyleCoaching {
             axis: .sentenceLength, relatedMarkers: ["точно"])
     ]
 
-    // MARK: - Краткие подсказки по осям (стиле-специфичные)
+    // MARK: - Brief per-axis tips (style-specific)
 
     private static let axisDrills: [VoiceStyleKey: [VoiceProfileMatcher.Axis: LocStr]] = [
         .erickson: [
@@ -490,7 +490,7 @@ enum VoiceStyleCoaching {
         ]
     ]
 
-    // MARK: - Generic-дриллы для кастомных профилей
+    // MARK: - Generic drills for custom profiles
 
     private static let genericDrills: [VoiceProfileMatcher.Axis: [VoiceProfileMatcher.AxisDirection: StyleDrill]] = [
         .sentenceLength: [

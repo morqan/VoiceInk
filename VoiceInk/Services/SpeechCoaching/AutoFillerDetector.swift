@@ -2,32 +2,32 @@
 //  AutoFillerDetector.swift
 //  VoiceInk
 //
-//  Авто-обнаружение паразитов пользователя из истории СЫРЫХ текстов.
-//  Без ручных списков: слово помечается «активным паразитом», если в речи оно
-//  одновременно ЧАСТОЕ и ВЕЗДЕСУЩЕЕ (встречается в большой доле диктовок
-//  независимо от темы) — тематическое слово вездесущим не бывает.
+//  Auto-detection of the user's filler words from the history of RAW texts.
+//  No manual lists: a word is flagged as an "active filler" if in speech it is
+//  both FREQUENT and UBIQUITOUS at the same time (appears in a large share of
+//  dictations regardless of topic) — a topical word is never ubiquitous.
 //
-//  Новое слово вне лексикона сначала «под наблюдением» (не в счёт) и переходит
-//  в счёт, только если держится устойчиво ≥ 10 дней по ≥ 6 диктовкам.
+//  A new word outside the lexicon is first "under observation" (not counted) and
+//  is promoted to counting only if it holds steadily for >= 10 days across >= 6 dictations.
 //
-//  Перф: тяжёлый скан истории НЕ выполняется в пайплайне на каждой диктовке —
-//  активный список держится в кэше (UserDefaults), обновляется из UI/recalc.
-//  Маркер-фразы активного стиля исключаются (иначе конфликт с тренером:
-//  «слушайте», «значит» — и паразит-кандидат, и риторический маркер).
+//  Perf: the heavy history scan is NOT run in the pipeline on every dictation —
+//  the active list is kept in a cache (UserDefaults), refreshed from UI/recalc.
+//  Marker phrases of the active style are excluded (otherwise they conflict with
+//  the coach: "слушайте", "значит" are both filler candidates and rhetorical markers).
 //
 
 import Foundation
 
 enum AutoFillerDetector {
 
-    // MARK: - Параметры (rate — на 100 слов)
+    // MARK: - Parameters (rate is per 100 words)
 
     private static let windowDays = 90
     private static let minDocs = 8
     private static let minWords = 1000
 
-    private static let lexiconRate = 0.5            // ≥ 0.5/100 = 1 на 200 слов
-    private static let lexiconUbiquity = 0.25       // встречается в ≥ 25% диктовок
+    private static let lexiconRate = 0.5            // >= 0.5/100 = 1 per 200 words
+    private static let lexiconUbiquity = 0.25       // appears in >= 25% of dictations
 
     private static let noveltyActiveRate = 0.4
     private static let noveltyActiveUbiquity = 0.25
@@ -43,7 +43,7 @@ enum AutoFillerDetector {
 
     private static let cacheKey = "AutoFillerActiveCache"
 
-    // MARK: - Типы
+    // MARK: - Types
 
     struct FillerEntry: Identifiable {
         let phrase: String
@@ -68,11 +68,11 @@ enum AutoFillerDetector {
         var disappeared: [FillerChange] = []
         var grew: [FillerChange] = []
         var dropped: [FillerChange] = []
-        var hasHistory: Bool = false   // analyze отработал (хватило истории)
-        var enoughData: Bool = false   // хватает на сравнение двух окон (динамика)
+        var hasHistory: Bool = false   // analyze ran (enough history)
+        var enoughData: Bool = false   // enough to compare two windows (dynamics)
     }
 
-    /// Подготовленный документ окна: токены и счёт считаются один раз.
+    /// A prepared window document: tokens and counts are computed once.
     private struct Doc {
         let date: Date
         let source: String
@@ -80,19 +80,19 @@ enum AutoFillerDetector {
         var wordCount: Int { tokens.count }
     }
 
-    // MARK: - Активный набор для подсчёта
+    // MARK: - Active set for counting
 
     private static let coreFillers: Set<String> = Set(SpeechMetricsAnalyzer.singleWordFillers)
         .union(SpeechMetricsAnalyzer.multiWordFillers)
 
-    /// Мгновенно: ядро ∪ кэш. Используется в пайплайне (без скана истории).
+    /// Instant: core ∪ cache. Used in the pipeline (no history scan).
     static func cachedActiveFillers() -> Set<String> {
         var set = coreFillers
         set.formUnion(UserDefaults.standard.stringArray(forKey: cacheKey) ?? [])
         return set
     }
 
-    /// Пересчитать активный список и положить в кэш (вызывать из UI/recalc, не из пайплайна).
+    /// Recompute the active list and store it in the cache (call from UI/recalc, not from the pipeline).
     @discardableResult
     static func refreshCache(history: [SpeechMetric], excluding: Set<String> = [], now: Date = Date()) -> Set<String> {
         let dyn = analyze(history: history, excluding: excluding, now: now)
@@ -101,19 +101,19 @@ enum AutoFillerDetector {
         return coreFillers.union(auto)
     }
 
-    /// Записать активный список в кэш напрямую — когда dynamics уже посчитан,
-    /// чтобы не сканировать историю второй раз (refreshCache делает повторный analyze).
+    /// Write the active list to the cache directly — when dynamics is already computed,
+    /// to avoid scanning the history a second time (refreshCache runs analyze again).
     static func writeCache(active phrases: [String]) {
         UserDefaults.standard.set(phrases, forKey: cacheKey)
     }
 
-    /// Полный пересчёт активного списка по истории (для recalc).
+    /// Full recompute of the active list from history (for recalc).
     static func activeFillers(history: [SpeechMetric], excluding: Set<String> = [], now: Date = Date()) -> Set<String> {
         let dyn = analyze(history: history, excluding: excluding, now: now)
         return coreFillers.union(dyn.active.map { $0.phrase })
     }
 
-    // MARK: - Полная картина для UI
+    // MARK: - Full picture for the UI
 
     static func computeDynamics(
         history: [SpeechMetric],
@@ -156,8 +156,8 @@ enum AutoFillerDetector {
         return dyn
     }
 
-    /// Дневные ряды rate (на 100 слов) для набора слов — для sparkline.
-    /// Считается один раз в .task, не в body.
+    /// Daily rate series (per 100 words) for a set of words — for the sparkline.
+    /// Computed once in .task, not in body.
     static func dailyRateSeries(phrases: [String], in metrics: [SpeechMetric]) -> [String: [(date: Date, value: Double)]] {
         guard !phrases.isEmpty else { return [:] }
         let ordered = PhraseOccurrenceScanner.normalizedOrdered(phrases)
@@ -182,14 +182,14 @@ enum AutoFillerDetector {
         return result
     }
 
-    // MARK: - Ядро анализа
+    // MARK: - Analysis core
 
     private static func analyze(history: [SpeechMetric], excluding: Set<String>, now: Date) -> Dynamics {
         var dyn = Dynamics()
         let cal = Calendar.current
         let windowStart = cal.date(byAdding: .day, value: -windowDays, to: now) ?? now
 
-        // Документы окна — токенизируем по разу
+        // Window documents — tokenize each once
         let docs: [Doc] = history.compactMap { m in
             guard m.timestamp >= windowStart else { return nil }
             let src = sourceText(m)
@@ -200,9 +200,9 @@ enum AutoFillerDetector {
         let wordsTotal = docs.reduce(0) { $0 + $1.wordCount }
         guard docs.count >= minDocs, wordsTotal >= minWords else { return dyn }
         let docsTotal = Double(docs.count)
-        let docMin = max(3, Int((0.20 * docsTotal).rounded(.up)))   // абсолютный минимум диктовок
+        let docMin = max(3, Int((0.20 * docsTotal).rounded(.up)))   // absolute minimum number of dictations
 
-        // Частотный профиль униграмм
+        // Unigram frequency profile
         var occ: [String: Int] = [:]
         var docCount: [String: Int] = [:]
         var firstDate: [String: Date] = [:]
@@ -221,7 +221,7 @@ enum AutoFillerDetector {
 
         let core = SpeechMetricsAnalyzer.singleWordFillers
 
-        // 1) Однословные кандидаты из лексикона
+        // 1) Single-word candidates from the lexicon
         for word in FillerLexicon.singleWordCandidates where !core.contains(word) && !excluding.contains(word) {
             let o = occ[word] ?? 0
             let dc = docCount[word] ?? 0
@@ -233,7 +233,7 @@ enum AutoFillerDetector {
             }
         }
 
-        // 2) Новые слова (нет ни в ядре, ни в лексиконе, ни в стоп-листе, ни в маркерах)
+        // 2) New words (not in the core, the lexicon, the stop list, or the markers)
         for (word, o) in occ {
             guard !core.contains(word),
                   !FillerLexicon.singleWordCandidates.contains(word),
@@ -256,7 +256,7 @@ enum AutoFillerDetector {
             }
         }
 
-        // 3) Многословные кандидаты (через сканер)
+        // 3) Multi-word candidates (via the scanner)
         let multiCandidates = FillerLexicon.multiWordCandidates.filter { !excluding.contains($0) }
         let multi = multiOccurrences(multiCandidates, in: docs)
         for (phrase, info) in multi {
@@ -276,7 +276,7 @@ enum AutoFillerDetector {
 
     // MARK: - Helpers
 
-    /// Текст для анализа: сырой ASR-выход, если есть, иначе очищенный (старые записи).
+    /// Text for analysis: the raw ASR output if available, otherwise the cleaned text (older records).
     static func sourceText(_ m: SpeechMetric) -> String {
         m.rawText.isEmpty ? m.text : m.rawText
     }

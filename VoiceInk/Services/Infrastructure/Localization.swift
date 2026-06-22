@@ -2,12 +2,12 @@
 //  Localization.swift
 //  VoiceInk
 //
-//  Простой механизм локализации для двух языков (en/ru) с auto-detect.
+//  Simple localization mechanism for two languages (en/ru) with auto-detect.
 //
-//  Использование в SwiftUI views:
+//  Usage in SwiftUI views:
 //      LocalizedText(en: "Speech Today", ru: "Сегодняшняя речь")
 //
-//  Использование в строковых контекстах (placeholder, accessibility hints):
+//  Usage in string contexts (placeholder, accessibility hints):
 //      L10n.t(en: "Browse…", ru: "Выбрать…")
 //
 
@@ -30,34 +30,34 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     }
 }
 
-/// Утилита для локализации с runtime-переключением.
+/// Localization utility with runtime switching.
 enum L10n {
 
-    /// Ключ в UserDefaults для выбранного языка.
+    /// UserDefaults key for the selected language.
     static let storageKey = "AppLanguage"
 
-    /// Эффективный язык — auto разрешается через системную локаль.
+    /// Effective language — auto is resolved via the system locale.
     static var current: AppLanguage {
         let raw = UserDefaults.standard.string(forKey: storageKey) ?? AppLanguage.auto.rawValue
         let stored = AppLanguage(rawValue: raw) ?? .auto
 
         if stored == .auto {
-            // Если системный язык — русский, используем русский, иначе английский
+            // If the system language is Russian, use Russian; otherwise English
             let preferred = Locale.preferredLanguages.first ?? "en"
             return preferred.hasPrefix("ru") ? .russian : .english
         }
         return stored
     }
 
-    /// Возвращает строку на текущем языке.
-    /// Используется для String-контекстов (placeholder, log messages, accessibility).
-    /// Для UI текста предпочитай LocalizedText.
+    /// Returns the string in the current language.
+    /// Used for String contexts (placeholder, log messages, accessibility).
+    /// For UI text, prefer LocalizedText.
     static func t(en: String, ru: String) -> String {
         return current == .russian ? ru : en
     }
 }
 
-/// SwiftUI Text который автоматически перерисовывается при смене языка.
+/// A SwiftUI Text that automatically redraws when the language changes.
 struct LocalizedText: View {
     let en: String
     let ru: String
@@ -81,7 +81,7 @@ struct LocalizedText: View {
 // MARK: - Plural forms
 
 extension L10n {
-    /// Русские формы множественного числа: 1 сессия / 2 сессии / 5 сессий.
+    /// Russian plural forms: 1 сессия / 2 сессии / 5 сессий.
     static func ruPlural(_ n: Int, one: String, few: String, many: String) -> String {
         let mod100 = n % 100
         if (11...14).contains(mod100) { return many }
@@ -92,7 +92,7 @@ extension L10n {
         }
     }
 
-    /// «N session(s)» / «N сессия/сессии/сессий» с корректным плюралом.
+    /// "N session(s)" / "N сессия/сессии/сессий" with correct pluralization.
     static func sessionsCount(_ n: Int) -> String {
         t(
             en: "\(n) session\(n == 1 ? "" : "s")",
@@ -104,15 +104,15 @@ extension L10n {
 // MARK: - Auto translation for full app
 
 extension L10n {
-    /// Если активный язык — русский, ищет en-ключ в таблице переводов.
-    /// Не нашёл — возвращает оригинал. На английском — всегда оригинал.
+    /// If the active language is Russian, looks up the en key in the translation table.
+    /// If not found, returns the original. In English, always returns the original.
     static func auto(_ en: String) -> String {
         guard current == .russian else { return en }
         return ruTranslations[en] ?? en
     }
 }
 
-/// Глобальный shortcut. `Text(tr("Sessions Recorded"))` вернёт русскую строку
-/// если язык переключён на русский.
+/// Global shortcut. `Text(tr("Sessions Recorded"))` returns the Russian string
+/// if the language is switched to Russian.
 func tr(_ en: String) -> String { L10n.auto(en) }
 

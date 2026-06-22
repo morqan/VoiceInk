@@ -2,13 +2,13 @@
 //  SpeechInsightsSection.swift
 //  VoiceInk
 //
-//  блок на Dashboard со сводкой речевых метрик за сегодня.
-//  Считает: filler rate, средняя длина предложения, anglicism rate, средний WPM.
+//  Dashboard block with a summary of today's speech metrics.
+//  Computes: filler rate, average sentence length, anglicism rate, average WPM.
 //
-//  Цвета карточек:
-//   🟢 — в цели
-//   🟡 — близко к границе
-//   🔴 — выше порога
+//  Card colors:
+//   🟢 — within target
+//   🟡 — near the threshold
+//   🔴 — above the threshold
 //
 
 import SwiftUI
@@ -66,7 +66,7 @@ struct SpeechInsightsSection: View {
         }
     }
 
-    /// Переход на полную страницу Speech Analytics — блок не должен быть тупиком.
+    /// Jump to the full Speech Analytics page — this block shouldn't be a dead end.
     private var openAnalyticsButton: some View {
         Button {
             NotificationCenter.default.post(
@@ -179,7 +179,7 @@ struct SpeechInsightsSection: View {
         todayMetrics.reduce(0) { $0 + $1.anglicismCount }
     }
 
-    /// Средний filler rate (взвешенный по словам, не по сессиям)
+    /// Average filler rate (weighted by words, not by sessions)
     private var avgFillerRate: Double {
         guard totalWords > 0 else { return 0 }
         return Double(totalFillers) / Double(totalWords) * 100
@@ -190,15 +190,15 @@ struct SpeechInsightsSection: View {
         return Double(totalAnglicisms) / Double(totalWords) * 100
     }
 
-    /// Средняя длина предложения (взвешенная)
+    /// Average sentence length (weighted)
     private var avgSentenceLength: Double {
         let totalSentences = todayMetrics.reduce(0) { $0 + $1.sentenceCount }
         guard totalSentences > 0 else { return 0 }
         return Double(totalWords) / Double(totalSentences)
     }
 
-    /// WPM — pooled: слова дня ÷ суммарное время записей дня
-    /// (невзвешенное среднее по сессиям давало короткой реплике вес длинной диктовки).
+    /// WPM — pooled: today's words ÷ total recording time for the day
+    /// (an unweighted per-session average gave a short remark the same weight as a long dictation).
     private var avgWPM: Double {
         let timed = todayMetrics.filter { $0.durationSeconds > 0 && $0.wordCount > 0 }
         let minutes = timed.reduce(0.0) { $0 + $1.durationSeconds } / 60.0
@@ -206,7 +206,7 @@ struct SpeechInsightsSection: View {
         return Double(timed.reduce(0) { $0 + $1.wordCount }) / minutes
     }
 
-    /// Доля латинских символов — взвешенно по словам сессий
+    /// Share of Latin characters — weighted by session word counts
     private var avgEnRuRatio: Double {
         guard totalWords > 0 else { return 0 }
         return todayMetrics.reduce(0.0) { $0 + $1.enRuRatio * Double($1.wordCount) } / Double(totalWords)

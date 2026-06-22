@@ -2,9 +2,9 @@
 //  VoiceProfileSection.swift
 //  VoiceInk
 //
-//  Секция Voice Profile Match — сравнение реальной речи с целевым стилем.
-//  Профиль-селектор + summary; счёт/оси рисует VoiceProfileBreakdownView,
-//  обучающий блок — VoiceProfileStyleCoachView.
+//  Voice Profile Match section — compares actual speech with a target style.
+//  Profile selector + summary; the score/axes are drawn by VoiceProfileBreakdownView,
+//  the coaching block by VoiceProfileStyleCoachView.
 //
 
 import SwiftUI
@@ -14,7 +14,7 @@ struct VoiceProfileSection: View {
     @Environment(\.modelContext) private var modelContext
     @Query(sort: \VoiceProfileTarget.name) private var profiles: [VoiceProfileTarget]
 
-    /// Метрики за выбранный период (передаём из родителя).
+    /// Metrics for the selected period (passed in from the parent).
     let metrics: [SpeechMetric]
 
     /// Cached match result — computed in `.task`, not on every render (the compute
@@ -99,8 +99,8 @@ struct VoiceProfileSection: View {
         }
     }
 
-    /// Перевод названий пресетов на английский. Если профиль кастомный (не preset) —
-    /// возвращаем как есть.
+    /// Translates preset names into English. If the profile is custom (not a preset),
+    /// returns it as is.
     private func profileDisplayName(_ p: VoiceProfileTarget) -> String {
         guard p.isPreset, L10n.current == .english else { return p.name }
         switch p.name {
@@ -112,7 +112,7 @@ struct VoiceProfileSection: View {
         }
     }
 
-    /// Перевод summary пресета.
+    /// Translates the preset's summary.
     private func profileSummaryText(_ p: VoiceProfileTarget) -> String {
         guard p.isPreset, L10n.current == .english else { return p.summary }
         switch p.name {

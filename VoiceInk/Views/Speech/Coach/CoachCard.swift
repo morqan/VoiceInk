@@ -37,7 +37,7 @@ struct CoachCard: View {
         VoiceStyleCoaching.patterns(for: styleKey, axis: breakdown.axis).first
     }
 
-    /// Краткая подсказка: стиле-специфичная для пресета, иначе generic по направлению.
+    /// Short hint: style-specific for the preset, otherwise generic based on the direction.
     private var drillText: String? {
         if let s = VoiceStyleCoaching.axisDrill(for: styleKey, axis: breakdown.axis) {
             return s.text
@@ -50,7 +50,7 @@ struct CoachCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // Заголовок-дельта + бейдж прироста
+            // Delta title + gain badge
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(deltaTitle)
                     .font(.system(size: 12, weight: .bold))
@@ -64,7 +64,7 @@ struct CoachCard: View {
                     .foregroundStyle(.green)
             }
 
-            // Краткая подсказка «что делать»
+            // Short "what to do" hint
             if let drillText {
                 Text(drillText)
                     .font(.system(size: 11))
@@ -72,7 +72,7 @@ struct CoachCard: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            // Спец-контент по оси
+            // Axis-specific content
             if breakdown.axis == .markers, !markerUsage.isEmpty {
                 markerChips
             }
@@ -80,7 +80,7 @@ struct CoachCard: View {
                 fillerChips
             }
 
-            // Раскрывашка: приём стиля с формулой и примерами
+            // Disclosure: style technique with formula and examples
             if let pattern {
                 DisclosureGroup(isExpanded: $expanded) {
                     patternBody(pattern)
@@ -114,7 +114,7 @@ struct CoachCard: View {
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            // Формула-шаблон
+            // Formula template
             HStack(alignment: .top, spacing: 6) {
                 Image(systemName: "function")
                     .font(.system(size: 10))
@@ -128,7 +128,7 @@ struct CoachCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 8).fill(Color.indigo.opacity(0.08)))
 
-            // Примеры
+            // Examples
             ForEach(Array(p.examples.enumerated()), id: \.offset) { _, ex in
                 HStack(alignment: .top, spacing: 6) {
                     Image(systemName: "quote.opening")
@@ -142,7 +142,7 @@ struct CoachCard: View {
                 }
             }
 
-            // Слова именно этого приёма — что добавить в речь
+            // Words specific to this technique — what to add to your speech
             if !p.relatedMarkers.isEmpty {
                 Text(L10n.t(en: "Words of this technique: ", ru: "Слова приёма: ")
                      + p.relatedMarkers.map { "«\($0)»" }.joined(separator: ", "))
